@@ -1,0 +1,855 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { PlayerDisplay } from '../src/views/PlayerDisplay';
+import { AdminHost } from '../src/views/AdminHost';
+import { GameBuilder } from '../src/components/builder/GameBuilder';
+import { MediaRenderer } from '../src/components/common/MediaRenderer';
+import { defaultGame } from '../src/data/defaultGame';
+import { initialGameState, gameReducer } from '../src/utils/gameReducer';
+import { createGameFromPreferences } from '../src/types/game';
+
+test('PlayerDisplay UI: Waiting screen displays logo, tagline, and message', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state: initialGameState,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('logo.svg'));
+  assert.ok(html.includes('Trivia, Team Fights &amp; Petty Rivalries'));
+  assert.ok(html.includes('Waiting for the host to start the game...'));
+  assert.ok(!html.includes('Player Board'));
+});
+
+test('PlayerDisplay UI: Active Board Grid renders categories and clue tiles', () => {
+  const state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('WORLD GEOGRAPHY'));
+  assert.ok(html.includes('SCIENCE &amp; NATURE'));
+  assert.ok(html.includes('text-modern-gold'));
+  assert.ok(html.includes('$100'));
+  assert.ok(html.includes('$500'));
+  assert.ok(html.includes('Champions'));
+  assert.ok(html.includes('Challengers'));
+});
+
+test('PlayerDisplay UI: Detailed question view has flat category & chunky points', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('bg-blue-500/20'));
+  assert.ok(html.includes('text-blue-100'));
+  assert.ok(html.includes('WORLD GEOGRAPHY'));
+  assert.ok(html.includes('Danube River'));
+  assert.ok(html.includes('font-display font-black text-white'));
+  assert.ok(html.includes('$100'));
+  assert.ok(html.includes('text-modern-gold font-display leading-none'));
+});
+
+test('PlayerDisplay UI: Wrong answer displays red border around clue box', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  state = gameReducer(state, {
+    type: 'ANSWER_WRONG',
+    payload: { team: 1 },
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('!border-2 !border-rose-500'));
+  assert.ok(html.includes('Missed'));
+});
+
+test('PlayerDisplay UI: Answer revealed banner renders with chunky font', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  state = gameReducer(state, {
+    type: 'ANSWER_CORRECT',
+    payload: { team: 1 },
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Budapest'));
+  assert.ok(html.includes('font-black uppercase tracking-wide text-white'));
+  assert.ok(html.includes('font-display'));
+});
+
+test('PlayerDisplay UI: Hint revealed renders hint card with deduction', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  state = gameReducer(state, {
+    type: 'REVEAL_HINT',
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Hint (-$100 pts)'));
+  assert.ok(html.includes('Capital of Hungary.'));
+});
+
+test('PlayerDisplay UI: Footer score displays tabular slots for each digit', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'OVERRIDE_SCORES',
+    payload: { team1Score: 1200, team2Score: -300 },
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('tabular-nums'));
+  assert.ok(html.includes('w-[0.65em]'));
+  assert.ok(html.includes('1'));
+  assert.ok(html.includes('2'));
+  assert.ok(html.includes('-'));
+});
+
+test('AdminHost UI: Setup screen renders logo, tagline, and actions', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state: initialGameState,
+      dispatch: () => {},
+      openDisplayWindow: () => {},
+      onOpenBuilder: () => {},
+      onGameCreated: () => {},
+    })
+  );
+
+  assert.ok(html.includes('stage-ambient'));
+  assert.ok(html.includes('ambient-grid'));
+  assert.ok(html.includes('logo.svg'));
+  assert.ok(html.includes('Trivia, Team Fights &amp; Petty Rivalries'));
+  assert.ok(html.includes('Create New Game'));
+  assert.ok(html.includes('Load Game File'));
+  assert.ok(html.includes('Load Sample Game'));
+});
+
+test('AdminHost UI: Active console has no green dot and has big X Close Game', () => {
+  const state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      openDisplayWindow: () => {},
+      onOpenBuilder: () => {},
+      onGameCreated: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Host Console'));
+  assert.ok(!html.includes('rounded-full bg-emerald-400 animate-pulse'));
+  assert.ok(!html.includes('(alternates automatically)'));
+  assert.ok(html.includes('Board Turn:'));
+  assert.ok(html.includes('Close Game'));
+});
+
+test('AdminHost UI: Clue grid applies Option 1 contrast and omits answer previews', () => {
+  const state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      openDisplayWindow: () => {},
+      onOpenBuilder: () => {},
+      onGameCreated: () => {},
+    })
+  );
+
+  // Option 1 Elevated Slate-Navy styling
+  assert.ok(html.includes('bg-[#0c2356]'));
+  assert.ok(html.includes('bg-[#0e1f42]'));
+  assert.ok(html.includes('text-amber-400'));
+  assert.ok(html.includes('text-slate-100'));
+
+  // Question text remains visible as sneak peek for host
+  assert.ok(html.includes('Danube River'));
+
+  // Answer previews must NOT appear on the home panel grid
+  assert.ok(!html.includes('Ans:'));
+  assert.ok(!html.includes('Budapest'));
+});
+
+test('GameBuilder UI: Renders game settings and clue editor', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(GameBuilder, {
+      currentConfig: defaultGame,
+      onSaveSuccess: () => {},
+      onSaveAndPlay: () => {},
+      onCloseGame: () => {},
+      saveGameFile: async () => true,
+      selectMediaFile: async () => null,
+    })
+  );
+
+  assert.ok(html.includes('Game Builder'));
+  assert.ok(html.includes('Ultimate Trivia Championship'));
+  assert.ok(html.includes('WORLD GEOGRAPHY'));
+  assert.ok(html.includes('Close Game'));
+});
+
+test('PlayerDisplay UI: Final Jeopardy tie-breaker renders category & question', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SET_ROUND',
+    payload: { roundIndex: -1 },
+  });
+
+  let html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Tie-Breaker Category'));
+  assert.ok(html.includes('FAMOUS LANDMARKS'));
+  assert.ok(html.includes('Teams are submitting secret wagers'));
+
+  state = gameReducer(state, { type: 'FJ_REVEAL_QUESTION' });
+  html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Exposition Universelle'));
+  assert.ok(html.includes('font-display font-black text-white'));
+});
+
+test('AdminHost UI: Clue judging modal displays judging buttons & hint controls', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      openDisplayWindow: () => {},
+      onOpenBuilder: () => {},
+      onGameCreated: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Question'));
+  assert.ok(html.includes('Danube River'));
+  assert.ok(html.includes('Answer'));
+  assert.ok(html.includes('Budapest'));
+  assert.ok(html.includes('+$100'));
+  assert.ok(html.includes('Wrong'));
+  assert.ok(html.includes('Reset'));
+  assert.ok(html.includes('Hint (-$100)'));
+  assert.ok(html.includes('Answering:'));
+  assert.ok(html.includes('Team 1'));
+  assert.ok(html.includes('Team 2'));
+  assert.ok(html.includes('bg-blue-600 text-white'));
+});
+
+test('AdminHost UI: First incorrect answer offers rebound option with skip', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  state = gameReducer(state, {
+    type: 'ANSWER_WRONG',
+    payload: { team: 1 },
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      openDisplayWindow: () => {},
+      onOpenBuilder: () => {},
+      onGameCreated: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Champions incorrect'));
+  assert.ok(html.includes('Rebound ($50)'));
+  assert.ok(html.includes('Skip'));
+});
+
+test('MediaRenderer UI: Omits controls when showControls is false', () => {
+  const videoHtml = renderToStaticMarkup(
+    React.createElement(MediaRenderer, {
+      media: { type: 'video', urlOrPath: 'sample.mp4' },
+      resolvedUrl: 'media://sample.mp4',
+      showControls: false,
+    })
+  );
+  assert.ok(videoHtml.includes('<video'));
+  assert.ok(!videoHtml.includes('controls'));
+
+  const audioHtml = renderToStaticMarkup(
+    React.createElement(MediaRenderer, {
+      media: { type: 'audio', urlOrPath: 'sample.mp3' },
+      resolvedUrl: 'media://sample.mp3',
+      showControls: false,
+    })
+  );
+  assert.ok(audioHtml.includes('<audio'));
+  assert.ok(!audioHtml.includes('controls'));
+
+  const withControls = renderToStaticMarkup(
+    React.createElement(MediaRenderer, {
+      media: { type: 'video', urlOrPath: 'sample.mp4' },
+      resolvedUrl: 'media://sample.mp4',
+      showControls: true,
+    })
+  );
+  assert.ok(withControls.includes('controls'));
+});
+
+test('PlayerDisplay UI: Active video clue renders without controls', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+
+  // Inject a video media clue
+  if (state.config) {
+    state.config.rounds[0].categories[0].clues[0].media = {
+      type: 'video',
+      urlOrPath: 'clip.mp4',
+    };
+  }
+
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  state = gameReducer(state, { type: 'REVEAL_MEDIA' });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => `media://${p}`,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('<video'));
+  assert.ok(!html.includes('controls'));
+});
+
+test('MediaRenderer UI: YouTube masks title when showControls is false', () => {
+  const maskedHtml = renderToStaticMarkup(
+    React.createElement(MediaRenderer, {
+      media: {
+        type: 'youtube',
+        urlOrPath: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      },
+      resolvedUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      showControls: false,
+    })
+  );
+
+  assert.ok(maskedHtml.includes('youtube-title-mask'));
+  assert.ok(maskedHtml.includes('controls=0'));
+
+  const unmaskedHtml = renderToStaticMarkup(
+    React.createElement(MediaRenderer, {
+      media: {
+        type: 'youtube',
+        urlOrPath: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      },
+      resolvedUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      showControls: true,
+    })
+  );
+
+  assert.ok(!unmaskedHtml.includes('youtube-title-mask'));
+  assert.ok(!unmaskedHtml.includes('controls=0'));
+});
+
+test('PlayerDisplay UI: Active media vanishes on ANSWER_CORRECT for all types', () => {
+  const mediaCases: Array<{
+    type: 'video' | 'youtube' | 'image' | 'audio';
+    url: string;
+    tag: string;
+  }> = [
+    { type: 'video', url: 'sample.mp4', tag: '<video' },
+    {
+      type: 'youtube',
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      tag: '<iframe',
+    },
+    { type: 'image', url: 'clue.png', tag: 'alt="Clue Picture"' },
+    { type: 'audio', url: 'clue.mp3', tag: '<audio' },
+  ];
+
+  for (const testCase of mediaCases) {
+    let state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: defaultGame,
+    });
+
+    if (state.config) {
+      state.config.rounds[0].categories[0].clues[0].media = {
+        type: testCase.type,
+        urlOrPath: testCase.url,
+      };
+    }
+
+    state = gameReducer(state, {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 0,
+        clueIndex: 0,
+        firstAnsweringTeam: 1,
+      },
+    });
+    state = gameReducer(state, { type: 'REVEAL_MEDIA' });
+
+    // Before judging: media element is present
+    const preJudgeHtml = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+    assert.ok(
+      preJudgeHtml.includes(testCase.tag),
+      `Expected ${testCase.tag} before answer judgment`
+    );
+
+    // Judge correct
+    state = gameReducer(state, {
+      type: 'ANSWER_CORRECT',
+      payload: { team: 1 },
+    });
+
+    const postJudgeHtml = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+
+    // Green box is rendered with correct answer
+    assert.ok(postJudgeHtml.includes('Danube River'));
+    assert.ok(postJudgeHtml.includes('bg-emerald-950/70'));
+    assert.ok(!postJudgeHtml.includes('!border-emerald-500'));
+    assert.ok(postJudgeHtml.includes('bg-emerald-950/30'));
+    // Media is completely unmounted
+    assert.ok(
+      !postJudgeHtml.includes(testCase.tag),
+      `Expected ${testCase.tag} to be absent after correct answer judgment`
+    );
+  }
+});
+
+test('PlayerDisplay UI: Active media vanishes on REVEAL_ANSWER & rebound miss', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+
+  if (state.config) {
+    state.config.rounds[0].categories[0].clues[0].media = {
+      type: 'video',
+      urlOrPath: 'sample.mp4',
+    };
+  }
+
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  state = gameReducer(state, { type: 'REVEAL_MEDIA' });
+
+  // Host reveals answer directly
+  const revealState = gameReducer(state, { type: 'REVEAL_ANSWER' });
+  const revealHtml = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state: revealState,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+  assert.ok(revealHtml.includes('Danube River'));
+  assert.ok(!revealHtml.includes('<video'));
+
+  // Both teams miss on rebound
+  let missState = gameReducer(state, {
+    type: 'ANSWER_WRONG',
+    payload: { team: 1 },
+  });
+  missState = gameReducer(missState, { type: 'ADVANCE_REBOUND' });
+  missState = gameReducer(missState, {
+    type: 'ANSWER_WRONG',
+    payload: { team: 2 },
+  });
+
+  const missHtml = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state: missState,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+  assert.ok(missHtml.includes('Both teams missed!'));
+  assert.ok(!missHtml.includes('<video'));
+});
+
+test('PlayerDisplay UI: Active media layout prevents overlap with shrink-0', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+
+  if (state.config) {
+    state.config.rounds[0].categories[0].clues[0].media = {
+      type: 'video',
+      urlOrPath: 'sample.mp4',
+    };
+  }
+
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  state = gameReducer(state, { type: 'REVEAL_MEDIA' });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  // Question h2 must have shrink-0 so it cannot be squished/overlapped
+  assert.ok(html.includes('shrink-0'));
+  // Media wrapper must have flex-1 min-h-0 overflow-hidden without my-auto
+  assert.ok(html.includes('flex-1 min-h-0 w-full flex items-center'));
+  assert.ok(html.includes('overflow-hidden py-1'));
+  // MediaRenderer has max-h-full max-w-full
+  assert.ok(html.includes('max-h-full max-w-full'));
+});
+
+test('PlayerDisplay UI: Winner screen renders when regulation ends with winner', () => {
+  const customGame = createGameFromPreferences({
+    title: 'Champions League',
+    team1Name: 'Gryffindor',
+    team2Name: 'Slytherin',
+    numCategories: 3,
+    numQuestionsPerCategory: 2,
+    includeFinalJeopardy: false,
+  });
+
+  const completedRounds = customGame.rounds.map((r) => ({
+    ...r,
+    categories: r.categories.map((c) => ({
+      ...c,
+      clues: c.clues.map((cl) => ({ ...cl, state: 'completed' as const })),
+    })),
+  }));
+
+  const state = {
+    ...initialGameState,
+    config: { ...customGame, rounds: completedRounds },
+    team1Score: 1200,
+    team2Score: 800,
+  };
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  // JeoPARTY! logo centerpiece
+  assert.ok(html.includes('logo.svg'));
+
+  // Headline and champion pill (game name champion, no sparkler)
+  assert.ok(html.includes('Champions League Champion'));
+  assert.ok(!html.includes('Sparkles'));
+
+  // Winning team name (without 'wins')
+  assert.ok(html.includes('Gryffindor'));
+  assert.ok(!html.includes('Gryffindor Wins'));
+
+  // Winning score rendered with tabular numerals
+  assert.ok(html.includes('tabular-nums'));
+
+  // Losing team name and score rendered without Runner-up prefix
+  assert.ok(!html.includes('Runner-up:'));
+  assert.ok(html.includes('Slytherin'));
+  assert.ok(html.includes('800'));
+
+  // Top header bar removed on victory screen
+  assert.ok(!html.includes('Toggle Fullscreen (F)'));
+
+  // Standard clue board and score cards should not be rendered
+  assert.ok(!html.includes('group-hover:scale-105'));
+  assert.ok(!html.includes('Team 1 Score Card'));
+});
+
+test('PlayerDisplay UI: Co-winners screen renders when tied without tie-breaker', () => {
+  const customGame = createGameFromPreferences({
+    title: 'Tie Battle',
+    team1Name: 'Red Owls',
+    team2Name: 'Blue Jays',
+    numCategories: 3,
+    numQuestionsPerCategory: 2,
+    includeFinalJeopardy: false,
+  });
+
+  const completedRounds = customGame.rounds.map((r) => ({
+    ...r,
+    categories: r.categories.map((c) => ({
+      ...c,
+      clues: c.clues.map((cl) => ({ ...cl, state: 'completed' as const })),
+    })),
+  }));
+
+  const state = {
+    ...initialGameState,
+    config: { ...customGame, rounds: completedRounds },
+    team1Score: 1000,
+    team2Score: 1000,
+  };
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('logo.svg'));
+  assert.ok(html.includes('Tie Battle Co-Champions'));
+  assert.ok(html.includes('Red Owls'));
+  assert.ok(html.includes('&amp;'));
+  assert.ok(html.includes('Blue Jays'));
+  assert.ok(html.includes('tabular-nums'));
+  assert.ok(!html.includes('Runner-up:'));
+});
+
+test('AdminHost UI: Game completed banner renders on victory', () => {
+  const customGame = createGameFromPreferences({
+    title: 'Admin Victory Test',
+    team1Name: 'Hawks',
+    team2Name: 'Eagles',
+    numCategories: 3,
+    numQuestionsPerCategory: 2,
+    includeFinalJeopardy: false,
+  });
+
+  const completedRounds = customGame.rounds.map((r) => ({
+    ...r,
+    categories: r.categories.map((c) => ({
+      ...c,
+      clues: c.clues.map((cl) => ({ ...cl, state: 'completed' as const })),
+    })),
+  }));
+
+  const state = {
+    ...initialGameState,
+    config: { ...customGame, rounds: completedRounds },
+    team1Score: 900,
+    team2Score: 400,
+  };
+
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      openGameFile: async () => null,
+      saveGameFile: async () => false,
+    })
+  );
+
+  assert.ok(html.includes('Game Completed'));
+  assert.ok(html.includes('Winner: Hawks'));
+  assert.ok(html.includes('Winner screen active on player display'));
+});
+
+test('AdminHost UI: Regulation tied banner renders when tie-breaker available', () => {
+  const customGame = createGameFromPreferences({
+    title: 'Tied With FJ',
+    team1Name: 'Team X',
+    team2Name: 'Team Y',
+    numCategories: 3,
+    numQuestionsPerCategory: 2,
+    includeFinalJeopardy: true,
+  });
+
+  const completedRounds = customGame.rounds.map((r) => ({
+    ...r,
+    categories: r.categories.map((c) => ({
+      ...c,
+      clues: c.clues.map((cl) => ({ ...cl, state: 'completed' as const })),
+    })),
+  }));
+
+  const state = {
+    ...initialGameState,
+    config: { ...customGame, rounds: completedRounds },
+    team1Score: 500,
+    team2Score: 500,
+  };
+
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      openGameFile: async () => null,
+      saveGameFile: async () => false,
+    })
+  );
+
+  assert.ok(html.includes('Regulation Tied ($500 each)'));
+  assert.ok(html.includes('Start Tie-Breaker'));
+  assert.ok(html.includes('Declare Co-Winners'));
+});

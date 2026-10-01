@@ -1,0 +1,6 @@
+dist
+dist-electron
+dist-test
+release
+node_modules
+*.log
