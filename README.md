@@ -52,8 +52,9 @@ Grab the pre-packaged installer for your system from GitHub Releases:
 ### macOS (Apple Silicon & Intel)
 
 1. Download `JeoParty-<version>-arm64.dmg` (Apple Silicon) or
-   `JeoParty-<version>-x64.dmg` (Intel).
-2. Open the `.dmg` and drag `JeoPARTY!` into `/Applications`.
+   `JeoParty-<version>-x64.zip` (Intel).
+2. For `.dmg`, open and drag `JeoPARTY!` into `/Applications`. For `.zip`,
+   extract and move `JeoPARTY!.app` into `/Applications`.
 3. **First launch (Gatekeeper)**: Since this package is community-built
    without an Apple Developer certificate, right-click `JeoPARTY!.app`
    in Finder and select **Open**, or run:
