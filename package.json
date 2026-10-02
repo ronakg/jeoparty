@@ -12,7 +12,7 @@
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
-    "release": "npm run build && electron-builder --mac",
+    "release": "npm run build && electron-builder --mac --publish never",
     "dev": "vite",
     "build:electron": "esbuild electron/main.ts --bundle --platform=node --format=esm --target=node20 --packages=external --outfile=dist-electron/main.js && esbuild electron/preload.ts --bundle --platform=node --format=cjs --target=node20 --packages=external --outfile=dist-electron/preload.cjs && cp dist-electron/preload.cjs dist-electron/preload.js && node scripts/patchElectronDevApp.js",
     "build": "tsc && vite build && npm run build:electron",
@@ -23,7 +23,7 @@
     "format:check": "prettier --check \"{src,electron,tests}/**/*.{ts,tsx,js}\"",
     "electron:dev": "npm run build:electron && concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
     "electron:start": "electron .",
-    "electron:build": "npm run build && electron-builder"
+    "electron:build": "npm run build && electron-builder --publish never"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
@@ -64,13 +64,6 @@
     "directories": {
       "output": "release"
     },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "ronakg",
-        "repo": "jeoparty"
-      }
-    ],
     "mac": {
       "icon": "build/icon.icns",
       "category": "public.app-category.games",
