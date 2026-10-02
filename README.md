@@ -1,62 +1,111 @@
-# Local Jeopardy Game (Desktop & Browser)
+# ⚡ JeoPARTY!
 
-A local-first, offline Jeopardy game packaged for macOS (and cross-platform) built with **Electron**, **React**, **TypeScript**, and **Tailwind CSS**.
+> The high-energy, local-first trivia game show built for living rooms,
+> classrooms, game nights, and company socials.
 
-Featuring two synchronized interfaces:
-1. **Admin Host Console**: Run on your laptop screen. Gives the host complete control over round navigation, advance clue/answer views, clue activation, media reveal and playback sync, hint release, answer judging with rebounds, score overrides, and game authoring.
-2. **Player Display Board**: Run on a second screen, projector, or TV. Features authentic Jeopardy styling, blue grid, golden typography, clue overlays, synced media players, and big team scoreboards with zero required player mouse interaction.
+JeoPARTY! turns any laptop and TV into an authentic, TV-ready game show.
+Hook your computer up to a projector or big screen, grab your phone or
+laptop to host, and run custom trivia rounds with synchronized media,
+dramatic rebounds, and victory confetti.
 
 ---
 
-## Quick Start
+## ✨ Features
 
-### 1. Launch with Electron (Dual Desktop Windows)
+- 📺 **Stage-Ready Player Display**
+  - Designed for projectors and big screens with zero player clicks needed.
+  - Sapphire-blue boards, gold typography, and smooth animations.
+  - Giant live team scoreboards with buzzer and celebration banners.
+
+- 📱 **Dual-Screen or Mobile Host Console**
+  - Host from your laptop or scan a stylized QR code to drive the game
+    straight from your smartphone over your local Wi-Fi.
+  - Real-time previews of upcoming clues and answers.
+  - Quick action controls: hint reveal, media playback, score override,
+    and instantaneous action undo.
+
+- 🎬 **Dynamic Multimedia Engine**
+  - Clues with YouTube clips, local video, audio with live waveforms,
+    and high-res images.
+  - Host controls media playback with synchronized playback on the stage.
+
+- ⚡ **Party-Tested Game Rules**
+  - Automatic turn alternation between competing teams.
+  - Misses give the opposing team a **50% Rebound Opportunity**.
+  - Hints reveal clues for a small point deduction.
+  - Daily Doubles and high-stakes Final Jeopardy secret wagers.
+
+- 🛠️ **In-App Game Builder**
+  - Visual editor to craft custom categories, clues, and point values.
+  - Save and load game packs in clean YAML and JSON formats.
+
+---
+
+## 🚀 Download & Installation
+
+Grab the pre-packaged installer for your system from GitHub Releases:
+
+### macOS (Apple Silicon & Intel)
+
+1. Download `JeoParty-<version>-arm64.dmg` (Apple Silicon) or
+   `JeoParty-<version>-x64.dmg` (Intel).
+2. Open the `.dmg` and drag `JeoPARTY!` into `/Applications`.
+3. **First launch (Gatekeeper)**: Since this package is community-built
+   without an Apple Developer certificate, right-click `JeoPARTY!.app`
+   in Finder and select **Open**, or run:
+   ```bash
+   xattr -cr /Applications/JeoPARTY!.app
+   ```
+
+### Windows (x64)
+
+1. Download `JeoParty-<version>-x64.exe`.
+2. Run the installer to create a desktop shortcut and Start Menu entry.
+3. **SmartScreen Prompt**: Click **More info** followed by **Run anyway**.
+
+---
+
+## 💻 Running from Source
+
+Requirements: Node.js 20+ (Node 24 recommended) and npm.
+
 ```bash
+# Clone the repository
+git clone https://github.com/ronakg/jeoparty.git
+cd jeoparty
+
+# Install dependencies
+npm install
+
+# Launch Electron desktop app (Dual Windows)
 npm run electron:dev
 ```
-* This launches both the **Admin Host Window** and the **Player Display Board** simultaneously.
-* Drag the **Player Display Board** to your projector or second monitor and press `F` (or the maximize icon) to make it full screen.
 
-### 2. Launch in Browser (Alternative Web Mode)
-You can also run it directly in your browser without packaging:
+### Browser Mode
+
+Run without Electron directly in any modern browser:
+
 ```bash
 npm run dev
 ```
-* **Host Admin Console**: Open `http://localhost:5173/?view=admin`
-* **Player Board**: Open `http://localhost:5173/?view=display` on your external monitor
-* Both tabs synchronize state instantly via the `BroadcastChannel` and `localStorage` engine with zero latency!
+
+- **Host Console**: `http://localhost:5173/?view=admin`
+- **Player Board**: `http://localhost:5173/?view=display`
+
+Tabs synchronize instantly via `BroadcastChannel` and `localStorage`.
 
 ---
 
-## Key Gameplay Rules & Features
+## 🧪 Testing
 
-- **2 Teams**: Custom team names configured in settings (defaults: "Champions" vs "Challengers").
-- **Turn Control**: Host selects which team has the board or answers first (decided offline).
-- **Correct Answer**: Awards the current clue points to the answering team.
-- **Incorrect Answer**: No point deductions! The other team automatically gets a **Rebound Opportunity** to answer for **50% of the clue points**.
-- **Hints**: Host can click "Reveal Hint" when requested by a team. Revealing the hint reduces available points by a configurable amount (default: $200). Hints are always text.
-- **Media Engine**:
-  - Supports **Local Images**, **Local Audio** (MP3/WAV with animated waveform), **Local Video** (MP4/WebM), and **YouTube URLs**.
-  - Clues with media remain hidden until the Host clicks **Reveal Media**.
-  - Host has play/pause/replay controls that synchronize directly to the player board.
-- **Host Tools**:
-  - Advance preview of questions and answers.
-  - Manual score adjustment modal.
-  - **Undo** button to rollback accidental clicks.
-  - Round switcher (Round 1, Round 2, Final Jeopardy).
-- **Final Jeopardy**:
-  - Category reveal.
-  - Offline secret wager entry.
-  - Clue reveal.
-  - Final response judging and confetti celebration for the winning team!
-- **In-App Game Builder**:
-  - Visually create, edit, add, or delete rounds, categories, clues, and point values.
-  - Native **Save to JSON** and **Load from JSON** files.
+Run the automated test suite:
 
----
-
-## Automated Tests
-Run the test suite:
 ```bash
 npm test
 ```
+
+---
+
+## 📜 License
+
+MIT License. Built for trivia fans everywhere.
