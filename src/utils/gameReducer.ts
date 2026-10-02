@@ -612,6 +612,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
+    case 'SYNC_STATE': {
+      if (!action.payload) return state;
+      return {
+        ...action.payload,
+        displayWindowOpen: state.displayWindowOpen,
+      };
+    }
+
     default:
       return state;
   }

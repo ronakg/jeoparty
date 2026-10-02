@@ -6,6 +6,8 @@ import { PlayerDisplay } from '../src/views/PlayerDisplay';
 import { AdminHost } from '../src/views/AdminHost';
 import { GameBuilder } from '../src/components/builder/GameBuilder';
 import { MediaRenderer } from '../src/components/common/MediaRenderer';
+import { MobileConnectModal } from '../src/components/common/MobileConnectModal';
+import { CompletedClueModal } from '../src/components/common/CompletedClueModal';
 import { defaultGame } from '../src/data/defaultGame';
 import { initialGameState, gameReducer } from '../src/utils/gameReducer';
 import { createGameFromPreferences } from '../src/types/game';
@@ -852,4 +854,119 @@ test('AdminHost UI: Regulation tied banner renders when tie-breaker available', 
   assert.ok(html.includes('Regulation Tied ($500 each)'));
   assert.ok(html.includes('Start Tie-Breaker'));
   assert.ok(html.includes('Declare Co-Winners'));
+});
+
+test('AdminHost UI: Setup screen renders Connect Phone button', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state: initialGameState,
+      dispatch: () => {},
+      openGameFile: async () => null,
+      saveGameFile: async () => false,
+    })
+  );
+
+  assert.ok(html.includes('Connect Phone'));
+});
+
+test('AdminHost UI: Active console header renders Mobile Host button', () => {
+  const state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      openGameFile: async () => null,
+      saveGameFile: async () => false,
+    })
+  );
+
+  assert.ok(html.includes('Mobile Host'));
+});
+
+test('MobileConnectModal UI: Renders QR modal with pairing elements', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(MobileConnectModal, {
+      isOpen: true,
+      onClose: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Mobile Pairing'));
+  assert.ok(html.includes('LAN Connect'));
+  assert.ok(html.includes('Host Console (Phone)'));
+  assert.ok(html.includes('Player Board (TV/Display)'));
+  assert.ok(html.includes('Same Wi-Fi network required'));
+  assert.ok(html.includes('<svg'));
+});
+
+test('AdminHost UI: Completed clue tile displays compact outcome pill', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  state = gameReducer(state, {
+    type: 'ANSWER_CORRECT',
+    payload: { team: 1 },
+  });
+  state = gameReducer(state, {
+    type: 'CLOSE_CLUE',
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      openGameFile: async () => null,
+      saveGameFile: async () => false,
+    })
+  );
+
+  assert.ok(html.includes('line-through text-slate-500'));
+  assert.ok(html.includes('T1'));
+  // Grid tile has no inline reset button
+  assert.ok(!html.includes('Reset</span>'));
+});
+
+test('CompletedClueModal UI: Renders details and reset action', () => {
+  const completedClue = {
+    id: 'c1',
+    points: 500,
+    question: 'What term describes a substance?',
+    answer: 'Matter',
+    state: 'completed' as const,
+    result: { winner: 1 as const, type: 'full' as const },
+  };
+
+  const html = renderToStaticMarkup(
+    React.createElement(CompletedClueModal, {
+      isOpen: true,
+      onClose: () => {},
+      categoryName: 'SCIENCE & NATURE',
+      clue: completedClue,
+      team1Name: 'Champions',
+      team2Name: 'Challengers',
+      onReset: () => {},
+    })
+  );
+
+  assert.ok(html.includes('SCIENCE &amp; NATURE'));
+  assert.ok(html.includes('$500'));
+  assert.ok(html.includes('T1'));
+  assert.ok(html.includes('Awarded to Champions (+500 pts, Full Value)'));
+  assert.ok(html.includes('What term describes a substance?'));
+  assert.ok(html.includes('Matter'));
+  assert.ok(html.includes('Reset Question'));
 });

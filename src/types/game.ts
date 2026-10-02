@@ -203,7 +203,7 @@ export interface GameState {
   coWinnersDeclared?: boolean;
 }
 
-export type GameAction =
+export type GameAction = (
   | { type: 'LOAD_GAME'; payload: GameConfig }
   | { type: 'UNLOAD_GAME' }
   | { type: 'SET_ROUND'; payload: { roundIndex: number } }
@@ -251,7 +251,9 @@ export type GameAction =
       type: 'FJ_JUDGE';
       payload: { team1Correct: boolean; team2Correct: boolean };
     }
-  | { type: 'DECLARE_CO_WINNERS' };
+  | { type: 'DECLARE_CO_WINNERS' }
+  | { type: 'SYNC_STATE'; payload: GameState }
+) & { _actionId?: string };
 
 // Electron IPC API definition
 export interface ElectronAPI {

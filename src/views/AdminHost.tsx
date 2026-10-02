@@ -29,10 +29,13 @@ import {
   Clock,
   Trophy,
   CheckCircle2,
+  QrCode,
 } from 'lucide-react';
 import { parseYouTubeUrl, formatSecondsToTime } from '../utils/youtube';
 import { getWinnerState } from '../utils/gameRules';
 import { tracer } from '../utils/tracer';
+import { MobileConnectModal } from '../components/common/MobileConnectModal';
+import { CompletedClueModal } from '../components/common/CompletedClueModal';
 
 interface CreateGameModalProps {
   isOpen: boolean;
@@ -126,24 +129,52 @@ const CreateGameModal: React.FC<CreateGameModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-[#0b162c] border border-blue-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl my-8">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-blue-900/60 bg-[#070e1c]">
+    <div
+      className={
+        'fixed inset-0 z-50 flex items-center justify-center ' +
+        'bg-black/80 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto'
+      }
+    >
+      <div
+        className={
+          'bg-[#0b162c] border border-blue-800 rounded-2xl w-full ' +
+          'max-w-2xl overflow-hidden shadow-2xl my-auto'
+        }
+      >
+        <div
+          className={
+            'flex items-center justify-between px-4 sm:px-6 py-3 ' +
+            'sm:py-4 border-b border-blue-900/60 bg-[#070e1c]'
+          }
+        >
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-yellow-400" />
-            <h2 className="text-lg font-black uppercase tracking-wider text-yellow-400">
+            <h2
+              className={
+                'text-base sm:text-lg font-black uppercase ' +
+                'tracking-wider text-yellow-400'
+              }
+            >
               Create New Game
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-all"
+            className={
+              'p-1.5 rounded-lg text-gray-400 hover:text-white ' +
+              'hover:bg-gray-800 transition-all'
+            }
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+        <div
+          className={
+            'p-4 sm:p-6 space-y-4 sm:space-y-5 max-h-[75vh] ' +
+            'overflow-y-auto'
+          }
+        >
           {/* Game Title */}
           <div>
             <label className="text-xs font-bold uppercase text-gray-300 block mb-1.5">
@@ -310,6 +341,13 @@ const CreateGameModal: React.FC<CreateGameModalProps> = ({
   );
 };
 
+interface InspectingCompletedClue {
+  roundIndex: number;
+  categoryIndex: number;
+  clueIndex: number;
+  clue: Clue;
+}
+
 interface AdminHostProps {
   state: GameState;
   dispatch: (action: GameAction) => void;
@@ -341,6 +379,9 @@ export const AdminHost: React.FC<AdminHostProps> = ({
   // Local modals
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showMobileConnectModal, setShowMobileConnectModal] = useState(false);
+  const [inspectingCompletedClue, setInspectingCompletedClue] =
+    useState<InspectingCompletedClue | null>(null);
   const [tempTeam1Score, setTempTeam1Score] = useState(team1Score);
   const [tempTeam2Score, setTempTeam2Score] = useState(team2Score);
 
@@ -413,9 +454,9 @@ export const AdminHost: React.FC<AdminHostProps> = ({
         <div
           className={
             'w-full max-w-xl bg-[#0b162c]/90 backdrop-blur-md border ' +
-            'border-blue-900/60 rounded-3xl p-8 md:p-10 shadow-2xl ' +
+            'border-blue-900/60 rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl ' +
             'flex flex-col items-center text-center relative z-10 ' +
-            'overflow-hidden space-y-6'
+            'overflow-hidden space-y-4 sm:space-y-6'
           }
         >
           <div className="flex flex-col items-center space-y-3">
@@ -423,7 +464,8 @@ export const AdminHost: React.FC<AdminHostProps> = ({
               src="/logo.svg"
               alt="JeoPARTY!"
               className={
-                'w-44 h-44 md:w-52 md:h-52 object-contain drop-shadow-2xl'
+                'w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 ' +
+                'object-contain drop-shadow-2xl'
               }
             />
             <p
@@ -464,16 +506,34 @@ export const AdminHost: React.FC<AdminHostProps> = ({
             </button>
           </div>
 
-          {/* Quick Demo Option */}
-          <div className="pt-2">
+          {/* Quick Demo & Mobile Connect */}
+          <div
+            className={'pt-2 flex items-center justify-center gap-4 flex-wrap'}
+          >
             <button
               onClick={() => {
                 if (onGameCreated) onGameCreated();
                 dispatch({ type: 'LOAD_GAME', payload: defaultGame });
               }}
-              className="text-xs text-gray-400 hover:text-yellow-400 transition-colors underline-offset-4 hover:underline cursor-pointer"
+              className={
+                'text-xs text-gray-400 hover:text-yellow-400 ' +
+                'transition-colors underline-offset-4 hover:underline ' +
+                'cursor-pointer'
+              }
             >
               Load Sample Game
+            </button>
+            <span className="text-gray-600 text-xs">•</span>
+            <button
+              onClick={() => setShowMobileConnectModal(true)}
+              className={
+                'text-xs text-gray-400 hover:text-blue-300 ' +
+                'transition-colors flex items-center gap-1.5 cursor-pointer'
+              }
+              title="Connect mobile phone as host controller"
+            >
+              <QrCode className="w-3.5 h-3.5 text-blue-400" />
+              <span>Connect Phone</span>
             </button>
           </div>
         </div>
@@ -487,6 +547,11 @@ export const AdminHost: React.FC<AdminHostProps> = ({
             setShowCreateModal(false);
             onOpenBuilder();
           }}
+        />
+
+        <MobileConnectModal
+          isOpen={showMobileConnectModal}
+          onClose={() => setShowMobileConnectModal(false)}
         />
       </div>
     );
@@ -507,7 +572,21 @@ export const AdminHost: React.FC<AdminHostProps> = ({
     clueIndex: number,
     clue: Clue
   ) => {
-    if (clue.state === 'completed') return;
+    if (clue.state === 'completed') {
+      tracer.recordUiEvent('Inspected completed clue', {
+        roundIndex,
+        categoryIndex,
+        clueIndex,
+        points: clue.points,
+      });
+      setInspectingCompletedClue({
+        roundIndex,
+        categoryIndex,
+        clueIndex,
+        clue,
+      });
+      return;
+    }
     tracer.recordUiEvent('Selected clue', {
       roundIndex,
       categoryIndex,
@@ -549,37 +628,58 @@ export const AdminHost: React.FC<AdminHostProps> = ({
       }
     >
       {/* HOST TOP NAV BAR */}
-      <header className="bg-[#0b1426] border-b border-blue-900/60 px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 shadow-md">
-        <div className="flex items-center gap-3">
+      <header
+        className={
+          'bg-[#0b1426] border-b border-blue-900/60 px-3 sm:px-6 py-2.5 ' +
+          'sm:py-3 flex flex-wrap items-center justify-between gap-2 ' +
+          'sm:gap-4 sticky top-0 z-30 shadow-md'
+        }
+      >
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <img
             src="/logo.svg"
             alt="JeoPARTY!"
-            className="w-8 h-8 object-contain shrink-0"
+            className="w-7 h-7 sm:w-8 sm:h-8 object-contain shrink-0"
           />
           <h1
             className={
-              'text-lg font-black uppercase tracking-wider text-yellow-400'
+              'text-base sm:text-lg font-black uppercase tracking-wider ' +
+              'text-yellow-400 shrink-0'
             }
           >
             Host Console
           </h1>
-          <span className="text-xs px-2.5 py-1 rounded bg-blue-950 text-blue-300 font-semibold border border-blue-800">
+          <span
+            className={
+              'text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded ' +
+              'bg-blue-950 text-blue-300 font-semibold border ' +
+              'border-blue-800 truncate max-w-[110px] sm:max-w-[200px]'
+            }
+            title={config.title}
+          >
             {config.title}
           </span>
         </div>
 
         {/* Navigation Tabs (Shown when Final Jeopardy Tie-Breaker exists) */}
         {config.finalJeopardy && (
-          <div className="flex items-center gap-1 bg-[#050a14] p-1 rounded-xl border border-blue-900/50">
+          <div
+            className={
+              'flex items-center gap-1 bg-[#050a14] p-1 rounded-xl ' +
+              'border border-blue-900/50'
+            }
+          >
             <button
               onClick={() =>
                 dispatch({ type: 'SET_ROUND', payload: { roundIndex: 0 } })
               }
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
-                currentRoundIndex === 0
+              className={
+                'px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg ' +
+                'text-xs font-bold transition-all shrink-0 ' +
+                (currentRoundIndex === 0
                   ? 'bg-blue-600 text-white shadow'
-                  : 'text-gray-400 hover:text-white'
-              }`}
+                  : 'text-gray-400 hover:text-white')
+              }
             >
               Main Board
             </button>
@@ -587,11 +687,13 @@ export const AdminHost: React.FC<AdminHostProps> = ({
               onClick={() =>
                 dispatch({ type: 'SET_ROUND', payload: { roundIndex: -1 } })
               }
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
-                isFinalJeopardy
+              className={
+                'px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg ' +
+                'text-xs font-bold transition-all shrink-0 ' +
+                (isFinalJeopardy
                   ? 'bg-amber-600 text-white shadow'
-                  : 'text-gray-400 hover:text-white'
-              }`}
+                  : 'text-gray-400 hover:text-white')
+              }
               title="Tie-Breaker Question"
             >
               Tie-Breaker Question
@@ -600,7 +702,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
         )}
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Display Window Launcher */}
           <button
             onClick={() => {
@@ -608,11 +710,15 @@ export const AdminHost: React.FC<AdminHostProps> = ({
               openDisplayWindow();
             }}
             disabled={state.displayWindowOpen}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold shadow transition-all ${
-              state.displayWindowOpen
-                ? 'bg-emerald-950/70 border border-emerald-500/50 text-emerald-300 cursor-default opacity-85'
-                : 'bg-blue-700/80 hover:bg-blue-600 text-white cursor-pointer active:scale-95'
-            }`}
+            className={
+              'flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 ' +
+              'rounded-lg text-xs font-bold shadow transition-all ' +
+              (state.displayWindowOpen
+                ? 'bg-emerald-950/70 border border-emerald-500/50 ' +
+                  'text-emerald-300 cursor-default opacity-85'
+                : 'bg-blue-700/80 hover:bg-blue-600 text-white ' +
+                  'cursor-pointer active:scale-95')
+            }
             title={
               state.displayWindowOpen
                 ? 'Player presentation board is already open'
@@ -620,12 +726,34 @@ export const AdminHost: React.FC<AdminHostProps> = ({
             }
           >
             <Monitor
-              className={`w-4 h-4 ${state.displayWindowOpen ? 'text-emerald-400' : 'text-yellow-300'}`}
+              className={`w-4 h-4 shrink-0 ${
+                state.displayWindowOpen ? 'text-emerald-400' : 'text-yellow-300'
+              }`}
             />
-            <span>Player Board</span>
+            <span className="hidden sm:inline">Player Board</span>
             {state.displayWindowOpen && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span
+                className={
+                  'w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0'
+                }
+              />
             )}
+          </button>
+
+          {/* Mobile Host Pairing */}
+          <button
+            onClick={() => setShowMobileConnectModal(true)}
+            className={
+              'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 ' +
+              'bg-blue-950/60 hover:bg-blue-900/80 border border-blue-700/60 ' +
+              'hover:border-yellow-400/60 text-blue-200 hover:text-white ' +
+              'rounded-lg text-xs font-bold transition-all cursor-pointer ' +
+              'active:scale-95'
+            }
+            title="Scan QR code to host from your phone"
+          >
+            <QrCode className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+            <span className="hidden sm:inline">Mobile Host</span>
           </button>
 
           {/* Score Override */}
@@ -635,19 +763,30 @@ export const AdminHost: React.FC<AdminHostProps> = ({
               setTempTeam2Score(team2Score);
               setShowScoreModal(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-yellow-400 rounded-lg text-xs font-bold transition-all"
+            className={
+              'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-gray-800 ' +
+              'hover:bg-gray-700 text-yellow-400 rounded-lg text-xs ' +
+              'font-bold transition-all'
+            }
+            title="Edit Scores"
           >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Edit Scores</span>
+            <Edit3 className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">Edit Scores</span>
           </button>
 
           {/* Game Builder / Settings */}
           <button
             onClick={onOpenBuilder}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-900/60 hover:bg-indigo-800 border border-indigo-700/60 text-indigo-200 rounded-lg text-xs font-bold transition-all"
+            className={
+              'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 ' +
+              'bg-indigo-900/60 hover:bg-indigo-800 border ' +
+              'border-indigo-700/60 text-indigo-200 rounded-lg text-xs ' +
+              'font-bold transition-all'
+            }
+            title="Game Builder"
           >
-            <Settings className="w-3.5 h-3.5" />
-            <span>Game Builder</span>
+            <Settings className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">Game Builder</span>
           </button>
 
           {/* Close Game */}
@@ -663,67 +802,103 @@ export const AdminHost: React.FC<AdminHostProps> = ({
               }
             }}
             className={
-              'flex items-center gap-1.5 px-3 py-1.5 bg-rose-950/40 ' +
-              'hover:bg-rose-900/60 border border-rose-800/40 text-rose-300 ' +
-              'rounded-lg text-xs font-bold transition-all'
+              'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 ' +
+              'bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/40 ' +
+              'text-rose-300 rounded-lg text-xs font-bold transition-all'
             }
             title="Close this game and return to setup"
           >
-            <X className="w-5 h-5" strokeWidth={2.5} />
-            <span>Close Game</span>
+            <X className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" strokeWidth={2.5} />
+            <span className="hidden sm:inline">Close Game</span>
           </button>
         </div>
       </header>
 
       {/* TEAM STATUS & CONTROL BAR */}
-      <section className="bg-[#091124] border-b border-blue-900/40 px-6 py-2.5 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <span className="text-xs uppercase font-bold text-gray-400">
+      <section
+        className={
+          'bg-[#091124] border-b border-blue-900/40 px-3 sm:px-6 ' +
+          'py-2 sm:py-2.5 flex flex-wrap items-center justify-between gap-2'
+        }
+      >
+        <div className="flex items-center gap-2 sm:gap-6 flex-wrap">
+          <span className="text-xs uppercase font-bold text-gray-400 shrink-0">
             Board Turn:
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <button
               onClick={() =>
                 dispatch({ type: 'SET_CONTROLLING_TEAM', payload: { team: 1 } })
               }
-              className={`px-3 py-1 rounded-lg text-xs font-extrabold flex items-center gap-2 border transition-all ${
-                controllingTeam === 1
-                  ? 'bg-blue-600 border-yellow-400 text-white shadow-md ring-2 ring-yellow-400/40'
-                  : 'bg-black/30 border-blue-900/60 text-gray-400 hover:text-white'
-              }`}
+              className={
+                'px-2.5 sm:px-3 py-1 rounded-lg text-xs font-extrabold ' +
+                'flex items-center gap-1.5 sm:gap-2 border transition-all ' +
+                (controllingTeam === 1
+                  ? 'bg-blue-600 border-yellow-400 text-white shadow-md ' +
+                    'ring-2 ring-yellow-400/40'
+                  : 'bg-black/30 border-blue-900/60 text-gray-400 ' +
+                    'hover:text-white')
+              }
               title="Click to give turn to Team 1"
             >
-              <span>{config.team1Name}</span>
+              <span className="truncate max-w-[85px] sm:max-w-none">
+                {config.team1Name}
+              </span>
               {controllingTeam === 1 && (
-                <span className="px-1.5 py-0.5 rounded bg-yellow-400 text-black text-[9px] font-black uppercase tracking-wider">
+                <span
+                  className={
+                    'px-1.5 py-0.5 rounded bg-yellow-400 text-black ' +
+                    'text-[9px] font-black uppercase tracking-wider shrink-0'
+                  }
+                >
                   Active Turn
                 </span>
               )}
-              <span className="text-yellow-300 font-mono">${team1Score}</span>
+              <span className="text-yellow-300 font-mono shrink-0">
+                ${team1Score}
+              </span>
             </button>
             <button
               onClick={() =>
                 dispatch({ type: 'SET_CONTROLLING_TEAM', payload: { team: 2 } })
               }
-              className={`px-3 py-1 rounded-lg text-xs font-extrabold flex items-center gap-2 border transition-all ${
-                controllingTeam === 2
-                  ? 'bg-blue-600 border-yellow-400 text-white shadow-md ring-2 ring-yellow-400/40'
-                  : 'bg-black/30 border-blue-900/60 text-gray-400 hover:text-white'
-              }`}
+              className={
+                'px-2.5 sm:px-3 py-1 rounded-lg text-xs font-extrabold ' +
+                'flex items-center gap-1.5 sm:gap-2 border transition-all ' +
+                (controllingTeam === 2
+                  ? 'bg-blue-600 border-yellow-400 text-white shadow-md ' +
+                    'ring-2 ring-yellow-400/40'
+                  : 'bg-black/30 border-blue-900/60 text-gray-400 ' +
+                    'hover:text-white')
+              }
               title="Click to give turn to Team 2"
             >
-              <span>{config.team2Name}</span>
+              <span className="truncate max-w-[85px] sm:max-w-none">
+                {config.team2Name}
+              </span>
               {controllingTeam === 2 && (
-                <span className="px-1.5 py-0.5 rounded bg-yellow-400 text-black text-[9px] font-black uppercase tracking-wider">
+                <span
+                  className={
+                    'px-1.5 py-0.5 rounded bg-yellow-400 text-black ' +
+                    'text-[9px] font-black uppercase tracking-wider shrink-0'
+                  }
+                >
                   Active Turn
                 </span>
               )}
-              <span className="text-yellow-300 font-mono">${team2Score}</span>
+              <span className="text-yellow-300 font-mono shrink-0">
+                ${team2Score}
+              </span>
             </button>
           </div>
         </div>
 
-        <div className="text-xs text-gray-400 flex items-center gap-2">
+        <div
+          className={
+            'text-[11px] sm:text-xs text-gray-400 flex items-center ' +
+            'gap-1 sm:gap-2 shrink-0'
+          }
+        >
           <span>Hint penalty:</span>
           <span className="font-bold text-yellow-400">
             -${config.defaultHintDeduction} pts
@@ -732,14 +907,14 @@ export const AdminHost: React.FC<AdminHostProps> = ({
       </section>
 
       {/* HOST BOARD VIEW */}
-      <main className="flex-1 p-6 overflow-y-auto">
+      <main className="flex-1 p-3 sm:p-6 overflow-y-auto">
         {/* Game Completed Banner */}
         {winnerState.isGameOver && (
           <div
             className={
-              'mb-6 p-4 rounded-xl bg-amber-950/40 ' +
+              'mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-amber-950/40 ' +
               'border border-amber-500/50 flex flex-wrap items-center ' +
-              'justify-between gap-4 shadow-lg'
+              'justify-between gap-3 sm:gap-4 shadow-lg'
             }
           >
             <div className="flex items-center gap-3">
@@ -795,8 +970,9 @@ export const AdminHost: React.FC<AdminHostProps> = ({
         {winnerState.canProceedToTieBreaker && (
           <div
             className={
-              'mb-6 p-4 rounded-xl bg-blue-950/60 border border-blue-400/50 ' +
-              'flex flex-wrap items-center justify-between gap-4 shadow-lg'
+              'mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-blue-950/60 ' +
+              'border border-blue-400/50 flex flex-wrap items-center ' +
+              'justify-between gap-3 sm:gap-4 shadow-lg'
             }
           >
             <div className="flex items-center gap-3">
@@ -858,13 +1034,13 @@ export const AdminHost: React.FC<AdminHostProps> = ({
           <div
             className={
               'max-w-4xl mx-auto bg-[#0a152e] border-2 border-amber-500/60 ' +
-              'rounded-2xl p-6 shadow-2xl space-y-6'
+              'rounded-2xl p-4 sm:p-6 shadow-2xl space-y-4 sm:space-y-6'
             }
           >
             <div
               className={
-                'flex items-center justify-between border-b ' +
-                'border-blue-900/60 pb-3'
+                'flex flex-wrap items-center justify-between gap-3 ' +
+                'border-b border-blue-900/60 pb-3'
               }
             >
               <div>
@@ -876,7 +1052,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                 >
                   Tie-Breaker Question
                 </span>
-                <h2 className="text-2xl font-bold text-white mt-1">
+                <h2 className="text-xl sm:text-2xl font-bold text-white mt-1">
                   Category: {config.finalJeopardy?.category}
                 </h2>
               </div>
@@ -923,11 +1099,16 @@ export const AdminHost: React.FC<AdminHostProps> = ({
             </div>
 
             {/* Step 1: Wagers */}
-            <div className="p-4 bg-blue-950/40 rounded-xl border border-blue-900/60 space-y-3">
+            <div
+              className={
+                'p-3 sm:p-4 bg-blue-950/40 rounded-xl border ' +
+                'border-blue-900/60 space-y-3'
+              }
+            >
               <span className="text-sm font-bold text-yellow-400 uppercase block">
                 Step 1: Record Offline Wagers
               </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="text-xs text-gray-300 block mb-1">
                     {config.team1Name} Wager (Max ${Math.max(1000, team1Score)})
@@ -966,7 +1147,13 @@ export const AdminHost: React.FC<AdminHostProps> = ({
             </div>
 
             {/* Step 2: Reveal Question */}
-            <div className="p-4 bg-blue-950/40 rounded-xl border border-blue-900/60 flex items-center justify-between">
+            <div
+              className={
+                'p-3 sm:p-4 bg-blue-950/40 rounded-xl border ' +
+                'border-blue-900/60 flex flex-wrap items-center ' +
+                'justify-between gap-3'
+              }
+            >
               <div>
                 <span className="text-sm font-bold text-yellow-400 uppercase block">
                   Step 2: Reveal Clue to Players
@@ -988,11 +1175,16 @@ export const AdminHost: React.FC<AdminHostProps> = ({
             </div>
 
             {/* Step 3: Judge Responses */}
-            <div className="p-4 bg-blue-950/40 rounded-xl border border-blue-900/60 space-y-4">
+            <div
+              className={
+                'p-3 sm:p-4 bg-blue-950/40 rounded-xl border ' +
+                'border-blue-900/60 space-y-3 sm:space-y-4'
+              }
+            >
               <span className="text-sm font-bold text-yellow-400 uppercase block">
                 Step 3: Judge Teams & Finalize Scores
               </span>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="flex items-center justify-between p-3 bg-black/30 rounded-lg border border-blue-900/40">
                   <span className="text-sm font-semibold">
                     {config.team1Name}
@@ -1044,8 +1236,9 @@ export const AdminHost: React.FC<AdminHostProps> = ({
               {config.finalJeopardy?.answersRevealed && (
                 <div
                   className={
-                    'mt-3 p-3.5 bg-emerald-950/60 rounded-xl border ' +
-                    'border-emerald-500/50 flex items-center justify-between'
+                    'mt-3 p-3 sm:p-3.5 bg-emerald-950/60 rounded-xl border ' +
+                    'border-emerald-500/50 flex flex-wrap items-center ' +
+                    'justify-between gap-3'
                   }
                 >
                   <div className="flex items-center gap-2">
@@ -1086,21 +1279,22 @@ export const AdminHost: React.FC<AdminHostProps> = ({
           </div>
         ) : (
           /* STANDARD GRID HOST VIEW */
-          <div className="space-y-4">
+          <div className="overflow-x-auto pb-4 -mx-1 sm:mx-0">
             <div
-              className="grid gap-3"
+              className="grid gap-2 sm:gap-3"
               style={{
                 gridTemplateColumns:
                   `repeat(${currentRound?.categories.length || 5}, ` +
-                  'minmax(0, 1fr))',
+                  'minmax(130px, 1fr))',
+                minWidth: `${(currentRound?.categories.length || 5) * 135}px`,
               }}
             >
               {currentRound?.categories.map((category, catIdx) => (
-                <div key={category.id} className="flex flex-col gap-3">
+                <div key={category.id} className="flex flex-col gap-2 sm:gap-3">
                   {/* Category Header */}
                   <div
                     className={
-                      'h-16 bg-[#0c2356] border border-blue-500/60 ' +
+                      'h-14 sm:h-16 bg-[#0c2356] border border-blue-500/60 ' +
                       'rounded-lg p-2 text-center flex items-center ' +
                       'justify-center shadow-sm'
                     }
@@ -1124,21 +1318,20 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                       <div
                         key={clue.id}
                         onClick={() => {
-                          if (!isCompleted) {
-                            handleSelectClue(
-                              currentRoundIndex,
-                              catIdx,
-                              clueIdx,
-                              clue
-                            );
-                          }
+                          handleSelectClue(
+                            currentRoundIndex,
+                            catIdx,
+                            clueIdx,
+                            clue
+                          );
                         }}
                         className={
-                          'min-h-[105px] p-2.5 rounded-lg border ' +
-                          'text-left flex flex-col justify-between ' +
-                          'transition-all group ' +
+                          'min-h-[96px] sm:min-h-[105px] p-2 sm:p-2.5 ' +
+                          'rounded-lg border text-left flex flex-col ' +
+                          'justify-between transition-all group ' +
                           (isCompleted
-                            ? 'bg-[#0a101f] border-slate-800/90 shadow-none'
+                            ? 'bg-[#0a101f] border-slate-800/90 shadow-none ' +
+                              'hover:border-slate-700/80 cursor-pointer'
                             : isActive
                               ? 'bg-[#17306b] border-2 border-yellow-400 ' +
                                 'shadow-lg ring-2 ring-yellow-400/40 ' +
@@ -1162,18 +1355,19 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                           >
                             ${clue.points}
                           </span>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             {isCompleted && clue.result ? (
                               clue.result.winner === 1 ? (
                                 <span
                                   className={
                                     'text-[10px] uppercase font-black px-1.5 ' +
                                     'py-0.5 rounded bg-blue-900/80 border ' +
-                                    'border-blue-500/60 text-blue-200'
+                                    'border-blue-500/60 text-blue-200 ' +
+                                    'whitespace-nowrap shrink-0'
                                   }
                                 >
                                   {clue.result.type === 'full'
-                                    ? 'T1 Full'
+                                    ? 'T1'
                                     : 'T1 50%'}
                                 </span>
                               ) : clue.result.winner === 2 ? (
@@ -1181,11 +1375,12 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                                   className={
                                     'text-[10px] uppercase font-black px-1.5 ' +
                                     'py-0.5 rounded bg-emerald-900/80 border ' +
-                                    'border-emerald-500/60 text-emerald-200'
+                                    'border-emerald-500/60 text-emerald-200 ' +
+                                    'whitespace-nowrap shrink-0'
                                   }
                                 >
                                   {clue.result.type === 'full'
-                                    ? 'T2 Full'
+                                    ? 'T2'
                                     : 'T2 50%'}
                                 </span>
                               ) : (
@@ -1193,7 +1388,8 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                                   className={
                                     'text-[10px] uppercase font-black px-1.5 ' +
                                     'py-0.5 rounded bg-slate-800 border ' +
-                                    'border-slate-700 text-slate-400'
+                                    'border-slate-700 text-slate-400 ' +
+                                    'whitespace-nowrap shrink-0'
                                   }
                                 >
                                   0 pts
@@ -1204,7 +1400,8 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                                 className={
                                   'text-[10px] uppercase font-bold px-1.5 ' +
                                   'py-0.5 rounded bg-slate-800 border ' +
-                                  'border-slate-700 text-slate-400'
+                                  'border-slate-700 text-slate-400 ' +
+                                  'whitespace-nowrap shrink-0'
                                 }
                               >
                                 Done
@@ -1214,54 +1411,13 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                                 className={
                                   'text-[10px] uppercase font-bold px-1.5 ' +
                                   'py-0.5 rounded bg-blue-950 text-blue-300 ' +
-                                  'border border-blue-800'
+                                  'border border-blue-800 whitespace-nowrap ' +
+                                  'shrink-0'
                                 }
                               >
                                 {clue.media.type}
                               </span>
                             ) : null}
-
-                            {/* Reset Specific Box Action */}
-                            {isCompleted && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (
-                                    window.confirm(
-                                      `Reset "${category.name}" ` +
-                                        `$${clue.points} box? Any awarded ` +
-                                        `points will be deducted and this ` +
-                                        `box will return to unopened.`
-                                    )
-                                  ) {
-                                    dispatch({
-                                      type: 'RESET_CLUE_BOX',
-                                      payload: {
-                                        roundIndex: currentRoundIndex,
-                                        categoryIndex: catIdx,
-                                        clueIndex: clueIdx,
-                                      },
-                                    });
-                                  }
-                                }}
-                                className={
-                                  'px-1.5 py-0.5 rounded bg-rose-950/80 ' +
-                                  'hover:bg-rose-900 border ' +
-                                  'border-rose-700/70 text-rose-300 ' +
-                                  'hover:text-white text-[10px] font-black ' +
-                                  'uppercase tracking-wider flex ' +
-                                  'items-center gap-1 transition-all shadow'
-                                }
-                                title={
-                                  'Reset this box back to unopened and ' +
-                                  'deduct any points'
-                                }
-                              >
-                                <RotateCcw className="w-2.5 h-2.5" />
-                                <span>Reset</span>
-                              </button>
-                            )}
                           </div>
                         </div>
 
@@ -1269,7 +1425,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                         <p
                           className={`text-xs leading-snug line-clamp-3 ${
                             isCompleted
-                              ? 'text-slate-400'
+                              ? 'text-slate-500'
                               : 'text-slate-100 font-medium'
                           }`}
                         >
@@ -1287,32 +1443,65 @@ export const AdminHost: React.FC<AdminHostProps> = ({
 
       {/* CLUE CONTROL MODAL / DRAWER */}
       {activeClue && activeClueData && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0b1631] border border-gray-700 rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-4 animate-scaleUp">
+        <div
+          className={
+            'fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex ' +
+            'items-center justify-center p-3 sm:p-4 overflow-y-auto'
+          }
+        >
+          <div
+            className={
+              'bg-[#0b1631] border border-gray-700 rounded-2xl max-w-3xl ' +
+              'w-full p-4 sm:p-6 shadow-2xl space-y-3 sm:space-y-4 ' +
+              'animate-scaleUp max-h-[92vh] overflow-y-auto my-auto'
+            }
+          >
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+            <div
+              className={
+                'flex items-center justify-between border-b ' +
+                'border-gray-800 pb-3'
+              }
+            >
               <div>
-                <span className="text-xs uppercase font-black tracking-widest text-gray-400">
+                <span
+                  className={
+                    'text-xs uppercase font-black tracking-widest ' +
+                    'text-gray-400'
+                  }
+                >
                   {currentRound?.categories[activeClue.categoryIndex]?.name}
                 </span>
-                <div className="flex items-center gap-3 mt-0.5">
-                  <span className="text-2xl font-black text-yellow-400 font-mono">
+                <div className="flex items-center gap-2 sm:gap-3 mt-0.5">
+                  <span
+                    className={
+                      'text-xl sm:text-2xl font-black text-yellow-400 ' +
+                      'font-mono'
+                    }
+                  >
                     ${activeClue.currentAvailablePoints}
                   </span>
                   {activeClue.reboundOpportunity && (
-                    <span className="px-2 py-0.5 bg-amber-600/80 text-white text-xs font-bold uppercase rounded">
+                    <span
+                      className={
+                        'px-2 py-0.5 bg-amber-600/80 text-white text-xs ' +
+                        'font-bold uppercase rounded'
+                      }
+                    >
                       Rebound 50%
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={() => {
                     if (
                       window.confirm(
-                        `Reset this question? Any pending scoring will be canceled and the question will return to unopened on the board.`
+                        `Reset this question? Any pending scoring will ` +
+                          `be canceled and the question will return to ` +
+                          `unopened on the board.`
                       )
                     ) {
                       dispatch({
@@ -1325,7 +1514,11 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                       });
                     }
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-gray-500 hover:text-rose-400 text-xs font-bold transition-colors"
+                  className={
+                    'flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 ' +
+                    'py-1.5 text-gray-500 hover:text-rose-400 text-xs ' +
+                    'font-bold transition-colors'
+                  }
                   title="Reset question to unopened"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -1334,7 +1527,11 @@ export const AdminHost: React.FC<AdminHostProps> = ({
 
                 <button
                   onClick={() => dispatch({ type: 'CLOSE_CLUE' })}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-gray-500 hover:text-white text-xs font-bold transition-colors"
+                  className={
+                    'flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 ' +
+                    'py-1.5 text-gray-500 hover:text-white text-xs ' +
+                    'font-bold transition-colors'
+                  }
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Close</span>
@@ -1366,7 +1563,13 @@ export const AdminHost: React.FC<AdminHostProps> = ({
             <div className="space-y-3">
               {/* Media Controls */}
               {activeClueData.media && activeClueData.media.type !== 'none' && (
-                <div className="flex items-center gap-3 p-3 bg-black/30 border border-gray-800 rounded-xl">
+                <div
+                  className={
+                    'flex flex-wrap sm:flex-nowrap items-center gap-2 ' +
+                    'sm:gap-3 p-2.5 sm:p-3 bg-black/30 border ' +
+                    'border-gray-800 rounded-xl'
+                  }
+                >
                   {/* Image thumbnail */}
                   {activeClueData.media.type === 'image' && (
                     <img
@@ -1476,7 +1679,13 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                 );
                 if (!hasHint) return null;
                 return (
-                  <div className="flex items-center gap-3 p-3 bg-black/30 border border-gray-800 rounded-xl">
+                  <div
+                    className={
+                      'flex flex-wrap sm:flex-nowrap items-center gap-2 ' +
+                      'sm:gap-3 p-2.5 sm:p-3 bg-black/30 border ' +
+                      'border-gray-800 rounded-xl'
+                    }
+                  >
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-bold text-gray-400 uppercase">
                         Hint (-$
@@ -1517,7 +1726,12 @@ export const AdminHost: React.FC<AdminHostProps> = ({
               !activeClue.reboundOpportunity &&
               activeClue.reboundAvailable &&
               !activeClue.correctTeam ? (
-                <div className="p-4 rounded-xl bg-black/30 border border-gray-800 space-y-3">
+                <div
+                  className={
+                    'p-3 sm:p-4 rounded-xl bg-black/30 border ' +
+                    'border-gray-800 space-y-2.5 sm:space-y-3'
+                  }
+                >
                   <div className="flex items-center gap-2">
                     <XCircle className="w-4 h-4 text-rose-400" />
                     <span className="text-xs font-bold text-gray-300">
@@ -1552,7 +1766,13 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                 </div>
               ) : activeClue.correctTeam ? (
                 /* STATE B: Correct */
-                <div className="p-4 rounded-xl bg-black/30 border border-gray-800 flex items-center justify-between gap-3">
+                <div
+                  className={
+                    'p-3 sm:p-4 rounded-xl bg-black/30 border ' +
+                    'border-gray-800 flex flex-wrap items-center ' +
+                    'justify-between gap-2.5 sm:gap-3'
+                  }
+                >
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-emerald-400" />
                     <span className="text-sm font-bold text-white">
@@ -1577,7 +1797,11 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                 /* STATE C: Standard judging */
                 <>
                   {/* Answering team selector */}
-                  <div className="flex items-center justify-between">
+                  <div
+                    className={
+                      'flex flex-wrap items-center justify-between gap-2'
+                    }
+                  >
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-bold text-gray-400 uppercase">
                         Answering:
@@ -1694,8 +1918,19 @@ export const AdminHost: React.FC<AdminHostProps> = ({
 
       {/* SCORE ADJUSTMENT MODAL */}
       {showScoreModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0c1630] border-2 border-blue-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div
+          className={
+            'fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex ' +
+            'items-center justify-center p-3 sm:p-4 overflow-y-auto'
+          }
+        >
+          <div
+            className={
+              'bg-[#0c1630] border-2 border-blue-700 rounded-2xl max-w-md ' +
+              'w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] ' +
+              'overflow-y-auto my-auto'
+            }
+          >
             <h3 className="text-lg font-bold text-yellow-400">
               Manual Score Adjustment
             </h3>
@@ -1711,17 +1946,27 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     type="number"
                     value={tempTeam1Score}
                     onChange={(e) => setTempTeam1Score(Number(e.target.value))}
-                    className="flex-1 px-3 py-2 bg-black/60 border border-blue-800 rounded-lg text-white font-mono text-base font-bold"
+                    className={
+                      'flex-1 min-w-0 px-3 py-2 bg-black/60 border ' +
+                      'border-blue-800 rounded-lg text-white font-mono ' +
+                      'text-base font-bold'
+                    }
                   />
                   <button
                     onClick={() => setTempTeam1Score((s) => s + 100)}
-                    className="p-2 bg-blue-900 hover:bg-blue-800 rounded-lg text-xs font-bold"
+                    className={
+                      'p-2 bg-blue-900 hover:bg-blue-800 rounded-lg ' +
+                      'text-xs font-bold shrink-0'
+                    }
                   >
                     +100
                   </button>
                   <button
                     onClick={() => setTempTeam1Score((s) => s - 100)}
-                    className="p-2 bg-blue-900 hover:bg-blue-800 rounded-lg text-xs font-bold"
+                    className={
+                      'p-2 bg-blue-900 hover:bg-blue-800 rounded-lg ' +
+                      'text-xs font-bold shrink-0'
+                    }
                   >
                     -100
                   </button>
@@ -1737,17 +1982,27 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     type="number"
                     value={tempTeam2Score}
                     onChange={(e) => setTempTeam2Score(Number(e.target.value))}
-                    className="flex-1 px-3 py-2 bg-black/60 border border-blue-800 rounded-lg text-white font-mono text-base font-bold"
+                    className={
+                      'flex-1 min-w-0 px-3 py-2 bg-black/60 border ' +
+                      'border-blue-800 rounded-lg text-white font-mono ' +
+                      'text-base font-bold'
+                    }
                   />
                   <button
                     onClick={() => setTempTeam2Score((s) => s + 100)}
-                    className="p-2 bg-blue-900 hover:bg-blue-800 rounded-lg text-xs font-bold"
+                    className={
+                      'p-2 bg-blue-900 hover:bg-blue-800 rounded-lg ' +
+                      'text-xs font-bold shrink-0'
+                    }
                   >
                     +100
                   </button>
                   <button
                     onClick={() => setTempTeam2Score((s) => s - 100)}
-                    className="p-2 bg-blue-900 hover:bg-blue-800 rounded-lg text-xs font-bold"
+                    className={
+                      'p-2 bg-blue-900 hover:bg-blue-800 rounded-lg ' +
+                      'text-xs font-bold shrink-0'
+                    }
                   >
                     -100
                   </button>
@@ -1758,7 +2013,10 @@ export const AdminHost: React.FC<AdminHostProps> = ({
             <div className="flex justify-end gap-2 pt-2 border-t border-blue-900">
               <button
                 onClick={() => setShowScoreModal(false)}
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-bold text-gray-300"
+                className={
+                  'px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg ' +
+                  'text-xs font-bold text-gray-300'
+                }
               >
                 Cancel
               </button>
@@ -1771,6 +2029,36 @@ export const AdminHost: React.FC<AdminHostProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      <MobileConnectModal
+        isOpen={showMobileConnectModal}
+        onClose={() => setShowMobileConnectModal(false)}
+      />
+
+      {inspectingCompletedClue && (
+        <CompletedClueModal
+          isOpen={true}
+          onClose={() => setInspectingCompletedClue(null)}
+          categoryName={
+            config.rounds[inspectingCompletedClue.roundIndex]?.categories[
+              inspectingCompletedClue.categoryIndex
+            ]?.name || ''
+          }
+          clue={inspectingCompletedClue.clue}
+          team1Name={config.team1Name || 'Champions'}
+          team2Name={config.team2Name || 'Challengers'}
+          onReset={() => {
+            dispatch({
+              type: 'RESET_CLUE_BOX',
+              payload: {
+                roundIndex: inspectingCompletedClue.roundIndex,
+                categoryIndex: inspectingCompletedClue.categoryIndex,
+                clueIndex: inspectingCompletedClue.clueIndex,
+              },
+            });
+          }}
+        />
       )}
     </div>
   );

@@ -49,6 +49,20 @@ export function useGameState() {
         );
         setState(updatedState);
         stateRef.current = updatedState;
+
+        const hot = import.meta.hot;
+        if (hot) {
+          hot.send('jeoparty:state-sync', { state: updatedState });
+        }
+        if (typeof fetch !== 'undefined') {
+          fetch('/api/state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ state: updatedState }),
+          }).catch(() => {
+            // Dev / offline fallback
+          });
+        }
       });
 
       return unsubscribe;
@@ -146,28 +160,157 @@ export function useGameState() {
     }
   }, [isElectron]);
 
+  // Cross-device LAN sync via Vite HMR WebSocket in development
+  useEffect(() => {
+    const hot = import.meta.hot;
+    const seenActionIds = new Set<string>();
+
+    const recordSeenId = (id: string): boolean => {
+      if (seenActionIds.has(id)) return false;
+      seenActionIds.add(id);
+      if (seenActionIds.size > 200) {
+        const first = seenActionIds.values().next().value;
+        if (first) seenActionIds.delete(first);
+      }
+      return true;
+    };
+
+    const handleStateBroadcast = (payload: { state?: GameState }) => {
+      if (!payload?.state) return;
+      if (isElectron) {
+        // If Electron does NOT have an active game loaded, adopt remote game
+        if (
+          !stateRef.current.config &&
+          payload.state.config &&
+          window.electronAPI
+        ) {
+          tracer.record(
+            'IPC_DISPATCH',
+            'Adopting remote game state in Electron'
+          );
+          window.electronAPI.dispatchAction({
+            type: 'SYNC_STATE',
+            payload: payload.state,
+          });
+        }
+        return;
+      }
+      const delta = computeStateDelta(stateRef.current, payload.state);
+      tracer.record(
+        'SYNC_CHANNEL',
+        'State sync received via LAN WebSocket',
+        undefined,
+        delta
+      );
+      setState((prev) => ({
+        ...payload.state!,
+        displayWindowOpen:
+          payload.state!.displayWindowOpen !== undefined
+            ? payload.state!.displayWindowOpen
+            : prev.displayWindowOpen,
+      }));
+      stateRef.current = payload.state;
+    };
+
+    const handleNeedState = () => {
+      if (stateRef.current.config && hot) {
+        hot.send('jeoparty:state-sync', { state: stateRef.current });
+      }
+    };
+
+    const handleDisplayStatus = (payload: { isOpen?: boolean }) => {
+      if (isElectron) return;
+      const isOpen = Boolean(payload?.isOpen);
+      setState((prev) => {
+        if (prev.displayWindowOpen === isOpen) return prev;
+        const updated = { ...prev, displayWindowOpen: isOpen };
+        stateRef.current = updated;
+        return updated;
+      });
+    };
+
+    const handleRemoteAction = (payload: { action?: GameAction }) => {
+      if (!payload?.action) return;
+      const actionId = payload.action._actionId;
+      if (actionId && !recordSeenId(actionId)) {
+        return;
+      }
+
+      if (isElectron && window.electronAPI) {
+        tracer.record(
+          'IPC_DISPATCH',
+          `Forwarding LAN action to Electron: ${payload.action.type}`
+        );
+        window.electronAPI.dispatchAction(payload.action);
+      } else {
+        const prevState = stateRef.current;
+        const nextState = gameReducer(prevState, payload.action);
+        tracer.recordDispatch(payload.action, prevState, nextState);
+        stateRef.current = nextState;
+        setState(nextState);
+      }
+    };
+
+    if (hot) {
+      hot.on('jeoparty:state-broadcast', handleStateBroadcast);
+      hot.on('jeoparty:need-state', handleNeedState);
+      hot.on('jeoparty:display-status', handleDisplayStatus);
+      hot.on('jeoparty:action', handleRemoteAction);
+      hot.send('jeoparty:request-state', {});
+    }
+
+    // Initial state query via HTTP endpoint
+    if (typeof fetch !== 'undefined') {
+      fetch('/api/state')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: { state?: GameState } | null) => {
+          if (data?.state?.config) {
+            handleStateBroadcast({ state: data.state });
+          }
+        })
+        .catch(() => {
+          // Dev / offline fallback
+        });
+    }
+
+    return () => {
+      if (hot) {
+        hot.off('jeoparty:state-broadcast', handleStateBroadcast);
+        hot.off('jeoparty:need-state', handleNeedState);
+        hot.off('jeoparty:display-status', handleDisplayStatus);
+        hot.off('jeoparty:action', handleRemoteAction);
+      }
+    };
+  }, [isElectron]);
+
   const dispatch = useCallback(
     (action: GameAction) => {
-      // Optimistically update local state synchronously so re-renders
-      // and inter-tab broadcasts always transmit fresh state.
+      const actionId =
+        action._actionId ||
+        `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const actionWithId: GameAction = {
+        ...action,
+        _actionId: actionId,
+      };
+
       const prevState = stateRef.current;
-      const nextState = gameReducer(prevState, action);
-      tracer.recordDispatch(action, prevState, nextState);
+      const nextState = gameReducer(prevState, actionWithId);
+      tracer.recordDispatch(actionWithId, prevState, nextState);
       stateRef.current = nextState;
       setState(nextState);
 
       if (isElectron && window.electronAPI) {
         tracer.record(
           'IPC_DISPATCH',
-          `Invoking IPC dispatch-action: ${action.type}`
+          `Invoking IPC dispatch-action: ${actionWithId.type}`
         );
-        window.electronAPI.dispatchAction(action);
+        window.electronAPI.dispatchAction(actionWithId);
       } else {
         // Fallback for browser mode: in-memory sync across active tabs
         try {
           tracer.record(
             'SYNC_CHANNEL',
-            `Broadcasting STATE_SYNC via channel: ${action.type}`
+            `Broadcasting STATE_SYNC via channel: ${actionWithId.type}`
           );
           const channel = new BroadcastChannel('jeopardy_broadcast_channel');
           channel.postMessage({ type: 'STATE_SYNC', state: nextState });
@@ -175,6 +318,24 @@ export function useGameState() {
         } catch (e) {
           console.error('Failed to sync in browser mode:', e);
         }
+      }
+
+      // Sync across LAN / devices via Vite WebSocket
+      const hot = import.meta.hot;
+      if (hot) {
+        hot.send('jeoparty:action', { action: actionWithId });
+        hot.send('jeoparty:state-sync', { state: nextState });
+      }
+
+      // HTTP fallback sync to guarantee delivery across network
+      if (typeof fetch !== 'undefined') {
+        fetch('/api/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: actionWithId, state: nextState }),
+        }).catch(() => {
+          // Dev / offline fallback
+        });
       }
     },
     [isElectron]

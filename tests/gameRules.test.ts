@@ -577,6 +577,32 @@ test('Window Management: displayWindowOpen state is preserved across reducer act
   assert.equal(closedClueState.displayWindowOpen, true);
 });
 
+test('State Sync: SYNC_STATE adopts state and preserves display', () => {
+  const localState = {
+    ...initialGameState,
+    displayWindowOpen: true,
+  };
+
+  const remoteState = {
+    ...createLoadedState(),
+    team1Score: 1200,
+    team2Score: 800,
+    controllingTeam: 2 as const,
+    displayWindowOpen: false,
+  };
+
+  const syncedState = gameReducer(localState, {
+    type: 'SYNC_STATE',
+    payload: remoteState,
+  });
+
+  assert.equal(syncedState.config?.title, defaultGame.title);
+  assert.equal(syncedState.team1Score, 1200);
+  assert.equal(syncedState.team2Score, 800);
+  assert.equal(syncedState.controllingTeam, 2);
+  assert.equal(syncedState.displayWindowOpen, true);
+});
+
 test('Save Game: Cancellation does not mark game as saved', async () => {
   let isSaved: boolean;
   let savedYaml: string | null = null;

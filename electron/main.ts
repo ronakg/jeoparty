@@ -232,6 +232,9 @@ app.on('window-all-closed', () => {
   }
 });
 
+const processedActionIds = new Set<string>();
+const actionIdQueue: string[] = [];
+
 // IPC Handlers
 ipcMain.handle('get-game-state', () => {
   return {
@@ -241,6 +244,24 @@ ipcMain.handle('get-game-state', () => {
 });
 
 ipcMain.handle('dispatch-action', (_event, action: GameAction) => {
+  const actionId = action._actionId;
+  if (actionId) {
+    if (processedActionIds.has(actionId)) {
+      const time = new Date().toISOString().slice(11, 23);
+      appendTraceLog(
+        `[${time}] [MAIN] [DROP_DUPLICATE] Action: ${action.type} | ` +
+          `id: ${actionId}`
+      );
+      return;
+    }
+    processedActionIds.add(actionId);
+    actionIdQueue.push(actionId);
+    if (actionIdQueue.length > 200) {
+      const oldest = actionIdQueue.shift();
+      if (oldest) processedActionIds.delete(oldest);
+    }
+  }
+
   const time = new Date().toISOString().slice(11, 23);
   appendTraceLog(
     `[${time}] [MAIN] [IPC_DISPATCH] Action: ${action.type} | ` +

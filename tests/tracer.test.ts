@@ -56,3 +56,27 @@ test('AppTracer: formatMarkdownSummary exports readable diagnostics', () => {
   assert.ok(markdown.includes('Raw JSON Trace'));
   assert.ok(markdown.includes('"winner": "tie"'));
 });
+
+test('Action Idempotency: Ring buffer deduplicates action IDs', () => {
+  const processed = new Set<string>();
+  const queue: string[] = [];
+
+  const dedupe = (id: string): boolean => {
+    if (processed.has(id)) return false;
+    processed.add(id);
+    queue.push(id);
+    if (queue.length > 3) {
+      const oldest = queue.shift();
+      if (oldest) processed.delete(oldest);
+    }
+    return true;
+  };
+
+  assert.equal(dedupe('act-1'), true);
+  assert.equal(dedupe('act-1'), false);
+  assert.equal(dedupe('act-2'), true);
+  assert.equal(dedupe('act-3'), true);
+  assert.equal(dedupe('act-4'), true);
+  assert.equal(processed.has('act-1'), false);
+  assert.equal(dedupe('act-1'), true);
+});

@@ -73,7 +73,7 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleDisplayFullScreen]);
 
-  // In web browser mode: advertise display window presence over BroadcastChannel
+  // In web browser mode: advertise display window presence
   useEffect(() => {
     if (
       currentView === 'display' &&
@@ -81,22 +81,36 @@ export const App: React.FC = () => {
       !window.electronAPI
     ) {
       const channel = new BroadcastChannel('jeopardy_broadcast_channel');
+      const hot = import.meta.hot;
+
       // Announce display presence immediately
       channel.postMessage({ type: 'DISPLAY_STATUS', isOpen: true });
+      if (hot) {
+        hot.send('jeoparty:display-status', { isOpen: true });
+      }
 
       const handleMsg = (event: MessageEvent) => {
         if (event.data?.type === 'PING_DISPLAY') {
           channel.postMessage({ type: 'DISPLAY_STATUS', isOpen: true });
+          if (hot) {
+            hot.send('jeoparty:display-status', { isOpen: true });
+          }
         }
       };
       channel.addEventListener('message', handleMsg);
 
       const heartbeat = setInterval(() => {
         channel.postMessage({ type: 'DISPLAY_STATUS', isOpen: true });
+        if (hot) {
+          hot.send('jeoparty:display-status', { isOpen: true });
+        }
       }, 2000);
 
       const handleBeforeUnload = () => {
         channel.postMessage({ type: 'DISPLAY_STATUS', isOpen: false });
+        if (hot) {
+          hot.send('jeoparty:display-status', { isOpen: false });
+        }
       };
       window.addEventListener('beforeunload', handleBeforeUnload);
 
@@ -105,6 +119,9 @@ export const App: React.FC = () => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
         channel.removeEventListener('message', handleMsg);
         channel.postMessage({ type: 'DISPLAY_STATUS', isOpen: false });
+        if (hot) {
+          hot.send('jeoparty:display-status', { isOpen: false });
+        }
         channel.close();
       };
     }
