@@ -5,7 +5,7 @@ node_modules/
 dist/
 dist-electron/
 dist-test/
-build/
+build/icon.iconset/
 release/
 
 # Logs
