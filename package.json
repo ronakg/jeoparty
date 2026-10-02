@@ -59,6 +59,8 @@
   "build": {
     "appId": "com.jeoparty.desktop",
     "productName": "JeoPARTY!",
+    "artifactName": "JeoParty-${version}-${arch}.${ext}",
+    "executableName": "jeoparty",
     "directories": {
       "output": "release"
     },
@@ -85,7 +87,7 @@
       "identity": null
     },
     "dmg": {
-      "title": "JeoPARTY! ${version}",
+      "title": "JeoParty ${version}",
       "icon": "build/icon.icns"
     },
     "files": [
