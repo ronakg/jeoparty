@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo.svg" alt="JeoPARTY! Logo" width="160" />
+</p>
+
 # ⚡ JeoPARTY!
 
 > The high-energy, local-first trivia game show built for living rooms,
@@ -108,4 +112,4 @@ npm test
 
 ## 📜 License
 
-MIT License. Built for trivia fans everywhere.
+Proprietary. All rights reserved.
