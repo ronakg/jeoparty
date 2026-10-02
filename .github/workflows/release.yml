@@ -33,8 +33,20 @@ jobs:
       - name: Build web assets and electron bundles
         run: npm run build
 
-      - name: Package macOS application
-        run: npx electron-builder --mac --publish never
+      - name: Disable Spotlight indexing
+        run: sudo mdutil -a -i off || true
+
+      - name: Package macOS application (arm64)
+        run: npx electron-builder --mac --arm64 --publish never
+
+      - name: Detach lingering disk images
+        if: always()
+        run: |
+          hdiutil info | grep '/dev/disk' | awk '{print $1}' | \
+            xargs -I {} hdiutil detach {} -force || true
+
+      - name: Package macOS application (x64)
+        run: npx electron-builder --mac --x64 --publish never
 
       - name: Upload macOS installers
         uses: actions/upload-artifact@v4
