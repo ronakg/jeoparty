@@ -461,7 +461,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
         >
           <div className="flex flex-col items-center space-y-3">
             <img
-              src="/logo.svg"
+              src="./logo.svg"
               alt="JeoPARTY!"
               className={
                 'w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 ' +
@@ -637,7 +637,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
       >
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <img
-            src="/logo.svg"
+            src="./logo.svg"
             alt="JeoPARTY!"
             className="w-7 h-7 sm:w-8 sm:h-8 object-contain shrink-0"
           />

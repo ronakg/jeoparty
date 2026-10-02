@@ -282,7 +282,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
 
         <div className="relative z-10 flex flex-col items-center text-center max-w-2xl">
           <img
-            src="/logo.svg"
+            src="./logo.svg"
             alt="JeoPARTY!"
             className={
               'w-56 h-56 md:w-72 md:h-72 object-contain drop-shadow-2xl mb-4'
@@ -461,7 +461,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         >
           <div className="flex items-center gap-3">
             <img
-              src="/logo.svg"
+              src="./logo.svg"
               alt="JeoPARTY!"
               className="w-8 h-8 object-contain shrink-0"
             />
@@ -522,7 +522,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
             {/* JeoPARTY! official logo as victory centerpiece */}
             <img
               ref={logoRef}
-              src="/logo.svg"
+              src="./logo.svg"
               alt="JeoPARTY!"
               className={
                 'h-[13vh] max-h-40 min-h-20 w-auto object-contain ' +

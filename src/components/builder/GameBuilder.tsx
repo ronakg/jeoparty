@@ -283,7 +283,7 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
       <header className="bg-[#0b172e] border-b border-blue-900/60 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <img
-            src="/logo.svg"
+            src="./logo.svg"
             alt="JeoPARTY!"
             className="w-9 h-9 object-contain shrink-0"
           />
