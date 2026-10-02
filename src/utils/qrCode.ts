@@ -1131,6 +1131,17 @@ export interface QROutput {
   size: number;
 }
 
+export interface QrSvgOptions {
+  innerMargin?: number;
+  frameWidth?: number;
+  mainColor?: string;
+  accentColor?: string;
+  bgColor?: string;
+  frameColor?: string;
+  dotRadius?: number;
+  finderRadius?: number;
+}
+
 export function generateQRCode(text: string): QROutput {
   const result = encode(text, { ecc: 'M', border: 0 });
   return {
@@ -1157,5 +1168,136 @@ export function getQrSvg(text: string, margin = 4): string {
     `viewBox="0 0 ${total} ${total}" shape-rendering="crispEdges">` +
     `<rect width="${total}" height="${total}" fill="#fff"/>` +
     `${rects}</svg>`
+  );
+}
+
+export function getStyledQrSvg(
+  text: string,
+  options: QrSvgOptions = {}
+): string {
+  const {
+    innerMargin = 3,
+    frameWidth = 1,
+    mainColor = '#07164F',
+    accentColor = '#C88200',
+    bgColor = '#FAF6EE',
+    frameColor = '#07164F',
+    dotRadius = 0.46,
+    finderRadius = 1.75,
+  } = options;
+
+  const qr = encode(text, { ecc: 'M', border: 0 });
+  const size = qr.size;
+  const margin = innerMargin + frameWidth;
+  const total = size + margin * 2;
+
+  const elements: string[] = [];
+
+  // Outer brand frame
+  elements.push(
+    `<rect width="${total}" height="${total}" rx="3.5" fill="${frameColor}"/>`
+  );
+
+  // Inner warm champagne card
+  const cardInset = frameWidth;
+  const cardSize = total - 2 * frameWidth;
+  elements.push(
+    `<rect x="${cardInset}" y="${cardInset}" width="${cardSize}" ` +
+      `height="${cardSize}" rx="2.5" fill="${bgColor}"/>`
+  );
+
+  // Finder patterns at top-left, top-right, and bottom-left
+  const finders = [
+    { x: 0, y: 0 },
+    { x: size - 7, y: 0 },
+    { x: 0, y: size - 7 },
+  ];
+  const isFinder = (c: number, r: number) =>
+    finders.some((f) => c >= f.x && c < f.x + 7 && r >= f.y && r < f.y + 7);
+
+  for (const f of finders) {
+    const ox = f.x + margin + 0.5;
+    const oy = f.y + margin + 0.5;
+    // Outer rounded squircle ring
+    elements.push(
+      `<rect x="${ox}" y="${oy}" width="6" height="6" ` +
+        `rx="${finderRadius}" ry="${finderRadius}" fill="none" ` +
+        `stroke="${mainColor}" stroke-width="1"/>`
+    );
+    // Inner center circle
+    const cx = f.x + margin + 3.5;
+    const cy = f.y + margin + 3.5;
+    elements.push(
+      `<circle cx="${cx}" cy="${cy}" r="1.5" fill="${accentColor}"/>`
+    );
+  }
+
+  // Detect 5x5 alignment pattern centers
+  const alignCenters: Array<{ x: number; y: number }> = [];
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (qr.types[r][c] === QrCodeDataType.Alignment) {
+        let isCenter = true;
+        for (let dr = -2; dr <= 2; dr++) {
+          for (let dc = -2; dc <= 2; dc++) {
+            const nr = r + dr;
+            const nc = c + dc;
+            if (
+              nr < 0 ||
+              nr >= size ||
+              nc < 0 ||
+              nc >= size ||
+              qr.types[nr][nc] !== QrCodeDataType.Alignment
+            ) {
+              isCenter = false;
+              break;
+            }
+          }
+          if (!isCenter) break;
+        }
+        if (isCenter) {
+          alignCenters.push({ x: c, y: r });
+        }
+      }
+    }
+  }
+
+  const isAlignment = (c: number, r: number) =>
+    alignCenters.some((a) => Math.abs(c - a.x) <= 2 && Math.abs(r - a.y) <= 2);
+
+  // Render alignment patterns as rounded squircle ring with center dot
+  for (const a of alignCenters) {
+    const ax = a.x - 2 + margin + 0.5;
+    const ay = a.y - 2 + margin + 0.5;
+    elements.push(
+      `<rect x="${ax}" y="${ay}" width="4" height="4" rx="1.0" ry="1.0" ` +
+        `fill="none" stroke="${mainColor}" stroke-width="1"/>`
+    );
+    elements.push(
+      `<circle cx="${a.x + margin + 0.5}" cy="${a.y + margin + 0.5}" ` +
+        `r="${dotRadius}" fill="${mainColor}"/>`
+    );
+  }
+
+  // Render data and timing modules as circular dots
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (isFinder(c, r) || isAlignment(c, r)) continue;
+      if (qr.data[r][c]) {
+        const cx = c + margin + 0.5;
+        const cy = r + margin + 0.5;
+        elements.push(
+          `<circle cx="${cx}" cy="${cy}" r="${dotRadius}" ` +
+            `fill="${mainColor}"/>`
+        );
+      }
+    }
+  }
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" ` +
+    `viewBox="0 0 ${total} ${total}" shape-rendering="geometricPrecision">` +
+    elements.join('') +
+    `</svg>`
   );
 }

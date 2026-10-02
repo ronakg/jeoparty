@@ -8,7 +8,7 @@ import {
   Wifi,
   ExternalLink,
 } from 'lucide-react';
-import { getQrSvg } from '../../utils/qrCode';
+import { getStyledQrSvg } from '../../utils/qrCode';
 
 interface ServerInfo {
   lanIp: string;
@@ -80,7 +80,7 @@ export const MobileConnectModal: React.FC<MobileConnectModalProps> = ({
   const qrSvg = useMemo(() => {
     if (!targetUrl) return '';
     try {
-      return getQrSvg(targetUrl, 3);
+      return getStyledQrSvg(targetUrl);
     } catch {
       return '';
     }
@@ -195,8 +195,10 @@ export const MobileConnectModal: React.FC<MobileConnectModalProps> = ({
           {/* QR Code Container */}
           <div
             className={
-              'p-3 bg-white rounded-2xl shadow-xl w-56 h-56 sm:w-60 sm:h-60 ' +
-              'flex items-center justify-center border-4 border-yellow-400/80'
+              'p-2 bg-[#040b29]/80 rounded-3xl w-60 h-60 sm:w-64 sm:h-64 ' +
+              'flex items-center justify-center ' +
+              'border-2 border-yellow-400/70 ' +
+              'shadow-[0_0_35px_rgba(245,194,66,0.18)]'
             }
           >
             {qrSvg ? (
