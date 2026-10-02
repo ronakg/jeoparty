@@ -1,11 +1,18 @@
 {
   "name": "jeopardy-desktop",
   "productName": "JeoPARTY!",
+  "description": "JeoPARTY! Modern trivia game show for macOS",
+  "author": "Ronak Gandhi",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ronakg/jeoparty.git"
+  },
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
+    "release": "npm run build && electron-builder --mac",
     "dev": "vite",
     "build:electron": "esbuild electron/main.ts --bundle --platform=node --format=esm --target=node20 --packages=external --outfile=dist-electron/main.js && esbuild electron/preload.ts --bundle --platform=node --format=cjs --target=node20 --packages=external --outfile=dist-electron/preload.cjs && cp dist-electron/preload.cjs dist-electron/preload.js && node scripts/patchElectronDevApp.js",
     "build": "tsc && vite build && npm run build:electron",
@@ -55,9 +62,31 @@
     "directories": {
       "output": "release"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ronakg",
+        "repo": "jeoparty"
+      }
+    ],
     "mac": {
       "icon": "build/icon.icns",
-      "category": "public.app-category.games"
+      "category": "public.app-category.games",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64", "x64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["arm64", "x64"]
+        }
+      ],
+      "identity": null
+    },
+    "dmg": {
+      "title": "JeoPARTY! ${version}",
+      "icon": "build/icon.icns"
     },
     "files": [
       "dist/**/*",
