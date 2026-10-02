@@ -17,6 +17,7 @@ test('App Config: package.json specifies JeoPARTY! branding', () => {
   assert.equal(pkg.build?.productName, 'JeoPARTY!');
   assert.equal(pkg.build?.appId, 'com.jeoparty.desktop');
   assert.equal(pkg.build?.mac?.icon, 'build/icon.icns');
+  assert.equal(pkg.build?.win?.icon, 'build/icon.ico');
 });
 
 test('App Config: main.ts configures JeoPARTY! app name and dock', () => {
@@ -69,6 +70,7 @@ test('App Assets: Required icons and vector assets exist', () => {
     'public/favicon.png',
     'build/icon.icns',
     'build/icon.png',
+    'build/icon.ico',
   ];
 
   for (const asset of assets) {

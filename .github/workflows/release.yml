@@ -11,17 +11,17 @@ permissions:
 
 jobs:
   build-macos:
-    name: Build & Publish macOS
+    name: Build macOS Installers
     runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - name: Install dependencies
@@ -33,7 +33,68 @@ jobs:
       - name: Build web assets and electron bundles
         run: npm run build
 
-      - name: Package and publish release
-        run: npx electron-builder --mac --publish always
+      - name: Package macOS application
+        run: npx electron-builder --mac
+
+      - name: Upload macOS installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: |
+            release/*.dmg
+            release/*.zip
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows Installer
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run test suite
+        run: npm test
+
+      - name: Build web assets and electron bundles
+        run: npm run build
+
+      - name: Package Windows installer
+        run: npx electron-builder --win
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: release/*.exe
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish Clean GitHub Release
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all installer artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-artifacts
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist-artifacts/**/*.dmg
+            dist-artifacts/**/*.zip
+            dist-artifacts/**/*.exe
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
