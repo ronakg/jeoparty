@@ -53,13 +53,13 @@ Grab the pre-packaged installer for your system from GitHub Releases:
 
 1. Download `JeoParty-<version>-arm64.dmg` (Apple Silicon) or
    `JeoParty-<version>-x64.zip` (Intel).
-2. For `.dmg`, open and drag `jeoparty` into `/Applications`. For `.zip`,
-   extract and move `jeoparty.app` into `/Applications`.
+2. For `.dmg`, open and drag `JeoPARTY` into `/Applications`. For `.zip`,
+   extract and move `JeoPARTY.app` into `/Applications`.
 3. **First launch (Gatekeeper)**: Since this package is community-built
-   without an Apple Developer certificate, right-click `jeoparty.app`
+   without an Apple Developer certificate, right-click `JeoPARTY.app`
    in Finder and select **Open**, or run:
    ```bash
-   xattr -cr /Applications/jeoparty.app
+   xattr -cr /Applications/JeoPARTY.app
    ```
 
 ### Windows (x64)

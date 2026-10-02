@@ -60,7 +60,7 @@
     "appId": "com.jeoparty.desktop",
     "productName": "JeoPARTY!",
     "artifactName": "JeoParty-${version}-${arch}.${ext}",
-    "executableName": "jeoparty",
+    "executableName": "JeoPARTY",
     "afterPack": "scripts/afterPack.cjs",
     "directories": {
       "output": "release"
