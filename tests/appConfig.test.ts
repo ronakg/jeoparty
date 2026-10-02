@@ -18,6 +18,11 @@ test('App Config: package.json specifies JeoPARTY! branding', () => {
   assert.equal(pkg.build?.appId, 'com.jeoparty.desktop');
   assert.equal(pkg.build?.mac?.icon, 'build/icon.icns');
   assert.equal(pkg.build?.win?.icon, 'build/icon.ico');
+  assert.equal(pkg.build?.afterPack, 'scripts/afterPack.cjs');
+  assert.ok(
+    fs.existsSync(path.join(rootDir, 'scripts/afterPack.cjs')),
+    'scripts/afterPack.cjs must exist'
+  );
 });
 
 test('App Config: main.ts configures JeoPARTY! app name and dock', () => {

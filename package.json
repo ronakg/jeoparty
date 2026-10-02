@@ -61,6 +61,7 @@
     "productName": "JeoPARTY!",
     "artifactName": "JeoParty-${version}-${arch}.${ext}",
     "executableName": "jeoparty",
+    "afterPack": "scripts/afterPack.cjs",
     "directories": {
       "output": "release"
     },
