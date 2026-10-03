@@ -48,6 +48,24 @@ test('PlayerDisplay UI: Active Board Grid renders categories and clue tiles', ()
   assert.ok(html.includes('$500'));
   assert.ok(html.includes('Champions'));
   assert.ok(html.includes('Challengers'));
+
+  // Option 1 Studio Broadcast aesthetic assertions
+  assert.ok(
+    html.includes('from-[#0d2254] to-[#081638]'),
+    'Category headers must use studio navy gradient'
+  );
+  assert.ok(
+    html.includes('from-[#0a1738] to-[#061026]'),
+    'Clue tiles must use studio navy vertical gradient'
+  );
+  assert.ok(
+    html.includes('border-t border-blue-900/60'),
+    'Scoreboard HUD must use edge-to-edge broadcast bar styling'
+  );
+  assert.ok(
+    !html.includes('glass-category-card'),
+    'Obsolete glass-category-card must not be present'
+  );
 });
 
 test('PlayerDisplay UI: Detailed question view has flat category & chunky points', () => {

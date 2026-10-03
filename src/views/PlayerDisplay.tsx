@@ -453,7 +453,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
   return (
     <div
       className={
-        'relative w-screen h-screen bg-[#070d1e] text-white flex flex-col ' +
+        'relative w-screen h-screen bg-[#040816] text-white flex flex-col ' +
         'justify-between overflow-hidden select-none'
       }
     >
@@ -651,8 +651,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
           <div
             className={
               'flex-1 flex flex-col items-center justify-center text-center ' +
-              'p-8 md:p-12 glass-card rounded-3xl border border-amber-500/40 ' +
-              'shadow-card-glow shadow-tile animate-modern-enter relative ' +
+              'p-8 md:p-12 rounded-2xl bg-[#091533] border ' +
+              'border-amber-500/40 shadow-2xl animate-modern-enter relative ' +
               'overflow-hidden'
             }
           >
@@ -685,8 +685,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
               >
                 <div
                   className={
-                    'p-8 md:p-10 rounded-3xl glass-card border ' +
-                    'border-blue-400/30 mb-8 shadow-tile'
+                    'p-8 md:p-10 rounded-2xl bg-[#0b1b3d] border ' +
+                    'border-blue-400/30 mb-8 shadow-xl'
                   }
                 >
                   <p
@@ -762,7 +762,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
           <div
             className={
               `flex-1 flex flex-col justify-between p-6 md:p-8 lg:p-10 ` +
-              `glass-card rounded-3xl shadow-tile ` +
+              `rounded-2xl bg-[#08122c] shadow-2xl ` +
               `relative overflow-hidden transition-all duration-300 ` +
               (isShaking
                 ? 'animate-shake !border-2 !border-rose-500 ' +
@@ -772,7 +772,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                     !activeClue.correctTeam
                   ? '!border-2 !border-rose-500 ' +
                     'shadow-[0_0_35px_rgba(244,63,94,0.45)] '
-                  : 'border border-blue-400/30 shadow-card-glow ' +
+                  : 'border border-blue-500/30 ' +
+                    'shadow-[0_0_40px_rgba(15,23,42,0.6)] ' +
                     'animate-modern-enter ')
             }
           >
@@ -982,23 +983,19 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 <div
                   key={category.id}
                   className={
-                    'h-16 md:h-20 lg:h-24 glass-category-card rounded-2xl ' +
-                    'p-2 md:p-3 flex items-center justify-center ' +
-                    'text-center shadow-tile relative overflow-hidden group'
+                    'h-16 md:h-20 lg:h-24 rounded-xl p-2 md:p-3 flex ' +
+                    'items-center justify-center text-center shadow-md ' +
+                    'relative overflow-hidden bg-gradient-to-b ' +
+                    'from-[#0d2254] to-[#081638] border border-blue-500/35 ' +
+                    'border-b-2 border-b-blue-500'
                   }
                 >
-                  <div
-                    className={
-                      'absolute inset-0 bg-gradient-to-b from-white/[0.08] ' +
-                      'to-transparent pointer-events-none'
-                    }
-                  />
                   <h3
                     className={
                       'text-xs sm:text-sm md:text-base lg:text-lg ' +
-                      'font-black uppercase tracking-wide text-category-title ' +
+                      'font-black uppercase tracking-wide text-white ' +
                       'line-clamp-2 md:line-clamp-3 font-display ' +
-                      'leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]'
+                      'leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]'
                     }
                   >
                     {category.name}
@@ -1047,11 +1044,11 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                               <div
                                 key={clue.id}
                                 className={
-                                  'rounded-2xl flex items-center ' +
+                                  'rounded-xl flex items-center ' +
                                   'justify-center p-1 select-none ' +
                                   'transition-all duration-300 ' +
-                                  'bg-[#030614]/80 border ' +
-                                  'border-slate-900/80 shadow-inner ' +
+                                  'bg-[#030614]/85 border ' +
+                                  'border-slate-900/90 shadow-inner ' +
                                   'min-h-0 h-full'
                                 }
                               >
@@ -1059,8 +1056,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                                   className={
                                     'text-lg sm:text-xl md:text-2xl ' +
                                     'lg:text-3xl font-bold font-display ' +
-                                    'text-slate-600/50 line-through ' +
-                                    'decoration-slate-600/60 truncate'
+                                    'text-slate-600/40 line-through ' +
+                                    'decoration-slate-600/50 truncate'
                                   }
                                 >
                                   ${clue.points}
@@ -1073,31 +1070,19 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                             <div
                               key={clue.id}
                               className={
-                                'rounded-2xl flex items-center ' +
+                                'rounded-xl flex items-center ' +
                                 'justify-center transition-all duration-300 ' +
                                 'select-none relative overflow-hidden ' +
-                                'glass-card shadow-tile ' +
-                                'hover:shadow-tile-hover border ' +
-                                'border-blue-400/20 hover:border-blue-400/50 ' +
-                                'hover:-translate-y-0.5 group cursor-default ' +
-                                'min-h-0 h-full p-1'
+                                'bg-gradient-to-b from-[#0a1738] ' +
+                                'to-[#061026] border border-blue-500/25 ' +
+                                'shadow-md min-h-0 h-full p-1 cursor-default'
                               }
                             >
-                              <div
-                                className={
-                                  'absolute inset-0 bg-blue-500/10 ' +
-                                  'opacity-0 group-hover:opacity-100 ' +
-                                  'transition-opacity duration-300 ' +
-                                  'pointer-events-none'
-                                }
-                              />
                               <span
                                 className={
                                   'text-xl sm:text-2xl md:text-3xl ' +
                                   'lg:text-4xl font-black tracking-tight ' +
-                                  'text-modern-gold font-display ' +
-                                  'group-hover:scale-105 transition-transform ' +
-                                  'duration-300 truncate'
+                                  'text-modern-gold font-display truncate'
                                 }
                               >
                                 ${clue.points}
@@ -1119,9 +1104,9 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
       {!winnerState.isGameOver && (
         <footer
           className={
-            'relative z-10 bg-[#0e162d] border border-slate-800/80 ' +
-            'rounded-2xl mx-4 md:mx-6 mb-3 p-3 grid grid-cols-2 gap-4 ' +
-            'shadow-sm'
+            'relative z-10 w-full bg-[#080f22] border-t ' +
+            'border-blue-900/60 px-4 md:px-6 py-2.5 sm:py-3 grid ' +
+            'grid-cols-2 gap-4 shrink-0 shadow-lg'
           }
         >
           {/* Team 1 Score Card */}
