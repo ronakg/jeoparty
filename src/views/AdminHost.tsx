@@ -437,6 +437,13 @@ export const AdminHost: React.FC<AdminHostProps> = ({
           'select-none relative overflow-hidden'
         }
       >
+        {/* Top Window Drag Strip */}
+        <div
+          className={
+            'absolute top-0 left-0 right-0 h-11 titlebar-drag z-30 ' +
+            'pointer-events-auto'
+          }
+        />
         <div
           className={
             'absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 ' +
@@ -624,8 +631,8 @@ export const AdminHost: React.FC<AdminHostProps> = ({
   return (
     <div
       className={
-        'min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans ' +
-        'select-none'
+        'h-screen max-h-screen bg-[#030712] text-slate-100 flex flex-col ' +
+        'font-sans select-none overflow-hidden'
       }
     >
       {/* HOST TOP NAV BAR */}
@@ -633,7 +640,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
         className={
           'bg-[#0b1426] border-b border-blue-900/60 px-3 sm:px-6 py-2.5 ' +
           'sm:py-3 flex flex-wrap items-center justify-between gap-2 ' +
-          'sm:gap-4 sticky top-0 z-30 shadow-md'
+          'sm:gap-4 shrink-0 shadow-md titlebar-drag titlebar-pad'
         }
       >
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -819,7 +826,8 @@ export const AdminHost: React.FC<AdminHostProps> = ({
       <section
         className={
           'bg-[#091124] border-b border-blue-900/40 px-3 sm:px-6 ' +
-          'py-2 sm:py-2.5 flex flex-wrap items-center justify-between gap-2'
+          'py-2 sm:py-2.5 flex flex-wrap items-center justify-between gap-2 ' +
+          'shrink-0'
         }
       >
         <div className="flex items-center gap-2 sm:gap-6 flex-wrap">
@@ -925,14 +933,18 @@ export const AdminHost: React.FC<AdminHostProps> = ({
       </section>
 
       {/* HOST BOARD VIEW */}
-      <main className="flex-1 p-3 sm:p-6 overflow-y-auto">
+      <main
+        className={
+          'flex-1 p-3 sm:p-5 overflow-y-auto min-h-0 flex flex-col'
+        }
+      >
         {/* Game Completed Banner */}
         {winnerState.isGameOver && (
           <div
             className={
-              'mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-amber-950/40 ' +
+              'mb-3 sm:mb-4 p-3 sm:p-4 rounded-xl bg-amber-950/40 ' +
               'border border-amber-500/50 flex flex-wrap items-center ' +
-              'justify-between gap-3 sm:gap-4 shadow-lg'
+              'justify-between gap-3 sm:gap-4 shadow-lg shrink-0'
             }
           >
             <div className="flex items-center gap-3">
@@ -988,9 +1000,9 @@ export const AdminHost: React.FC<AdminHostProps> = ({
         {winnerState.canProceedToTieBreaker && (
           <div
             className={
-              'mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-blue-950/60 ' +
+              'mb-3 sm:mb-4 p-3 sm:p-4 rounded-xl bg-blue-950/60 ' +
               'border border-blue-400/50 flex flex-wrap items-center ' +
-              'justify-between gap-3 sm:gap-4 shadow-lg'
+              'justify-between gap-3 sm:gap-4 shadow-lg shrink-0'
             }
           >
             <div className="flex items-center gap-3">
@@ -1297,24 +1309,32 @@ export const AdminHost: React.FC<AdminHostProps> = ({
           </div>
         ) : (
           /* STANDARD GRID HOST VIEW */
-          <div className="overflow-x-auto pb-4 -mx-1 sm:mx-0">
+          <div
+            className={
+              'overflow-x-auto pb-4 -mx-1 sm:mx-0 flex-1 flex ' +
+              'flex-col min-h-full'
+            }
+          >
             <div
-              className="grid gap-2 sm:gap-3"
+              className="grid gap-2 sm:gap-3 flex-1"
               style={{
                 gridTemplateColumns:
                   `repeat(${currentRound?.categories.length || 5}, ` +
-                  'minmax(130px, 1fr))',
-                minWidth: `${(currentRound?.categories.length || 5) * 135}px`,
+                  'minmax(135px, 1fr))',
+                minWidth: `${(currentRound?.categories.length || 5) * 140}px`,
               }}
             >
               {currentRound?.categories.map((category, catIdx) => (
-                <div key={category.id} className="flex flex-col gap-2 sm:gap-3">
+                <div
+                  key={category.id}
+                  className="flex flex-col gap-2 sm:gap-3 flex-1 min-w-0"
+                >
                   {/* Category Header */}
                   <div
                     className={
                       'h-14 sm:h-16 bg-[#0c2356] border border-blue-500/60 ' +
                       'rounded-lg p-2 text-center flex items-center ' +
-                      'justify-center shadow-sm'
+                      'justify-center shadow-sm shrink-0'
                     }
                   >
                     <span
@@ -1344,9 +1364,10 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                           );
                         }}
                         className={
-                          'min-h-[96px] sm:min-h-[105px] p-2 sm:p-2.5 ' +
-                          'rounded-lg border text-left flex flex-col ' +
-                          'justify-between transition-all group ' +
+                          'flex-1 min-h-[85px] sm:min-h-[95px] ' +
+                          'p-2 sm:p-2.5 rounded-lg border text-left ' +
+                          'flex flex-col justify-between ' +
+                          'transition-all group ' +
                           (isCompleted
                             ? 'bg-[#0a101f] border-slate-800/90 shadow-none ' +
                               'hover:border-slate-700/80 cursor-pointer'

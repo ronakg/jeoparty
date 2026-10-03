@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { MediaClue } from '../../types/game';
-import { Volume2 } from 'lucide-react';
+import { Volume2, ExternalLink } from 'lucide-react';
 import { parseYouTubeUrl } from '../../utils/youtube';
 
 interface MediaRendererProps {
@@ -102,10 +102,33 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
           className="w-full h-full"
           allow={
             'accelerometer; autoplay; clipboard-write; ' +
-            'encrypted-media; gyroscope; picture-in-picture'
+            'encrypted-media; gyroscope; picture-in-picture; web-share'
           }
+          referrerPolicy="strict-origin-when-cross-origin"
           allowFullScreen
         />
+        {showControls && (
+          <button
+            type="button"
+            onClick={() => {
+              if (window.electronAPI?.openExternalUrl) {
+                window.electronAPI.openExternalUrl(resolvedUrl);
+              } else {
+                window.open(resolvedUrl, '_blank', 'noopener,noreferrer');
+              }
+            }}
+            className={
+              'absolute bottom-2 right-2 z-20 flex items-center ' +
+              'gap-1.5 px-2.5 py-1 text-xs font-semibold text-white/90 ' +
+              'bg-black/70 hover:bg-black/90 rounded border ' +
+              'border-white/20 transition-colors shadow'
+            }
+            title="Open video in external browser"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-yellow-400" />
+            <span>Open in Browser</span>
+          </button>
+        )}
       </div>
     );
   }

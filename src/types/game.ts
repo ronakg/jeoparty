@@ -264,6 +264,7 @@ export interface ServerInfo {
 
 // Electron IPC API definition
 export interface ElectronAPI {
+  platform?: string;
   // Server info
   getServerInfo?: () => Promise<ServerInfo>;
   // State sync
@@ -280,6 +281,7 @@ export interface ElectronAPI {
     type: 'image' | 'audio' | 'video'
   ) => Promise<string | null>;
   toMediaUrl: (filePath: string) => string;
+  openExternalUrl?: (url: string) => Promise<void>;
   // Diagnostics
   writeTraceLog?: (entry: string) => Promise<void>;
 }

@@ -6,6 +6,8 @@ import {
   protocol,
   net,
   nativeImage,
+  session,
+  shell,
 } from 'electron';
 import http from 'http';
 import os from 'os';
@@ -85,15 +87,47 @@ function broadcastState() {
   broadcastSse({ type: 'state', state: payload });
 }
 
+function getWindowIconPath(): string {
+  const candidates = [
+    path.join(__dirname, '../build/icon.png'),
+    path.join(app.getAppPath(), 'build/icon.png'),
+    path.join(process.resourcesPath, 'icon.png'),
+    path.join(__dirname, '../public/app-icon.png'),
+    path.join(app.getAppPath(), 'public/app-icon.png'),
+  ];
+  return candidates.find((p) => fs.existsSync(p)) || '';
+}
+
+function getTitleBarConfig() {
+  if (process.platform === 'darwin') {
+    return {
+      titleBarStyle: 'hidden' as const,
+      trafficLightPosition: { x: 16, y: 16 },
+    };
+  }
+  if (process.platform === 'win32' || process.platform === 'linux') {
+    return {
+      titleBarStyle: 'hidden' as const,
+      titleBarOverlay: {
+        color: '#0b1426',
+        symbolColor: '#cbd5e1',
+        height: 48,
+      },
+    };
+  }
+  return {};
+}
+
 function createAdminWindow() {
   adminWindow = new BrowserWindow({
     width: 1360,
     height: 880,
-    minWidth: 1080,
-    minHeight: 700,
+    minWidth: 720,
+    minHeight: 500,
     title: 'JeoPARTY! - Host Admin Console',
-    icon: path.join(__dirname, '../build/icon.png'),
+    icon: getWindowIconPath(),
     backgroundColor: '#050b14',
+    ...getTitleBarConfig(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -106,6 +140,8 @@ function createAdminWindow() {
   const isDev = process.env.NODE_ENV !== 'production' && !app.isPackaged;
   if (isDev) {
     adminWindow.loadURL('http://localhost:5173/?view=admin');
+  } else if (currentServerPort > 0) {
+    adminWindow.loadURL(`http://127.0.0.1:${currentServerPort}/?view=admin`);
   } else {
     adminWindow.loadFile(path.join(__dirname, '../dist/index.html'), {
       query: { view: 'admin' },
@@ -134,11 +170,12 @@ function createDisplayWindow() {
   displayWindow = new BrowserWindow({
     width: 1280,
     height: 720,
-    minWidth: 1024,
-    minHeight: 680,
+    minWidth: 720,
+    minHeight: 500,
     title: 'JeoPARTY! - Player Display Board',
-    icon: path.join(__dirname, '../build/icon.png'),
-    backgroundColor: '#060ce9',
+    icon: getWindowIconPath(),
+    backgroundColor: '#070d1e',
+    ...getTitleBarConfig(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -151,6 +188,10 @@ function createDisplayWindow() {
   const isDev = process.env.NODE_ENV !== 'production' && !app.isPackaged;
   if (isDev) {
     displayWindow.loadURL('http://localhost:5173/?view=display');
+  } else if (currentServerPort > 0) {
+    displayWindow.loadURL(
+      `http://127.0.0.1:${currentServerPort}/?view=display`
+    );
   } else {
     displayWindow.loadFile(path.join(__dirname, '../dist/index.html'), {
       query: { view: 'display' },
@@ -176,13 +217,16 @@ protocol.registerSchemesAsPrivileged([
       secure: true,
       supportFetchAPI: true,
       stream: true,
+      corsEnabled: true,
+      bypassCSP: true,
     },
   },
 ]);
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   if (process.platform === 'darwin' && app.dock) {
     const candidates = [
+      path.join(process.resourcesPath, 'icon.icns'),
       path.join(__dirname, '../build/icon.icns'),
       path.join(__dirname, '../build/icon.png'),
       path.join(app.getAppPath(), 'build/icon.icns'),
@@ -202,7 +246,7 @@ app.whenReady().then(() => {
   }
 
   // Protocol handler for media://local-file/<path>
-  protocol.handle('media', (request) => {
+  protocol.handle('media', async (request) => {
     try {
       const url = new URL(request.url);
       let filePath = decodeURIComponent(url.pathname);
@@ -230,13 +274,21 @@ app.whenReady().then(() => {
       }
 
       const fileUrl = new URL(`file://${filePath}`).toString();
-      return net.fetch(fileUrl);
+      const resp = await net.fetch(fileUrl);
+      const headers = new Headers(resp.headers);
+      headers.set('Access-Control-Allow-Origin', '*');
+      return new Response(resp.body, {
+        status: resp.status,
+        statusText: resp.statusText,
+        headers,
+      });
     } catch {
       return new Response('Media file not found', { status: 404 });
     }
   });
 
-  startHttpServer();
+  await startHttpServer();
+  setupWebRequestInterceptors();
   createDisplayWindow();
   createAdminWindow();
 
@@ -400,145 +452,166 @@ function serveStaticFile(
   });
 }
 
-function startHttpServer(preferredPort = 5173) {
-  const distDir = findDistDir();
+function startHttpServer(preferredPort = 5173): Promise<number> {
+  return new Promise((resolve) => {
+    const distDir = findDistDir();
 
-  const server = http.createServer(async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader(
-      'Access-Control-Allow-Headers',
-      'Content-Type, Cache-Control, Accept'
-    );
-
-    if (req.method === 'OPTIONS') {
-      res.statusCode = 204;
-      res.end();
-      return;
-    }
-
-    const hostHeader = req.headers.host || `127.0.0.1:${currentServerPort}`;
-    const parsedUrl = new URL(req.url || '/', `http://${hostHeader}`);
-    const pathname = parsedUrl.pathname;
-
-    if (pathname === '/api/server-info') {
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify(getServerInfo()));
-      return;
-    }
-
-    if (pathname === '/api/events') {
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache, no-transform',
-        Connection: 'keep-alive',
-      });
-      res.write(
-        `data: ${JSON.stringify({
-          type: 'state',
-          state: {
-            ...currentState,
-            displayWindowOpen:
-              displayWindow !== null && !displayWindow.isDestroyed(),
-          },
-        })}\n\n`
-      );
-      sseClients.add(res);
-      req.on('close', () => {
-        sseClients.delete(res);
-      });
-      return;
-    }
-
-    if (pathname === '/api/state') {
-      if (req.method === 'GET') {
-        res.setHeader('Content-Type', 'application/json');
-        res.end(
-          JSON.stringify({
-            ok: true,
-            state: {
-              ...currentState,
-              displayWindowOpen:
-                displayWindow !== null && !displayWindow.isDestroyed(),
-            },
-          })
+    const tryListen = (port: number) => {
+      const server = http.createServer(async (req, res) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.setHeader(
+          'Access-Control-Allow-Headers',
+          'Content-Type, Cache-Control, Accept'
         );
-        return;
-      }
-      if (req.method === 'POST') {
-        try {
-          const body = await readJsonBody<{ state?: GameState }>(req);
-          if (body?.state) {
-            currentState = body.state;
-            broadcastState();
+
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204;
+          res.end();
+          return;
+        }
+
+        const hostHeader = req.headers.host || `127.0.0.1:${currentServerPort}`;
+        const parsedUrl = new URL(req.url || '/', `http://${hostHeader}`);
+        const pathname = parsedUrl.pathname;
+
+        if (pathname === '/api/server-info') {
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(getServerInfo()));
+          return;
+        }
+
+        if (pathname === '/api/events') {
+          res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache, no-transform',
+            Connection: 'keep-alive',
+          });
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'state',
+              state: {
+                ...currentState,
+                displayWindowOpen:
+                  displayWindow !== null && !displayWindow.isDestroyed(),
+              },
+            })}\n\n`
+          );
+          sseClients.add(res);
+          req.on('close', () => {
+            sseClients.delete(res);
+          });
+          return;
+        }
+
+        if (pathname === '/api/state') {
+          if (req.method === 'GET') {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(
+              JSON.stringify({
+                ok: true,
+                state: {
+                  ...currentState,
+                  displayWindowOpen:
+                    displayWindow !== null && !displayWindow.isDestroyed(),
+                },
+              })
+            );
+            return;
           }
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ ok: true, state: currentState }));
-        } catch (err) {
-          res.statusCode = 500;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: String(err) }));
+          res.statusCode = 405;
+          res.end('Method not allowed');
+          return;
         }
-        return;
-      }
-      res.statusCode = 405;
-      res.end('Method not allowed');
-      return;
-    }
 
-    if (pathname === '/api/action') {
-      if (req.method !== 'POST') {
-        res.statusCode = 405;
-        res.end('Method not allowed');
-        return;
-      }
-      try {
-        const body = await readJsonBody<{
-          action?: GameAction;
-          state?: GameState;
-        }>(req);
-        if (body?.action) {
-          applyAction(body.action, 'HTTP');
-        } else if (body?.state) {
-          currentState = body.state;
-          broadcastState();
+        if (pathname === '/api/action') {
+          if (req.method !== 'POST') {
+            res.statusCode = 405;
+            res.end('Method not allowed');
+            return;
+          }
+          try {
+            const body = await readJsonBody<{
+              action?: GameAction;
+            }>(req);
+            if (body?.action) {
+              applyAction(body.action, 'HTTP');
+            }
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ ok: true, state: currentState }));
+          } catch (err) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: String(err) }));
+          }
+          return;
         }
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ ok: true, state: currentState }));
-      } catch (err) {
-        res.statusCode = 500;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ error: String(err) }));
+
+        serveStaticFile(res, distDir, pathname);
+      });
+
+      server.on('error', (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE') {
+          appendTraceLog(`[MAIN] Port ${port} in use, trying next port`);
+          if (port > 0 && port < 5180) {
+            tryListen(port + 1);
+          } else if (port > 0) {
+            tryListen(0);
+          } else {
+            resolve(0);
+          }
+        } else {
+          appendTraceLog(`[MAIN] HTTP server error: ${err.message}`);
+          resolve(0);
+        }
+      });
+
+      server.listen(port, '0.0.0.0', () => {
+        const address = server.address();
+        if (address && typeof address === 'object') {
+          currentServerPort = address.port;
+        }
+        httpServer = server;
+        appendTraceLog(
+          `[MAIN] HTTP server listening on 0.0.0.0:${currentServerPort}`
+        );
+        resolve(currentServerPort);
+      });
+    };
+
+    tryListen(preferredPort);
+  });
+}
+
+function setupWebRequestInterceptors() {
+  session.defaultSession.webRequest.onBeforeSendHeaders(
+    {
+      urls: [
+        '*://*.youtube.com/*',
+        '*://*.youtube-nocookie.com/*',
+        '*://*.googlevideo.com/*',
+      ],
+    },
+    (details, callback) => {
+      const headers = { ...details.requestHeaders };
+      const fallbackOrigin =
+        currentServerPort > 0
+          ? `http://127.0.0.1:${currentServerPort}`
+          : 'https://www.youtube.com';
+
+      if (!headers['Referer'] || headers['Referer'].startsWith('file://')) {
+        headers['Referer'] = `${fallbackOrigin}/`;
       }
-      return;
-    }
-
-    serveStaticFile(res, distDir, pathname);
-  });
-
-  server.on('error', (err: NodeJS.ErrnoException) => {
-    if (err.code === 'EADDRINUSE') {
-      appendTraceLog(`[MAIN] Port ${preferredPort} in use, trying next port`);
-      if (preferredPort < 5180) {
-        startHttpServer(preferredPort + 1);
-      } else {
-        startHttpServer(0);
+      if (
+        !headers['Origin'] ||
+        headers['Origin'] === 'file://' ||
+        headers['Origin'] === 'null'
+      ) {
+        headers['Origin'] = fallbackOrigin;
       }
-    } else {
-      appendTraceLog(`[MAIN] HTTP server error: ${err.message}`);
+      callback({ requestHeaders: headers });
     }
-  });
-
-  server.listen(preferredPort, '0.0.0.0', () => {
-    const address = server.address();
-    if (address && typeof address === 'object') {
-      currentServerPort = address.port;
-    }
-    httpServer = server;
-    appendTraceLog(
-      `[MAIN] HTTP server listening on 0.0.0.0:${currentServerPort}`
-    );
-  });
+  );
 }
 
 const processedActionIds = new Set<string>();
@@ -702,3 +775,12 @@ ipcMain.handle(
     return result.filePaths[0];
   }
 );
+
+ipcMain.handle('open-external-url', async (_event, url: string) => {
+  if (
+    typeof url === 'string' &&
+    (url.startsWith('http://') || url.startsWith('https://'))
+  ) {
+    await shell.openExternal(url);
+  }
+});

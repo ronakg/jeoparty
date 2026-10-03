@@ -224,3 +224,32 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(61, 114, 255, 0.7);
 }
+
+/* Electron Window Drag Regions & Controls Clearance */
+.titlebar-drag {
+  -webkit-app-region: drag;
+}
+
+.titlebar-drag button,
+.titlebar-drag input,
+.titlebar-drag select,
+.titlebar-drag a,
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Platform-Adaptive Window Clearance */
+[data-platform='darwin'] .titlebar-pad {
+  padding-left: 76px;
+}
+
+[data-platform='win32'] .titlebar-pad,
+[data-platform='linux'] .titlebar-pad {
+  padding-right: 140px;
+}
+
+:fullscreen .titlebar-pad {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+

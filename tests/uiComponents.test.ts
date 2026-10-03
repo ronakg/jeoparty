@@ -970,3 +970,93 @@ test('CompletedClueModal UI: Renders details and reset action', () => {
   assert.ok(html.includes('Matter'));
   assert.ok(html.includes('Reset Question'));
 });
+
+test('AdminHost UI: Setup screen & host console render drag regions', () => {
+  // 1. Setup screen (no config)
+  const setupHtml = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state: initialGameState,
+      dispatch: () => {},
+      toMediaUrl: (p: string) => p,
+      openDisplayWindow: () => {},
+    })
+  );
+  assert.ok(
+    setupHtml.includes('titlebar-drag'),
+    'Setup screen must render top titlebar-drag strip'
+  );
+
+  // 2. Active host console (game loaded)
+  const loadedState = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  const hostHtml = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state: loadedState,
+      dispatch: () => {},
+      toMediaUrl: (p: string) => p,
+      openDisplayWindow: () => {},
+    })
+  );
+  assert.ok(
+    hostHtml.includes('titlebar-drag titlebar-pad'),
+    'Host console header must include titlebar-drag and titlebar-pad'
+  );
+});
+
+test(
+  'GameBuilder UI: Header renders drag region and platform clearance',
+  () => {
+  const html = renderToStaticMarkup(
+    React.createElement(GameBuilder, {
+      initialConfig: defaultGame,
+      onSaveAndPlay: () => {},
+      onClose: () => {},
+      toMediaUrl: (p: string) => p,
+    })
+  );
+  assert.ok(
+    html.includes('titlebar-drag titlebar-pad'),
+    'GameBuilder header must include titlebar-drag and titlebar-pad'
+  );
+});
+
+test(
+  'PlayerDisplay UI: Waiting screen and edge header render drag zones',
+  () => {
+  // 1. Waiting screen
+  const waitHtml = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state: initialGameState,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+  assert.ok(
+    waitHtml.includes('titlebar-drag'),
+    'PlayerDisplay waiting screen must render titlebar-drag strip'
+  );
+
+  // 2. Active board header
+  const loadedState = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  const boardHtml = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state: loadedState,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+  assert.ok(
+    boardHtml.includes('titlebar-drag titlebar-pad'),
+    'PlayerDisplay header must include titlebar-drag and titlebar-pad'
+  );
+  assert.ok(
+    boardHtml.includes('Ultimate Trivia Championship'),
+    'PlayerDisplay renders game title'
+  );
+});
+

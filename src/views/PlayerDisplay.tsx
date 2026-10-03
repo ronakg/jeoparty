@@ -277,6 +277,13 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
   if (!config) {
     return (
       <div className="relative w-screen h-screen stage-ambient ambient-grid text-white flex flex-col items-center justify-center overflow-hidden select-none p-8">
+        {/* Top Window Drag Strip */}
+        <div
+          className={
+            'absolute top-0 left-0 right-0 h-11 titlebar-drag z-30 ' +
+            'pointer-events-auto'
+          }
+        />
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-blue-600/20 rounded-full blur-[140px] pointer-events-none" />
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[500px] h-[200px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
 
@@ -454,21 +461,21 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
       {!winnerState.isGameOver && (
         <header
           className={
-            'relative z-10 bg-[#0e162d] border border-slate-800/80 ' +
-            'rounded-2xl mx-4 md:mx-6 mt-3 px-6 py-2.5 flex items-center ' +
-            'justify-between shadow-sm'
+            'relative z-10 w-full bg-[#0b1426] border-b border-blue-900/60 ' +
+            'px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between ' +
+            'shrink-0 shadow-md titlebar-drag titlebar-pad'
           }
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <img
               src="./logo.svg"
               alt="JeoPARTY!"
-              className="w-8 h-8 object-contain shrink-0"
+              className="w-7 h-7 sm:w-8 sm:h-8 object-contain shrink-0"
             />
             <h1
               className={
                 'text-base md:text-lg font-black uppercase tracking-[0.2em] ' +
-                'text-slate-200 font-display'
+                'text-slate-200 font-display truncate'
               }
             >
               {config.title}

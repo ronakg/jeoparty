@@ -114,7 +114,9 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
-      "public/**/*"
+      "public/**/*",
+      "build/icon.icns",
+      "build/icon.png"
     ]
   }
 }

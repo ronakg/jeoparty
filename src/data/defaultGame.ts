@@ -177,7 +177,7 @@ export const defaultGame: GameConfig = {
               hint: 'Starring Michael J. Fox and Christopher Lloyd.',
               media: {
                 type: 'youtube',
-                urlOrPath: 'https://www.youtube.com/watch?v=Psxktpxkc6o',
+                urlOrPath: 'https://www.youtube.com/watch?v=qvsgGtivCgs',
               },
               state: 'unopened',
             },

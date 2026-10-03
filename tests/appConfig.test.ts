@@ -130,3 +130,82 @@ test('App Assets: build/icon.icns and build/icon.png have HIG framing', () => {
     'main.ts must prioritize framed HIG icon over raw full-bleed icon'
   );
 });
+
+test('App Config: main.ts configures cross-platform title bar options', () => {
+  const mainTsPath = path.join(rootDir, 'electron/main.ts');
+  const mainTs = fs.readFileSync(mainTsPath, 'utf-8');
+
+  assert.ok(
+    mainTs.includes('function getTitleBarConfig()'),
+    'main.ts must define getTitleBarConfig'
+  );
+  assert.ok(
+    mainTs.includes("titleBarStyle: 'hidden'"),
+    'main.ts must set hidden titleBarStyle'
+  );
+  assert.ok(
+    mainTs.includes('trafficLightPosition: { x: 16, y: 16 }'),
+    'main.ts must configure macOS trafficLightPosition'
+  );
+  assert.ok(
+    mainTs.includes('titleBarOverlay:'),
+    'main.ts must configure Windows/Linux titleBarOverlay'
+  );
+  assert.ok(
+    mainTs.includes("color: '#0b1426'"),
+    'titleBarOverlay must match header theme background'
+  );
+
+  const adminBlock = mainTs.slice(mainTs.indexOf('function createAdminWindow'));
+  assert.ok(
+    adminBlock.includes('...getTitleBarConfig()'),
+    'adminWindow must apply custom title bar'
+  );
+
+  const displayBlock = mainTs.slice(
+    mainTs.indexOf('function createDisplayWindow')
+  );
+  assert.ok(
+    displayBlock.includes('...getTitleBarConfig()'),
+    'displayWindow must apply custom title bar'
+  );
+});
+
+test('App Config: preload.ts exposes process.platform on electronAPI', () => {
+  const preloadPath = path.join(rootDir, 'electron/preload.ts');
+  const preloadTs = fs.readFileSync(preloadPath, 'utf-8');
+
+  assert.ok(
+    preloadTs.includes('platform: process.platform'),
+    'preload.ts must expose platform property'
+  );
+});
+
+test(
+  'App Config: index.css defines drag regions and platform clearance',
+  () => {
+  const cssPath = path.join(rootDir, 'src/index.css');
+  const css = fs.readFileSync(cssPath, 'utf-8');
+
+  assert.ok(
+    css.includes('.titlebar-drag'),
+    'index.css must define .titlebar-drag'
+  );
+  assert.ok(
+    css.includes('-webkit-app-region: drag'),
+    'titlebar-drag must set -webkit-app-region: drag'
+  );
+  assert.ok(
+    css.includes('-webkit-app-region: no-drag'),
+    'interactive elements must set -webkit-app-region: no-drag'
+  );
+  assert.ok(
+    css.includes("[data-platform='darwin'] .titlebar-pad"),
+    'index.css must define macOS left padding clearance'
+  );
+  assert.ok(
+    css.includes("[data-platform='win32'] .titlebar-pad"),
+    'index.css must define Windows right padding clearance'
+  );
+});
+

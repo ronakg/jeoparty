@@ -7,6 +7,7 @@ import {
 } from '../src/types/game';
 
 const api = {
+  platform: process.platform,
   getServerInfo: (): Promise<ServerInfo> =>
     ipcRenderer.invoke('get-server-info'),
   getState: (): Promise<GameState> => ipcRenderer.invoke('get-game-state'),
@@ -41,8 +42,13 @@ const api = {
     }
     // Encode for custom protocol: media://local-file/<path>
     const normalized = filePath.replace(/\\/g, '/');
-    return `media://local-file/${encodeURI(normalized.startsWith('/') ? normalized.slice(1) : normalized)}`;
+    const pathPart = normalized.startsWith('/')
+      ? normalized.slice(1)
+      : normalized;
+    return `media://local-file/${encodeURI(pathPart)}`;
   },
+  openExternalUrl: (url: string): Promise<void> =>
+    ipcRenderer.invoke('open-external-url', url),
   writeTraceLog: (entry: string): Promise<void> =>
     ipcRenderer.invoke('write-trace-log', entry),
 };

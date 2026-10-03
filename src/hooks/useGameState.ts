@@ -54,15 +54,6 @@ export function useGameState() {
         if (hot) {
           hot.send('jeoparty:state-sync', { state: updatedState });
         }
-        if (typeof fetch !== 'undefined') {
-          fetch('/api/state', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ state: updatedState }),
-          }).catch(() => {
-            // Dev / offline fallback
-          });
-        }
       });
 
       return unsubscribe;
@@ -283,8 +274,8 @@ export function useGameState() {
       }
     }
 
-    // Initial state query via HTTP endpoint
-    if (typeof fetch !== 'undefined') {
+    // Initial state query via HTTP endpoint for external web/mobile clients
+    if (!isElectron && typeof fetch !== 'undefined') {
       fetch('/api/state')
         .then((res) => (res.ok ? res.json() : null))
         .then((data: { state?: GameState } | null) => {
@@ -354,8 +345,8 @@ export function useGameState() {
         hot.send('jeoparty:state-sync', { state: nextState });
       }
 
-      // HTTP fallback sync to guarantee delivery across network
-      if (typeof fetch !== 'undefined') {
+      // HTTP sync to guarantee delivery across network for mobile / web
+      if (!isElectron && typeof fetch !== 'undefined') {
         fetch('/api/action', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
