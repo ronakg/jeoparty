@@ -23,7 +23,9 @@
     "format:check": "prettier --check \"{src,electron,tests}/**/*.{ts,tsx,js}\"",
     "electron:dev": "npm run build:electron && concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
     "electron:start": "electron .",
-    "electron:build": "npm run build && electron-builder --publish never"
+    "electron:build": "npm run build && electron-builder --publish never",
+    "build:app": "npm run build && electron-builder --mac dir --publish never",
+    "open:app": "open release/mac*/JeoPARTY.app"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
