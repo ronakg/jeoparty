@@ -1,7 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { GameAction, GameConfig, GameState } from '../src/types/game';
+import {
+  GameAction,
+  GameConfig,
+  GameState,
+  ServerInfo,
+} from '../src/types/game';
 
 const api = {
+  getServerInfo: (): Promise<ServerInfo> =>
+    ipcRenderer.invoke('get-server-info'),
   getState: (): Promise<GameState> => ipcRenderer.invoke('get-game-state'),
   dispatchAction: (action: GameAction): Promise<void> =>
     ipcRenderer.invoke('dispatch-action', action),

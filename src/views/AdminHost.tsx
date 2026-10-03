@@ -30,6 +30,7 @@ import {
   Trophy,
   CheckCircle2,
   QrCode,
+  Smartphone,
 } from 'lucide-react';
 import { parseYouTubeUrl, formatSecondsToTime } from '../utils/youtube';
 import { getWinnerState } from '../utils/gameRules';
@@ -753,7 +754,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
             title="Scan QR code to host from your phone"
           >
             <QrCode className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
-            <span className="hidden sm:inline">Mobile Host</span>
+            <span>Connect Phone</span>
           </button>
 
           {/* Score Override */}
@@ -893,16 +894,33 @@ export const AdminHost: React.FC<AdminHostProps> = ({
           </div>
         </div>
 
-        <div
-          className={
-            'text-[11px] sm:text-xs text-gray-400 flex items-center ' +
-            'gap-1 sm:gap-2 shrink-0'
-          }
-        >
-          <span>Hint penalty:</span>
-          <span className="font-bold text-yellow-400">
-            -${config.defaultHintDeduction} pts
-          </span>
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <button
+            onClick={() => setShowMobileConnectModal(true)}
+            className={
+              'flex items-center gap-1.5 px-2.5 py-1 bg-blue-900/40 ' +
+              'hover:bg-blue-800/60 border border-blue-600/50 ' +
+              'hover:border-yellow-400 text-blue-200 hover:text-white ' +
+              'rounded-lg text-xs font-bold transition-all cursor-pointer ' +
+              'active:scale-95'
+            }
+            title="Scan QR code to connect your phone as host controller"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+            <span>Connect Phone</span>
+          </button>
+
+          <div
+            className={
+              'text-[11px] sm:text-xs text-gray-400 flex items-center ' +
+              'gap-1 sm:gap-2 shrink-0'
+            }
+          >
+            <span>Hint penalty:</span>
+            <span className="font-bold text-yellow-400">
+              -${config.defaultHintDeduction} pts
+            </span>
+          </div>
         </div>
       </section>
 

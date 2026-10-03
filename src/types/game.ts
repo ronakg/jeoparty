@@ -255,8 +255,17 @@ export type GameAction = (
   | { type: 'SYNC_STATE'; payload: GameState }
 ) & { _actionId?: string };
 
+export interface ServerInfo {
+  lanIp: string;
+  port: number;
+  hostUrl: string;
+  displayUrl: string;
+}
+
 // Electron IPC API definition
 export interface ElectronAPI {
+  // Server info
+  getServerInfo?: () => Promise<ServerInfo>;
   // State sync
   getState: () => Promise<GameState>;
   dispatchAction: (action: GameAction) => Promise<void>;

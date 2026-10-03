@@ -34,16 +34,27 @@ export const MobileConnectModal: React.FC<MobileConnectModalProps> = ({
     if (!isOpen) return;
 
     let isMounted = true;
-    fetch('/api/server-info')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: ServerInfo | null) => {
-        if (isMounted && data) {
-          setServerInfo(data);
-        }
-      })
-      .catch(() => {
-        // Fallback handled in computed targetUrl
-      });
+    if (window.electronAPI?.getServerInfo) {
+      window.electronAPI
+        .getServerInfo()
+        .then((data) => {
+          if (isMounted && data) {
+            setServerInfo(data);
+          }
+        })
+        .catch(() => {});
+    } else {
+      fetch('/api/server-info')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: ServerInfo | null) => {
+          if (isMounted && data) {
+            setServerInfo(data);
+          }
+        })
+        .catch(() => {
+          // Fallback handled in computed targetUrl
+        });
+    }
 
     return () => {
       isMounted = false;
@@ -65,14 +76,20 @@ export const MobileConnectModal: React.FC<MobileConnectModalProps> = ({
     if (serverInfo) {
       return activeTab === 'admin' ? serverInfo.hostUrl : serverInfo.displayUrl;
     }
+    const isFileProto =
+      typeof window !== 'undefined' && window.location.protocol === 'file:';
     const host =
-      typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
+      typeof window !== 'undefined' && window.location.hostname && !isFileProto
+        ? window.location.hostname
+        : '127.0.0.1';
     const port =
-      typeof window !== 'undefined' && window.location.port
+      typeof window !== 'undefined' && window.location.port && !isFileProto
         ? window.location.port
         : '5173';
     const proto =
-      typeof window !== 'undefined' ? window.location.protocol : 'http:';
+      typeof window !== 'undefined' && !isFileProto
+        ? window.location.protocol
+        : 'http:';
     const param = activeTab === 'admin' ? 'view=admin' : 'view=display';
     return `${proto}//${host}:${port}/?${param}`;
   }, [serverInfo, activeTab]);

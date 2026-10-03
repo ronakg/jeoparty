@@ -259,6 +259,30 @@ export function useGameState() {
       hot.send('jeoparty:request-state', {});
     }
 
+    // Real-time synchronization via Server-Sent Events (SSE) for mobile
+    let eventSource: EventSource | null = null;
+    if (
+      !isElectron &&
+      typeof window !== 'undefined' &&
+      typeof EventSource !== 'undefined'
+    ) {
+      try {
+        eventSource = new EventSource('/api/events');
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data?.type === 'state' && data.state) {
+              handleStateBroadcast({ state: data.state });
+            }
+          } catch {
+            // Ignore malformed message
+          }
+        };
+      } catch {
+        // SSE connection error fallback
+      }
+    }
+
     // Initial state query via HTTP endpoint
     if (typeof fetch !== 'undefined') {
       fetch('/api/state')
@@ -274,6 +298,9 @@ export function useGameState() {
     }
 
     return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
       if (hot) {
         hot.off('jeoparty:state-broadcast', handleStateBroadcast);
         hot.off('jeoparty:need-state', handleNeedState);

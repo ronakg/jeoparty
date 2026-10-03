@@ -7,11 +7,18 @@ import {
   net,
   nativeImage,
 } from 'electron';
+import http from 'http';
+import os from 'os';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initialGameState, gameReducer } from '../src/utils/gameReducer';
-import { GameAction, GameConfig, GameState } from '../src/types/game';
+import {
+  GameAction,
+  GameConfig,
+  GameState,
+  ServerInfo,
+} from '../src/types/game';
 import {
   serializeGameConfigToYaml,
   parseGameConfigFromYaml,
@@ -43,6 +50,19 @@ function appendTraceLog(line: string) {
   }
 }
 
+const sseClients = new Set<http.ServerResponse>();
+
+function broadcastSse(data: unknown) {
+  const message = `data: ${JSON.stringify(data)}\n\n`;
+  for (const client of sseClients) {
+    try {
+      client.write(message);
+    } catch {
+      sseClients.delete(client);
+    }
+  }
+}
+
 function broadcastState() {
   const payload: GameState = {
     ...currentState,
@@ -62,6 +82,7 @@ function broadcastState() {
   if (displayWindow && !displayWindow.isDestroyed()) {
     displayWindow.webContents.send('state-updated', payload);
   }
+  broadcastSse({ type: 'state', state: payload });
 }
 
 function createAdminWindow() {
@@ -215,6 +236,7 @@ app.whenReady().then(() => {
     }
   });
 
+  startHttpServer();
   createDisplayWindow();
   createAdminWindow();
 
@@ -226,24 +248,303 @@ app.whenReady().then(() => {
   });
 });
 
+app.on('before-quit', () => {
+  if (httpServer) {
+    httpServer.close();
+    httpServer = null;
+  }
+});
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
+const MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
+  '.wav': 'audio/wav',
+  '.mp3': 'audio/mpeg',
+  '.mp4': 'video/mp4',
+  '.wasm': 'application/wasm',
+};
+
+function getLanIp(): string {
+  const ifaces = os.networkInterfaces();
+  const candidates: { address: string; score: number }[] = [];
+
+  for (const name of Object.keys(ifaces)) {
+    for (const iface of ifaces[name] || []) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        const addr = iface.address;
+        const isPhysical = /^(en|eth|wlan)/i.test(name);
+        let score = 0;
+        if (isPhysical) score += 10;
+        if (addr.startsWith('192.168.')) score += 5;
+        else if (addr.startsWith('10.')) score += 4;
+        else if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(addr)) score += 3;
+        if (addr.startsWith('169.254.') || addr.startsWith('100.')) {
+          score -= 10;
+        }
+        candidates.push({ address: addr, score });
+      }
+    }
+  }
+
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates[0].address;
+  }
+  return '127.0.0.1';
+}
+
+let httpServer: http.Server | null = null;
+let currentServerPort = 5173;
+
+function getServerInfo(): ServerInfo {
+  const lanIp = getLanIp();
+  return {
+    lanIp,
+    port: currentServerPort,
+    hostUrl: `http://${lanIp}:${currentServerPort}/?view=admin`,
+    displayUrl: `http://${lanIp}:${currentServerPort}/?view=display`,
+  };
+}
+
+function findDistDir(): string {
+  const candidateDirs = [
+    path.join(__dirname, '../dist'),
+    path.join(__dirname, 'dist'),
+    path.join(app.getAppPath(), 'dist'),
+  ];
+  for (const dir of candidateDirs) {
+    if (fs.existsSync(dir) && fs.existsSync(path.join(dir, 'index.html'))) {
+      return dir;
+    }
+  }
+  return path.join(__dirname, '../dist');
+}
+
+function readJsonBody<T = unknown>(req: http.IncomingMessage): Promise<T> {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+      if (body.length > 10 * 1024 * 1024) {
+        req.destroy();
+        reject(new Error('Payload too large'));
+      }
+    });
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : ({} as T));
+      } catch (err) {
+        reject(err);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+function serveStaticFile(
+  res: http.ServerResponse,
+  distDir: string,
+  urlPath: string
+) {
+  let relativePath = urlPath;
+  try {
+    relativePath = decodeURIComponent(urlPath);
+  } catch {
+    // Keep unencoded
+  }
+
+  if (relativePath === '/' || relativePath === '') {
+    relativePath = '/index.html';
+  }
+
+  const safePath = path.normalize(relativePath).replace(/^(\.\.[/\\])+/, '');
+  let filePath = path.join(distDir, safePath);
+
+  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(distDir, 'index.html');
+  }
+
+  if (!fs.existsSync(filePath)) {
+    res.statusCode = 404;
+    res.end('Not found');
+    return;
+  }
+
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+  res.setHeader('Content-Type', contentType);
+
+  const stream = fs.createReadStream(filePath);
+  stream.pipe(res);
+  stream.on('error', () => {
+    if (!res.headersSent) {
+      res.statusCode = 500;
+      res.end('Server error');
+    }
+  });
+}
+
+function startHttpServer(preferredPort = 5173) {
+  const distDir = findDistDir();
+
+  const server = http.createServer(async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Cache-Control, Accept'
+    );
+
+    if (req.method === 'OPTIONS') {
+      res.statusCode = 204;
+      res.end();
+      return;
+    }
+
+    const hostHeader = req.headers.host || `127.0.0.1:${currentServerPort}`;
+    const parsedUrl = new URL(req.url || '/', `http://${hostHeader}`);
+    const pathname = parsedUrl.pathname;
+
+    if (pathname === '/api/server-info') {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(getServerInfo()));
+      return;
+    }
+
+    if (pathname === '/api/events') {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+      });
+      res.write(
+        `data: ${JSON.stringify({
+          type: 'state',
+          state: {
+            ...currentState,
+            displayWindowOpen:
+              displayWindow !== null && !displayWindow.isDestroyed(),
+          },
+        })}\n\n`
+      );
+      sseClients.add(res);
+      req.on('close', () => {
+        sseClients.delete(res);
+      });
+      return;
+    }
+
+    if (pathname === '/api/state') {
+      if (req.method === 'GET') {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(
+          JSON.stringify({
+            ok: true,
+            state: {
+              ...currentState,
+              displayWindowOpen:
+                displayWindow !== null && !displayWindow.isDestroyed(),
+            },
+          })
+        );
+        return;
+      }
+      if (req.method === 'POST') {
+        try {
+          const body = await readJsonBody<{ state?: GameState }>(req);
+          if (body?.state) {
+            currentState = body.state;
+            broadcastState();
+          }
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ ok: true, state: currentState }));
+        } catch (err) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: String(err) }));
+        }
+        return;
+      }
+      res.statusCode = 405;
+      res.end('Method not allowed');
+      return;
+    }
+
+    if (pathname === '/api/action') {
+      if (req.method !== 'POST') {
+        res.statusCode = 405;
+        res.end('Method not allowed');
+        return;
+      }
+      try {
+        const body = await readJsonBody<{
+          action?: GameAction;
+          state?: GameState;
+        }>(req);
+        if (body?.action) {
+          applyAction(body.action, 'HTTP');
+        } else if (body?.state) {
+          currentState = body.state;
+          broadcastState();
+        }
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ ok: true, state: currentState }));
+      } catch (err) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: String(err) }));
+      }
+      return;
+    }
+
+    serveStaticFile(res, distDir, pathname);
+  });
+
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      appendTraceLog(`[MAIN] Port ${preferredPort} in use, trying next port`);
+      if (preferredPort < 5180) {
+        startHttpServer(preferredPort + 1);
+      } else {
+        startHttpServer(0);
+      }
+    } else {
+      appendTraceLog(`[MAIN] HTTP server error: ${err.message}`);
+    }
+  });
+
+  server.listen(preferredPort, '0.0.0.0', () => {
+    const address = server.address();
+    if (address && typeof address === 'object') {
+      currentServerPort = address.port;
+    }
+    httpServer = server;
+    appendTraceLog(
+      `[MAIN] HTTP server listening on 0.0.0.0:${currentServerPort}`
+    );
+  });
+}
+
 const processedActionIds = new Set<string>();
 const actionIdQueue: string[] = [];
 
-// IPC Handlers
-ipcMain.handle('get-game-state', () => {
-  return {
-    ...currentState,
-    displayWindowOpen: displayWindow !== null && !displayWindow.isDestroyed(),
-  };
-});
-
-ipcMain.handle('dispatch-action', (_event, action: GameAction) => {
+function applyAction(action: GameAction, source = 'IPC') {
   const actionId = action._actionId;
   if (actionId) {
     if (processedActionIds.has(actionId)) {
@@ -264,11 +565,27 @@ ipcMain.handle('dispatch-action', (_event, action: GameAction) => {
 
   const time = new Date().toISOString().slice(11, 23);
   appendTraceLog(
-    `[${time}] [MAIN] [IPC_DISPATCH] Action: ${action.type} | ` +
+    `[${time}] [MAIN] [${source}_DISPATCH] Action: ${action.type} | ` +
       `payload: ${JSON.stringify(action)}`
   );
   currentState = gameReducer(currentState, action);
   broadcastState();
+}
+
+// IPC Handlers
+ipcMain.handle('get-server-info', () => {
+  return getServerInfo();
+});
+
+ipcMain.handle('get-game-state', () => {
+  return {
+    ...currentState,
+    displayWindowOpen: displayWindow !== null && !displayWindow.isDestroyed(),
+  };
+});
+
+ipcMain.handle('dispatch-action', (_event, action: GameAction) => {
+  applyAction(action, 'IPC');
 });
 
 ipcMain.handle('write-trace-log', (_event, entry: string) => {

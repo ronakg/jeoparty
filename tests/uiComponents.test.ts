@@ -869,7 +869,7 @@ test('AdminHost UI: Setup screen renders Connect Phone button', () => {
   assert.ok(html.includes('Connect Phone'));
 });
 
-test('AdminHost UI: Active console header renders Mobile Host button', () => {
+test('AdminHost UI: Active console header renders Connect Phone button', () => {
   const state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -884,7 +884,7 @@ test('AdminHost UI: Active console header renders Mobile Host button', () => {
     })
   );
 
-  assert.ok(html.includes('Mobile Host'));
+  assert.ok(html.includes('Connect Phone'));
 });
 
 test('MobileConnectModal UI: Renders QR modal with pairing elements', () => {
