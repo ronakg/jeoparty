@@ -1060,3 +1060,52 @@ test(
   );
 });
 
+test(
+  'AdminHost UI: Mobile host panel enables 2D touch scroll',
+  () => {
+    const state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: defaultGame,
+    });
+
+    const html = renderToStaticMarkup(
+      React.createElement(AdminHost, {
+        state,
+        dispatch: () => {},
+        openDisplayWindow: () => {},
+        onOpenBuilder: () => {},
+        onGameCreated: () => {},
+      })
+    );
+
+    // Dynamic viewport height prevents cutoff
+    assert.ok(
+      html.includes('h-[100dvh]') &&
+        html.includes('max-h-[100dvh]'),
+      'Root must use dynamic viewport height'
+    );
+
+    // Main must NOT be a scroll container to avoid
+    // nested scroller gesture conflicts on mobile
+    assert.ok(
+      html.includes('overflow-hidden'),
+      'Main must be overflow-hidden'
+    );
+
+    // Grid wrapper is the sole 2D touch scroller
+    assert.ok(
+      html.includes('overflow-auto') &&
+        html.includes('touch-pan-x') &&
+        html.includes('touch-pan-y') &&
+        html.includes('pb-20') &&
+        html.includes('min-h-0'),
+      'Grid wrapper must be sole 2D touch scroller'
+    );
+
+    // Category headers stay pinned on scroll
+    assert.ok(
+      html.includes('sticky top-0 z-10'),
+      'Category headers must be sticky'
+    );
+  }
+);
