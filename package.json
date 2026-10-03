@@ -8,6 +8,7 @@
     "url": "https://github.com/ronakg/jeoparty.git"
   },
   "private": true,
+  "license": "MIT",
   "version": "1.0.1",
   "type": "module",
   "main": "dist-electron/main.js",
