@@ -113,4 +113,4 @@ npm test
 
 ## 📜 License
 
-Proprietary. All rights reserved.
+Distributed under the [MIT License](LICENSE). Copyright (c) 2026 Ronak Gandhi.
