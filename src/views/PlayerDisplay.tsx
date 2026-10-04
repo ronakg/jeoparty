@@ -639,18 +639,12 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
               <TabularScore
                 score={
                   winnerState.winner === 'team1'
-                    ? t1DisplayScore
+                    ? team1Score
                     : winnerState.winner === 'team2'
-                      ? t2DisplayScore
-                      : t1DisplayScore
+                      ? team2Score
+                      : team1Score
                 }
-                isAnimating={
-                  winnerState.winner === 'team1'
-                    ? t1Animating
-                    : winnerState.winner === 'team2'
-                      ? t2Animating
-                      : t1Animating
-                }
+                isAnimating={false}
                 size="large"
               />
             </div>
