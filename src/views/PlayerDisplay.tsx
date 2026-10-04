@@ -363,7 +363,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         !activeClue.answerRevealed &&
         activeClue.currentAnsweringTeam === teamId;
 
-      let borderClass = 'border border-slate-800/80 bg-[#090f20]';
+      let borderClass = 'border border-blue-900/50 bg-[#060d22]';
       if (isCorrect) {
         borderClass =
           'border-2 border-emerald-500 bg-emerald-950/30' +
@@ -371,7 +371,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
       } else if (isIncorrect) {
         borderClass = 'border-2 border-rose-500/80 bg-rose-950/30';
       } else if (isAnswering) {
-        borderClass = 'border-2 bg-[#132247] animate-border-blink';
+        borderClass =
+          'border-2 bg-[#09173a] border-blue-400 animate-border-blink';
       }
 
       let badge = null;
@@ -434,8 +435,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
     // 2. On the board (activeClue is null)
     const isTurn = state.controllingTeam === teamId;
     const borderClass = isTurn
-      ? 'border-2 bg-[#132247] border-blue-400/60'
-      : 'border border-slate-800/80 bg-[#090f20]';
+      ? 'border-2 bg-[#09173a] border-blue-400/80 shadow-md'
+      : 'border border-blue-900/50 bg-[#060d22]';
     const badge = isTurn ? (
       <span
         className={
@@ -453,17 +454,27 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
   return (
     <div
       className={
-        'relative w-screen h-screen bg-[#040816] text-white flex flex-col ' +
+        'relative w-screen h-screen bg-[#040817] text-white flex flex-col ' +
         'justify-between overflow-hidden select-none'
       }
     >
+      {/* Ambient Royal Blue Stage Wash */}
+      <div
+        className={
+          'absolute inset-0 pointer-events-none ' +
+          'bg-[radial-gradient(circle_at_50%_40%,' +
+          'rgba(10,36,118,0.14)_0%,transparent_72%)]'
+        }
+      />
+
       {/* Top Header Bar (hidden on victory screen) */}
       {!winnerState.isGameOver && (
         <header
           className={
-            'relative z-10 w-full bg-[#0b1426] border-b border-blue-900/60 ' +
+            'relative z-10 w-full bg-[#060e24]/90 ' +
+            'border-b border-blue-900/60 ' +
             'px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between ' +
-            'shrink-0 shadow-md titlebar-drag titlebar-pad'
+            'shrink-0 shadow-md titlebar-drag titlebar-pad backdrop-blur-sm'
           }
         >
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -475,7 +486,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
             <h1
               className={
                 'text-base md:text-lg font-black uppercase tracking-[0.2em] ' +
-                'text-slate-200 font-display truncate'
+                'text-modern-gold font-display truncate'
               }
             >
               {config.title}
@@ -526,6 +537,23 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
               'overflow-hidden select-none h-full'
             }
           >
+            {/* Ambient Royal Blue Victory Stage Wash */}
+            <div
+              className={
+                'absolute inset-0 pointer-events-none ' +
+                'bg-[radial-gradient(circle_at_50%_38%,' +
+                'rgba(8,32,107,0.42)_0%,' +
+                'rgba(5,19,61,0.22)_52%,transparent_78%)]'
+              }
+            />
+            <div
+              className={
+                'absolute bottom-0 inset-x-0 h-1/2 pointer-events-none ' +
+                'bg-gradient-to-t from-[#071c59]/25 via-transparent ' +
+                'to-transparent'
+              }
+            />
+
             {/* JeoPARTY! official logo as victory centerpiece */}
             <img
               ref={logoRef}
@@ -651,11 +679,19 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
           <div
             className={
               'flex-1 flex flex-col items-center justify-center text-center ' +
-              'p-8 md:p-12 rounded-2xl bg-[#091533] border ' +
-              'border-amber-500/40 shadow-2xl animate-modern-enter relative ' +
-              'overflow-hidden'
+              'p-8 md:p-12 rounded-2xl bg-gradient-to-b from-[#071c59] ' +
+              'to-[#041038] border border-amber-500/40 shadow-2xl ' +
+              'animate-modern-enter relative overflow-hidden'
             }
           >
+            {/* Ambient Sapphire Radial Wash */}
+            <div
+              className={
+                'absolute inset-0 bg-radial from-blue-500/10 ' +
+                'via-transparent to-transparent pointer-events-none'
+              }
+            />
+
             <div
               className={
                 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full ' +
@@ -685,7 +721,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
               >
                 <div
                   className={
-                    'p-8 md:p-10 rounded-2xl bg-[#0b1b3d] border ' +
+                    'p-8 md:p-10 rounded-2xl bg-gradient-to-b ' +
+                    'from-[#08206b] to-[#05133d] border ' +
                     'border-blue-400/30 mb-8 shadow-xl'
                   }
                 >
@@ -746,7 +783,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
               <div
                 className={
                   'flex items-center gap-3 px-6 py-3 rounded-2xl ' +
-                  'bg-[#0e172e] border border-blue-900/60 text-slate-300 ' +
+                  'bg-[#060e24] border border-blue-900/60 text-slate-300 ' +
                   'text-sm font-semibold tracking-wider'
                 }
               >
@@ -762,8 +799,9 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
           <div
             className={
               `flex-1 flex flex-col justify-between p-6 md:p-8 lg:p-10 ` +
-              `rounded-2xl bg-[#08122c] shadow-2xl ` +
-              `relative overflow-hidden transition-all duration-300 ` +
+              `rounded-2xl bg-gradient-to-b from-[#071c59] to-[#041038] ` +
+              `shadow-2xl relative overflow-hidden transition-all ` +
+              `duration-300 ` +
               (isShaking
                 ? 'animate-shake !border-2 !border-rose-500 ' +
                   'shadow-[0_0_35px_rgba(244,63,94,0.45)] '
@@ -772,8 +810,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                     !activeClue.correctTeam
                   ? '!border-2 !border-rose-500 ' +
                     'shadow-[0_0_35px_rgba(244,63,94,0.45)] '
-                  : 'border border-blue-500/30 ' +
-                    'shadow-[0_0_40px_rgba(15,23,42,0.6)] ' +
+                  : 'border border-blue-400/35 ' +
+                    'shadow-[0_0_40px_rgba(5,18,59,0.7)] ' +
                     'animate-modern-enter ')
             }
           >
@@ -986,8 +1024,9 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                     'h-16 md:h-20 lg:h-24 rounded-xl p-2 md:p-3 flex ' +
                     'items-center justify-center text-center shadow-md ' +
                     'relative overflow-hidden bg-gradient-to-b ' +
-                    'from-[#0d2254] to-[#081638] border border-blue-500/35 ' +
-                    'border-b-2 border-b-blue-500'
+                    'from-[#082470] to-[#051644] border border-blue-400/35 ' +
+                    'border-b-2 border-b-blue-400/90 ' +
+                    'shadow-[inset_0_1px_1px_rgba(255,255,255,0.18)]'
                   }
                 >
                   <h3
@@ -1047,8 +1086,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                                   'rounded-xl flex items-center ' +
                                   'justify-center p-1 select-none ' +
                                   'transition-all duration-300 ' +
-                                  'bg-[#030614]/85 border ' +
-                                  'border-slate-900/90 shadow-inner ' +
+                                  'bg-[#030718]/90 border ' +
+                                  'border-slate-800/80 shadow-inner ' +
                                   'min-h-0 h-full'
                                 }
                               >
@@ -1073,8 +1112,10 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                                 'rounded-xl flex items-center ' +
                                 'justify-center transition-all duration-300 ' +
                                 'select-none relative overflow-hidden ' +
-                                'bg-gradient-to-b from-[#0a1738] ' +
-                                'to-[#061026] border border-blue-500/25 ' +
+                                'bg-gradient-to-b from-[#08206b] ' +
+                                'to-[#05133d] border border-blue-400/30 ' +
+                                'shadow-[inset_0_1px_1px_' +
+                                'rgba(255,255,255,0.18)] ' +
                                 'shadow-md min-h-0 h-full p-1 cursor-default'
                               }
                             >
@@ -1104,9 +1145,9 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
       {!winnerState.isGameOver && (
         <footer
           className={
-            'relative z-10 w-full bg-[#080f22] border-t ' +
+            'relative z-10 w-full bg-[#060e24]/90 border-t ' +
             'border-blue-900/60 px-4 md:px-6 py-2.5 sm:py-3 grid ' +
-            'grid-cols-2 gap-4 shrink-0 shadow-lg'
+            'grid-cols-2 gap-4 shrink-0 shadow-lg backdrop-blur-sm'
           }
         >
           {/* Team 1 Score Card */}

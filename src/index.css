@@ -36,7 +36,12 @@
 
 /* Polished Modern Gold Gradient */
 .text-modern-gold {
-  background: linear-gradient(135deg, #FFF6D1 0%, #F5C242 45%, #E59D1E 75%, #C27D0B 100%);
+  background: linear-gradient(
+    180deg,
+    #FFF8D6 0%,
+    #F6C744 50%,
+    #E8A224 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 2px 8px rgba(245, 194, 66, 0.35));

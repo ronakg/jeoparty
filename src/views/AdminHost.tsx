@@ -1298,20 +1298,32 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                       </span>
                     </div>
                   </div>
-                  <button
-                    onClick={() =>
-                      dispatch({
-                        type: 'SET_ROUND',
-                        payload: { roundIndex: 0 },
-                      })
-                    }
-                    className={
-                      'px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white ' +
-                      'rounded-lg text-xs font-bold'
-                    }
-                  >
-                    Return to Main Board
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => dispatch({ type: 'FJ_RESET' })}
+                      className={
+                        'px-3 py-1.5 bg-gray-800 hover:bg-gray-700 ' +
+                        'text-gray-300 rounded-lg text-xs font-bold ' +
+                        'transition-all'
+                      }
+                    >
+                      Reset Tie-Breaker
+                    </button>
+                    <button
+                      onClick={() =>
+                        dispatch({
+                          type: 'SET_ROUND',
+                          payload: { roundIndex: 0 },
+                        })
+                      }
+                      className={
+                        'px-3 py-1.5 bg-blue-600 hover:bg-blue-500 ' +
+                        'text-white rounded-lg text-xs font-bold'
+                      }
+                    >
+                      Return to Main Board
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1723,12 +1735,11 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                 </div>
               )}
 
-              {/* Hint Controls — only show if hint exists */}
+              {/* Hint Controls */}
               {(() => {
                 const hasHint = Boolean(
                   activeClueData.hint && activeClueData.hint.trim().length > 0
                 );
-                if (!hasHint) return null;
                 return (
                   <div
                     className={
@@ -1738,30 +1749,45 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     }
                   >
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-bold text-gray-400 uppercase">
+                      <span
+                        className="text-xs font-bold text-gray-400 uppercase"
+                      >
                         Hint (-$
                         {activeClueData.hintDeduction ??
                           config.defaultHintDeduction ??
                           100}
                         )
                       </span>
-                      <p className="text-xs text-gray-300 italic truncate">
-                        "{activeClueData.hint}"
+                      <p className="text-xs text-gray-400 italic truncate">
+                        {hasHint
+                          ? `"${activeClueData.hint}"`
+                          : 'No hint configured for this clue'}
                       </p>
                     </div>
                     <button
                       onClick={() => dispatch({ type: 'REVEAL_HINT' })}
-                      disabled={activeClue.hintRevealed}
-                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0"
+                      disabled={!hasHint || activeClue.hintRevealed}
+                      className={
+                        'px-3 py-1.5 bg-amber-600 hover:bg-amber-500 ' +
+                        'disabled:opacity-40 disabled:cursor-not-allowed ' +
+                        'text-white rounded-lg text-xs font-bold flex ' +
+                        'items-center gap-1.5 transition-all shrink-0'
+                      }
                       title={
-                        activeClue.hintRevealed
-                          ? 'Hint already revealed'
-                          : 'Reveal hint to players'
+                        !hasHint
+                          ? 'No hint configured for this clue'
+                          : activeClue.hintRevealed
+                            ? 'Hint already revealed'
+                            : 'Reveal hint to players'
                       }
                     >
                       <HelpCircle className="w-3.5 h-3.5" />
                       <span>
-                        {activeClue.hintRevealed ? 'Revealed' : 'Reveal'}
+                        {!hasHint
+                          ? 'None'
+                          : activeClue.hintRevealed
+                            ? 'Revealed'
+                            : 'Reveal'}
                       </span>
                     </button>
                   </div>

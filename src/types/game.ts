@@ -251,6 +251,7 @@ export type GameAction = (
       type: 'FJ_JUDGE';
       payload: { team1Correct: boolean; team2Correct: boolean };
     }
+  | { type: 'FJ_RESET' }
   | { type: 'DECLARE_CO_WINNERS' }
   | { type: 'SYNC_STATE'; payload: GameState }
 ) & { _actionId?: string };

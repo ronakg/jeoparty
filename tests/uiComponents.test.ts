@@ -49,14 +49,14 @@ test('PlayerDisplay UI: Active Board Grid renders categories and clue tiles', ()
   assert.ok(html.includes('Champions'));
   assert.ok(html.includes('Challengers'));
 
-  // Option 1 Studio Broadcast aesthetic assertions
+  // Classic Jeopardy Royal Blue aesthetic assertions
   assert.ok(
-    html.includes('from-[#0d2254] to-[#081638]'),
-    'Category headers must use studio navy gradient'
+    html.includes('from-[#082470] to-[#051644]'),
+    'Category headers must use royal sapphire gradient'
   );
   assert.ok(
-    html.includes('from-[#0a1738] to-[#061026]'),
-    'Clue tiles must use studio navy vertical gradient'
+    html.includes('from-[#08206b] to-[#05133d]'),
+    'Clue tiles must use royal sapphire vertical gradient'
   );
   assert.ok(
     html.includes('border-t border-blue-900/60'),
@@ -342,6 +342,14 @@ test('PlayerDisplay UI: Final Jeopardy tie-breaker renders category & question',
 
   assert.ok(html.includes('Exposition Universelle'));
   assert.ok(html.includes('font-display font-black text-white'));
+  assert.ok(
+    html.includes('from-[#071c59] to-[#041038]'),
+    'Tie-breaker container must use calibrated royal sapphire gradient'
+  );
+  assert.ok(
+    html.includes('from-[#08206b] to-[#05133d]'),
+    'Tie-breaker question card must use calibrated royal blue gradient'
+  );
 });
 
 test('AdminHost UI: Clue judging modal displays judging buttons & hint controls', () => {
@@ -752,6 +760,12 @@ test('PlayerDisplay UI: Winner screen renders when regulation ends with winner',
   // Standard clue board and score cards should not be rendered
   assert.ok(!html.includes('group-hover:scale-105'));
   assert.ok(!html.includes('Team 1 Score Card'));
+
+  // Royal blue victory stage wash
+  assert.ok(
+    html.includes('rgba(8,32,107,0.42)'),
+    'Winner screen must render royal blue victory stage wash'
+  );
 });
 
 test('PlayerDisplay UI: Co-winners screen renders when tied without tie-breaker', () => {

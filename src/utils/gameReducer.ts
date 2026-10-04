@@ -199,9 +199,33 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'ANSWER_CORRECT': {
       if (!state.config || !state.activeClue) return state;
+
+      // Guard against duplicate judging calls on the same clue
+      if (
+        state.activeClue.correctTeam !== undefined &&
+        state.activeClue.correctTeam !== null
+      ) {
+        return state;
+      }
+      if (state.activeClue.lastJudgedResult === 'correct') {
+        return state;
+      }
+
       const { team } = action.payload;
-      const points = state.activeClue.currentAvailablePoints;
-      const isRebound = state.activeClue.reboundOpportunity;
+
+      // Invariant: auto-scale to rebound if opposing team answers while
+      // rebound is pending but ADVANCE_REBOUND was not dispatched
+      const isPendingRebound =
+        Boolean(state.activeClue.reboundAvailable) &&
+        !state.activeClue.reboundOpportunity &&
+        state.activeClue.incorrectTeams?.length === 1 &&
+        state.activeClue.incorrectTeams[0] !== team;
+
+      const isRebound = state.activeClue.reboundOpportunity || isPendingRebound;
+      const points = isPendingRebound
+        ? Math.round(state.activeClue.currentAvailablePoints / 2)
+        : state.activeClue.currentAvailablePoints;
+
       const awardResult = {
         winner: team,
         type: isRebound ? ('rebound' as const) : ('full' as const),
@@ -241,9 +265,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         },
         activeClue: {
           ...state.activeClue,
+          currentAvailablePoints: points,
           answerRevealed: true,
           reboundAvailable: false,
-          reboundOpportunity: false,
+          reboundOpportunity: isRebound,
           lastJudgedResult: 'correct',
           correctTeam: team,
           awardResult,
@@ -600,6 +625,40 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             team1Correct,
             team2Correct,
             answersRevealed: true,
+          },
+        },
+      };
+    }
+
+    case 'FJ_RESET': {
+      if (!state.config || !state.config.finalJeopardy) return state;
+      const fj = state.config.finalJeopardy;
+      let newT1 = state.team1Score;
+      let newT2 = state.team2Score;
+
+      // Revert wagers scored if answers had been judged and revealed
+      if (fj.answersRevealed) {
+        const w1 = fj.team1Wager ?? 0;
+        const w2 = fj.team2Wager ?? 0;
+        newT1 = fj.team1Correct ? Math.max(0, newT1 - w1) : newT1 + w1;
+        newT2 = fj.team2Correct ? Math.max(0, newT2 - w2) : newT2 + w2;
+      }
+
+      return {
+        ...state,
+        team1Score: newT1,
+        team2Score: newT2,
+        config: {
+          ...state.config,
+          finalJeopardy: {
+            ...fj,
+            team1Wager: undefined,
+            team2Wager: undefined,
+            team1Correct: undefined,
+            team2Correct: undefined,
+            wagersLocked: false,
+            questionRevealed: false,
+            answersRevealed: false,
           },
         },
       };
