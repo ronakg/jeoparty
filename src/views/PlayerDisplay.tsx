@@ -7,6 +7,7 @@ import {
   Sparkles,
   XCircle,
   CheckCircle2,
+  Clock,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getWinnerState } from '../utils/gameRules';
@@ -128,6 +129,107 @@ const LOGO_CONFETTI_COLORS = [
   '#FFFFFF',
 ];
 
+export interface QuestionTimerState {
+  enabled: boolean;
+  remaining: number;
+  isWaitingForMedia: boolean;
+}
+
+export const useQuestionTimer = (
+  timerSeconds?: number,
+  timerStartedAt?: number | null,
+  isClueResolved?: boolean
+): QuestionTimerState => {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!timerSeconds || timerSeconds <= 0) return;
+    if (timerStartedAt === null || timerStartedAt === undefined) return;
+    if (isClueResolved) return;
+
+    setNow(Date.now());
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, [timerSeconds, timerStartedAt, isClueResolved]);
+
+  if (!timerSeconds || timerSeconds <= 0) {
+    return { enabled: false, remaining: 0, isWaitingForMedia: false };
+  }
+
+  if (timerStartedAt === null || timerStartedAt === undefined) {
+    return {
+      enabled: true,
+      remaining: timerSeconds,
+      isWaitingForMedia: true,
+    };
+  }
+
+  const elapsed = Math.max(0, Math.floor((now - timerStartedAt) / 1000));
+  const remaining = Math.max(0, timerSeconds - elapsed);
+
+  return {
+    enabled: true,
+    remaining,
+    isWaitingForMedia: false,
+  };
+};
+
+export const QuestionTimerBadge: React.FC<{
+  remaining: number;
+  isWaitingForMedia: boolean;
+}> = ({ remaining, isWaitingForMedia }) => {
+  if (isWaitingForMedia) {
+    return (
+      <div
+        className={
+          'flex items-center gap-1.5 px-3 py-1 rounded-full border ' +
+          'bg-[#060e24]/80 border-blue-500/25 text-blue-300/70 ' +
+          'font-mono font-bold text-xs sm:text-sm tracking-wider ' +
+          'tabular-nums'
+        }
+        title="Timer starts when media is shown"
+      >
+        <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400/60" />
+        <span>{remaining}s</span>
+      </div>
+    );
+  }
+
+  const isExpired = remaining === 0;
+  const isUrgent = remaining > 0 && remaining <= 5;
+
+  return (
+    <div
+      className={
+        'flex items-center gap-1.5 px-3 py-1 rounded-full border ' +
+        'font-mono font-bold text-xs sm:text-sm tracking-wider ' +
+        'tabular-nums transition-colors duration-200 ' +
+        (isExpired
+          ? 'bg-rose-950/40 border-rose-500/50 text-rose-300'
+          : isUrgent
+            ? 'bg-amber-950/40 border-amber-500/50 text-amber-300 ' +
+              'animate-pulse'
+            : 'bg-[#060e24]/80 border-blue-400/30 text-modern-gold')
+      }
+    >
+      <Clock
+        className={
+          'w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ' +
+          (isExpired
+            ? 'text-rose-400'
+            : isUrgent
+              ? 'text-amber-400'
+              : 'text-modern-gold')
+        }
+      />
+      <span>{remaining}s</span>
+    </div>
+  );
+};
+
 export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
   state,
   toMediaUrl,
@@ -140,6 +242,18 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
     useAnimatedScore(team1Score);
   const { displayScore: t2DisplayScore, isAnimating: t2Animating } =
     useAnimatedScore(team2Score);
+
+  const isClueResolved = Boolean(
+    activeClue?.correctTeam ||
+      activeClue?.answerRevealed ||
+      (activeClue?.incorrectTeams && activeClue.incorrectTeams.length >= 2)
+  );
+
+  const timerState = useQuestionTimer(
+    config?.questionTimerSeconds,
+    activeClue?.timerStartedAt,
+    isClueResolved
+  );
 
   const winnerState = getWinnerState(state);
   const celebrationTriggerRef = useRef<string | null>(null);
@@ -833,7 +947,13 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 {currentRound?.categories[activeClue.categoryIndex]?.name}
               </span>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                {timerState.enabled && (
+                  <QuestionTimerBadge
+                    remaining={timerState.remaining}
+                    isWaitingForMedia={timerState.isWaitingForMedia}
+                  />
+                )}
                 {activeClue.reboundOpportunity && (
                   <span
                     className={

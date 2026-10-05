@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { PlayerDisplay } from '../src/views/PlayerDisplay';
+import { PlayerDisplay, QuestionTimerBadge } from '../src/views/PlayerDisplay';
 import { AdminHost, CreateGameModal } from '../src/views/AdminHost';
 import { GameBuilder } from '../src/components/builder/GameBuilder';
 import { MediaRenderer } from '../src/components/common/MediaRenderer';
@@ -99,6 +99,86 @@ test('PlayerDisplay UI: Detailed question view has flat category & chunky points
   assert.ok(html.includes('$100'));
   assert.ok(html.includes('text-modern-gold font-display leading-none'));
 });
+
+test(
+  'QuestionTimerBadge UI: Renders waiting, active, urgent, and expired',
+  () => {
+    const waitingHtml = renderToStaticMarkup(
+      React.createElement(QuestionTimerBadge, {
+        remaining: 30,
+        isWaitingForMedia: true,
+      })
+    );
+    assert.ok(waitingHtml.includes('30s'));
+    assert.ok(waitingHtml.includes('Timer starts when media is shown'));
+
+    const activeHtml = renderToStaticMarkup(
+      React.createElement(QuestionTimerBadge, {
+        remaining: 20,
+        isWaitingForMedia: false,
+      })
+    );
+    assert.ok(activeHtml.includes('20s'));
+    assert.ok(activeHtml.includes('text-modern-gold'));
+
+    const urgentHtml = renderToStaticMarkup(
+      React.createElement(QuestionTimerBadge, {
+        remaining: 4,
+        isWaitingForMedia: false,
+      })
+    );
+    assert.ok(urgentHtml.includes('4s'));
+    assert.ok(urgentHtml.includes('text-amber-300'));
+    assert.ok(urgentHtml.includes('animate-pulse'));
+
+    const expiredHtml = renderToStaticMarkup(
+      React.createElement(QuestionTimerBadge, {
+        remaining: 0,
+        isWaitingForMedia: false,
+      })
+    );
+    assert.ok(expiredHtml.includes('0s'));
+    assert.ok(expiredHtml.includes('text-rose-300'));
+  }
+);
+
+test(
+  'PlayerDisplay UI: Question timer renders countdown on active clue',
+  () => {
+    const timerGame = {
+      ...defaultGame,
+      questionTimerSeconds: 30,
+    };
+
+    let state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: timerGame,
+    });
+
+    const now = Date.now();
+    state = gameReducer(state, {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 0,
+        clueIndex: 0,
+        firstAnsweringTeam: 1,
+        timerStartedAt: now - 5000,
+      },
+    });
+
+    const html = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+
+    assert.ok(html.includes('25s'));
+    assert.ok(html.includes('tabular-nums'));
+  }
+);
 
 test('PlayerDisplay UI: Wrong answer displays red border around clue box', () => {
   let state = gameReducer(initialGameState, {

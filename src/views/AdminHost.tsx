@@ -465,6 +465,28 @@ export const AdminHost: React.FC<AdminHostProps> = ({
     }
   }, [showScoreModal]);
 
+  const [hostTimerNow, setHostTimerNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!config?.questionTimerSeconds || !activeClue?.timerStartedAt) return;
+    setHostTimerNow(Date.now());
+    const interval = setInterval(() => setHostTimerNow(Date.now()), 250);
+    return () => clearInterval(interval);
+  }, [config?.questionTimerSeconds, activeClue?.timerStartedAt]);
+
+  const hostTimerRemaining = config?.questionTimerSeconds
+    ? activeClue?.timerStartedAt
+      ? Math.max(
+          0,
+          config.questionTimerSeconds -
+            Math.max(
+              0,
+              Math.floor((hostTimerNow - activeClue.timerStartedAt) / 1000)
+            )
+        )
+      : config.questionTimerSeconds
+    : 0;
+
   const handleLoadGameFile = async () => {
     if (openGameFile) {
       const loaded = await openGameFile();
@@ -1622,6 +1644,31 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                       }
                     >
                       Rebound 50%
+                    </span>
+                  )}
+                  {Boolean(
+                    config?.questionTimerSeconds &&
+                      config.questionTimerSeconds > 0
+                  ) && (
+                    <span
+                      className={
+                        'flex items-center gap-1 px-2 py-0.5 rounded ' +
+                        'text-xs font-mono font-bold ' +
+                        (!activeClue.timerStartedAt
+                          ? 'bg-blue-950/60 text-blue-300 ' +
+                            'border border-blue-800'
+                          : hostTimerRemaining === 0
+                            ? 'bg-rose-950/60 text-rose-300 ' +
+                              'border border-rose-800'
+                            : hostTimerRemaining <= 5
+                              ? 'bg-amber-950/60 text-amber-300 ' +
+                                'border border-amber-800'
+                              : 'bg-blue-950/80 text-yellow-400 ' +
+                                'border border-blue-700')
+                      }
+                    >
+                      <Clock className="w-3 h-3" />
+                      {hostTimerRemaining}s
                     </span>
                   )}
                 </div>
