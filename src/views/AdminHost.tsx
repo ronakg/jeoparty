@@ -33,7 +33,7 @@ import {
   Smartphone,
 } from 'lucide-react';
 import { parseYouTubeUrl, formatSecondsToTime } from '../utils/youtube';
-import { getWinnerState } from '../utils/gameRules';
+import { getWinnerState, formatTimerMmSs } from '../utils/gameRules';
 import { tracer } from '../utils/tracer';
 import { MobileConnectModal } from '../components/common/MobileConnectModal';
 import { CompletedClueModal } from '../components/common/CompletedClueModal';
@@ -1668,7 +1668,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                       }
                     >
                       <Clock className="w-3 h-3" />
-                      {hostTimerRemaining}s
+                      {formatTimerMmSs(hostTimerRemaining)}
                     </span>
                   )}
                 </div>

@@ -153,3 +153,16 @@ export function getWinnerState(state: GameState): WinnerState {
     canProceedToTieBreaker: true,
   };
 }
+
+/**
+ * Formats a duration in seconds into mm:ss format (e.g. 30 -> "00:30").
+ */
+export function formatTimerMmSs(totalSeconds: number): string {
+  const clamped = Math.max(0, Math.floor(totalSeconds));
+  const minutes = Math.floor(clamped / 60);
+  const seconds = clamped % 60;
+  const mm = minutes.toString().padStart(2, '0');
+  const ss = seconds.toString().padStart(2, '0');
+  return `${mm}:${ss}`;
+}
+

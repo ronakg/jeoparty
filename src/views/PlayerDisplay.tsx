@@ -10,7 +10,7 @@ import {
   Clock,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { getWinnerState } from '../utils/gameRules';
+import { getWinnerState, formatTimerMmSs } from '../utils/gameRules';
 import { tracer } from '../utils/tracer';
 
 interface PlayerDisplayProps {
@@ -181,6 +181,8 @@ export const QuestionTimerBadge: React.FC<{
   remaining: number;
   isWaitingForMedia: boolean;
 }> = ({ remaining, isWaitingForMedia }) => {
+  const formattedTime = formatTimerMmSs(remaining);
+
   if (isWaitingForMedia) {
     return (
       <div
@@ -193,7 +195,7 @@ export const QuestionTimerBadge: React.FC<{
         title="Timer starts when media is shown"
       >
         <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400/60" />
-        <span>{remaining}s</span>
+        <span>{formattedTime}</span>
       </div>
     );
   }
@@ -225,7 +227,7 @@ export const QuestionTimerBadge: React.FC<{
               : 'text-modern-gold')
         }
       />
-      <span>{remaining}s</span>
+      <span>{formattedTime}</span>
     </div>
   );
 };

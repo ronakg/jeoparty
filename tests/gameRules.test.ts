@@ -15,7 +15,11 @@ import {
   serializeGameConfigToYaml,
   parseGameConfigFromYaml,
 } from '../src/utils/gameYaml';
-import { isBoardComplete, getWinnerState } from '../src/utils/gameRules';
+import {
+  isBoardComplete,
+  getWinnerState,
+  formatTimerMmSs,
+} from '../src/utils/gameRules';
 
 const createLoadedState = (config = defaultGame) => {
   return gameReducer(initialGameState, { type: 'LOAD_GAME', payload: config });
@@ -1547,4 +1551,15 @@ test(
 
   assert.equal(state.activeClue?.timerStartedAt, null);
 });
+
+test('Time Format: formatTimerMmSs zero-pads minutes and seconds', () => {
+  assert.equal(formatTimerMmSs(0), '00:00');
+  assert.equal(formatTimerMmSs(5), '00:05');
+  assert.equal(formatTimerMmSs(30), '00:30');
+  assert.equal(formatTimerMmSs(60), '01:00');
+  assert.equal(formatTimerMmSs(75), '01:15');
+  assert.equal(formatTimerMmSs(3600), '60:00');
+  assert.equal(formatTimerMmSs(-10), '00:00');
+});
+
 

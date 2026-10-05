@@ -109,7 +109,7 @@ test(
         isWaitingForMedia: true,
       })
     );
-    assert.ok(waitingHtml.includes('30s'));
+    assert.ok(waitingHtml.includes('00:30'));
     assert.ok(waitingHtml.includes('Timer starts when media is shown'));
 
     const activeHtml = renderToStaticMarkup(
@@ -118,7 +118,7 @@ test(
         isWaitingForMedia: false,
       })
     );
-    assert.ok(activeHtml.includes('20s'));
+    assert.ok(activeHtml.includes('00:20'));
     assert.ok(activeHtml.includes('text-modern-gold'));
 
     const urgentHtml = renderToStaticMarkup(
@@ -127,7 +127,7 @@ test(
         isWaitingForMedia: false,
       })
     );
-    assert.ok(urgentHtml.includes('4s'));
+    assert.ok(urgentHtml.includes('00:04'));
     assert.ok(urgentHtml.includes('text-amber-300'));
     assert.ok(urgentHtml.includes('animate-pulse'));
 
@@ -137,7 +137,7 @@ test(
         isWaitingForMedia: false,
       })
     );
-    assert.ok(expiredHtml.includes('0s'));
+    assert.ok(expiredHtml.includes('00:00'));
     assert.ok(expiredHtml.includes('text-rose-300'));
   }
 );
@@ -175,7 +175,7 @@ test(
       })
     );
 
-    assert.ok(html.includes('25s'));
+    assert.ok(html.includes('00:25'));
     assert.ok(html.includes('tabular-nums'));
   }
 );
