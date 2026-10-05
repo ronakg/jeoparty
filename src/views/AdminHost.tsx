@@ -277,11 +277,11 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
             </div>
           </div>
 
-          {/* Scoring Progression */}
+          {/* Question Point Values */}
           <div>
             <div className="mb-1.5">
               <label className="text-xs font-bold uppercase text-gray-300">
-                Clue Scoring Progression ($ per question)
+                Question Point Values ($)
               </label>
             </div>
 
