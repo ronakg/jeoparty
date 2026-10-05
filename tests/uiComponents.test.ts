@@ -400,7 +400,8 @@ test('CreateGameModal UI: Renders countdown timer presets and input', () => {
   );
 
   assert.ok(html.includes('Question Point Values ($)'));
-  assert.ok(html.includes('Question Countdown Timer (Seconds)'));
+  assert.ok(html.includes('Question Countdown Timer'));
+  assert.ok(!html.includes('Question Countdown Timer (Seconds)'));
   assert.ok(html.includes('Off'));
   assert.ok(html.includes('30s'));
   assert.ok(html.includes('1m'));

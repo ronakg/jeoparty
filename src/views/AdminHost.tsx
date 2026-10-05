@@ -325,7 +325,7 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold uppercase text-gray-300">
-                Question Countdown Timer (Seconds)
+                Question Countdown Timer
               </label>
               <span className="text-[11px] text-yellow-400 font-bold">
                 {timerSeconds
