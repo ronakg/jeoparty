@@ -407,7 +407,7 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
       >
         <div
           className={
-            'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 ' +
+            'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 ' +
             'sm:gap-4 items-center'
           }
         >
@@ -498,7 +498,7 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
             </div>
           </div>
 
-          <div className="min-w-0 col-span-2 sm:col-span-1">
+          <div className="min-w-0">
             <label
               className={
                 'text-[10px] sm:text-xs font-bold uppercase ' +
@@ -532,6 +532,45 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                 }
               >
                 %
+              </span>
+            </div>
+          </div>
+
+          <div className="min-w-0">
+            <label
+              className={
+                'text-[10px] sm:text-xs font-bold uppercase ' +
+                'text-gray-400 block mb-0.5 sm:mb-1 truncate'
+              }
+            >
+              Question Timer
+            </label>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <input
+                type="number"
+                min="0"
+                placeholder="Off"
+                value={config.questionTimerSeconds || ''}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  setConfig({
+                    ...config,
+                    questionTimerSeconds: val > 0 ? val : undefined,
+                  });
+                }}
+                className={
+                  'w-full min-w-0 px-2 sm:px-3 py-1 sm:py-1.5 bg-black/60 ' +
+                  'border border-blue-800 rounded-lg text-white font-bold ' +
+                  'text-xs sm:text-sm focus:border-yellow-400 ' +
+                  'focus:outline-none'
+                }
+              />
+              <span
+                className={
+                  'text-xs sm:text-sm font-bold text-yellow-400 shrink-0'
+                }
+              >
+                s
               </span>
             </div>
           </div>

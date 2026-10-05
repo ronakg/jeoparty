@@ -44,7 +44,7 @@ interface CreateGameModalProps {
   onCreate: (config: GameConfig) => void;
 }
 
-const CreateGameModal: React.FC<CreateGameModalProps> = ({
+export const CreateGameModal: React.FC<CreateGameModalProps> = ({
   isOpen,
   onClose,
   onCreate,
@@ -63,6 +63,9 @@ const CreateGameModal: React.FC<CreateGameModalProps> = ({
   ]);
   const [customPointsInput, setCustomPointsInput] = useState(
     DEFAULT_PREFERENCES.cluePointValues.join(', ')
+  );
+  const [timerSeconds, setTimerSeconds] = useState<number | undefined>(
+    undefined
   );
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -125,6 +128,7 @@ const CreateGameModal: React.FC<CreateGameModalProps> = ({
           ? pointValues
           : DEFAULT_PREFERENCES.cluePointValues,
       includeFinalJeopardy: false,
+      questionTimerSeconds: timerSeconds,
     });
     onCreate(config);
   };
@@ -309,7 +313,73 @@ const CreateGameModal: React.FC<CreateGameModalProps> = ({
               type="text"
               value={customPointsInput}
               onChange={(e) => handleCustomPointsChange(e.target.value)}
-              className="w-full px-3.5 py-2 bg-black/50 border border-blue-800 rounded-xl text-yellow-400 font-mono font-bold text-sm focus:border-yellow-400 focus:outline-none"
+              className={
+                'w-full px-3.5 py-2 bg-black/50 border border-blue-800 ' +
+                'rounded-xl text-yellow-400 font-mono font-bold text-sm ' +
+                'focus:border-yellow-400 focus:outline-none'
+              }
+            />
+          </div>
+
+          {/* Question Countdown Timer */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold uppercase text-gray-300">
+                Question Countdown Timer
+              </label>
+              <span className="text-[11px] text-yellow-400 font-bold">
+                {timerSeconds ? `${timerSeconds}s per question` : 'Disabled'}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-2">
+              <button
+                type="button"
+                onClick={() => setTimerSeconds(undefined)}
+                className={
+                  'px-2.5 py-1 text-xs font-bold rounded border ' +
+                  'transition-all ' +
+                  (!timerSeconds
+                    ? 'bg-blue-950 border-blue-700 text-yellow-300'
+                    : 'bg-gray-800 border-gray-700 text-gray-300 ' +
+                      'hover:bg-gray-700')
+                }
+              >
+                Off (Default)
+              </button>
+              {[15, 30, 45, 60].map((sec) => (
+                <button
+                  key={sec}
+                  type="button"
+                  onClick={() => setTimerSeconds(sec)}
+                  className={
+                    'px-2.5 py-1 text-xs font-bold rounded border ' +
+                    'transition-all ' +
+                    (timerSeconds === sec
+                      ? 'bg-blue-950 border-blue-700 text-yellow-300'
+                      : 'bg-gray-800 border-gray-700 text-gray-300 ' +
+                        'hover:bg-gray-700')
+                  }
+                >
+                  {sec}s
+                </button>
+              ))}
+            </div>
+
+            <input
+              type="number"
+              min="0"
+              placeholder="Off (no timer)"
+              value={timerSeconds || ''}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                setTimerSeconds(val > 0 ? val : undefined);
+              }}
+              className={
+                'w-full px-3.5 py-2 bg-black/50 border border-blue-800 ' +
+                'rounded-xl text-yellow-400 font-mono font-bold text-sm ' +
+                'focus:border-yellow-400 focus:outline-none'
+              }
             />
           </div>
         </div>

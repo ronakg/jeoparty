@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PlayerDisplay } from '../src/views/PlayerDisplay';
-import { AdminHost } from '../src/views/AdminHost';
+import { AdminHost, CreateGameModal } from '../src/views/AdminHost';
 import { GameBuilder } from '../src/components/builder/GameBuilder';
 import { MediaRenderer } from '../src/components/common/MediaRenderer';
 import { MobileConnectModal } from '../src/components/common/MobileConnectModal';
@@ -307,6 +307,24 @@ test('GameBuilder UI: Renders game settings and clue editor', () => {
   assert.ok(html.includes('Ultimate Trivia Championship'));
   assert.ok(html.includes('WORLD GEOGRAPHY'));
   assert.ok(html.includes('Close Game'));
+  assert.ok(html.includes('Question Timer'));
+});
+
+test('CreateGameModal UI: Renders countdown timer presets and input', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(CreateGameModal, {
+      isOpen: true,
+      onClose: () => {},
+      onCreate: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Question Countdown Timer'));
+  assert.ok(html.includes('Off (Default)'));
+  assert.ok(html.includes('15s'));
+  assert.ok(html.includes('30s'));
+  assert.ok(html.includes('45s'));
+  assert.ok(html.includes('60s'));
 });
 
 test('PlayerDisplay UI: Final Jeopardy tie-breaker renders category & question', () => {
