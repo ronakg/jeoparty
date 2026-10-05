@@ -152,17 +152,14 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
             'sm:py-4 border-b border-blue-900/60 bg-[#070e1c]'
           }
         >
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-yellow-400" />
-            <h2
-              className={
-                'text-base sm:text-lg font-black uppercase ' +
-                'tracking-wider text-yellow-400'
-              }
-            >
-              Create New Game
-            </h2>
-          </div>
+          <h2
+            className={
+              'text-base sm:text-lg font-black uppercase ' +
+              'tracking-wider text-yellow-400'
+            }
+          >
+            Create New Game
+          </h2>
           <button
             onClick={onClose}
             className={
@@ -415,13 +412,15 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
             type="button"
             onClick={submit}
             disabled={!isFormValid}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
-              isFormValid
-                ? 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-lg hover:shadow-yellow-500/20 active:scale-95 cursor-pointer'
-                : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60'
-            }`}
+            className={
+              'flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs ' +
+              'font-black uppercase tracking-wider transition-all ' +
+              (isFormValid
+                ? 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-lg ' +
+                  'hover:shadow-yellow-500/20 active:scale-95 cursor-pointer'
+                : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60')
+            }
           >
-            <Sparkles className="w-4 h-4" />
             <span>Create</span>
           </button>
         </div>

@@ -409,6 +409,7 @@ test('CreateGameModal UI: Renders countdown timer presets and input', () => {
   assert.ok(html.includes('3m'));
   assert.ok(html.includes('value="120"'));
   assert.ok(html.includes('seconds'));
+  assert.ok(!html.includes('lucide-sparkles'));
 });
 
 test('PlayerDisplay UI: Final Jeopardy tie-breaker renders category & question', () => {
