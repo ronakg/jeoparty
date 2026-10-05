@@ -4,7 +4,6 @@ import { MediaRenderer } from '../components/common/MediaRenderer';
 import {
   Maximize,
   HelpCircle,
-  Sparkles,
   XCircle,
   CheckCircle2,
   Clock,
@@ -618,7 +617,6 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                   'uppercase tracking-widest text-xs flex items-center gap-2'
                 }
               >
-                <Sparkles className="w-3.5 h-3.5" />
                 <span>Tie-Breaker Question</span>
               </div>
             )}
@@ -809,7 +807,6 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 'font-black text-xs uppercase tracking-widest mb-4'
               }
             >
-              <Sparkles className="w-3.5 h-3.5" />
               <span>Tie-Breaker Category</span>
             </div>
 

@@ -388,6 +388,9 @@ test('GameBuilder UI: Renders game settings and clue editor', () => {
   assert.ok(html.includes('WORLD GEOGRAPHY'));
   assert.ok(html.includes('Close Game'));
   assert.ok(html.includes('Question Timer'));
+  assert.ok(html.includes('Play Game'));
+  assert.ok(html.includes('lucide-play'));
+  assert.ok(!html.includes('lucide-sparkles'));
 });
 
 test('CreateGameModal UI: Renders countdown timer presets and input', () => {
@@ -431,6 +434,7 @@ test('PlayerDisplay UI: Final Jeopardy tie-breaker renders category & question',
   );
 
   assert.ok(html.includes('Tie-Breaker Category'));
+  assert.ok(!html.includes('lucide-sparkles'));
   assert.ok(html.includes('FAMOUS LANDMARKS'));
   assert.ok(html.includes('Teams are submitting secret wagers'));
 
@@ -989,6 +993,7 @@ test('AdminHost UI: Regulation tied banner renders when tie-breaker available', 
   assert.ok(html.includes('Regulation Tied ($500 each)'));
   assert.ok(html.includes('Start Tie-Breaker'));
   assert.ok(html.includes('Declare Co-Winners'));
+  assert.ok(!html.includes('lucide-sparkles'));
 });
 
 test('AdminHost UI: Setup screen renders Connect Phone button', () => {

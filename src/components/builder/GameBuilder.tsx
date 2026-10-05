@@ -15,7 +15,7 @@ import {
   X,
   FileUp,
   Video,
-  Sparkles,
+  Play,
   ExternalLink,
   Clock,
 } from 'lucide-react';
@@ -377,7 +377,7 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
             }
             title={playGameTooltip}
           >
-            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 fill-current" />
             <span>Play Game</span>
           </button>
 

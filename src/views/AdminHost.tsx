@@ -25,7 +25,6 @@ import {
   Plus,
   FolderOpen,
   X,
-  Sparkles,
   Clock,
   Trophy,
   CheckCircle2,
@@ -1145,7 +1144,6 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                   'flex items-center gap-1.5'
                 }
               >
-                <Sparkles className="w-4 h-4" />
                 <span>Start Tie-Breaker</span>
               </button>
               <button
