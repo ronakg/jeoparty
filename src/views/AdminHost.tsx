@@ -65,7 +65,7 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
     DEFAULT_PREFERENCES.cluePointValues.join(', ')
   );
   const [timerSeconds, setTimerSeconds] = useState<number | undefined>(
-    undefined
+    120
   );
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -328,7 +328,9 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
                 Question Countdown Timer
               </label>
               <span className="text-[11px] text-yellow-400 font-bold">
-                {timerSeconds ? `${timerSeconds}s per question` : 'Disabled'}
+                {timerSeconds
+                  ? `${formatTimerMmSs(timerSeconds)} per question`
+                  : 'Disabled'}
               </span>
             </div>
 
@@ -345,9 +347,14 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
                       'hover:bg-gray-700')
                 }
               >
-                Off (Default)
+                Off
               </button>
-              {[15, 30, 45, 60].map((sec) => (
+              {[
+                { label: '30s', sec: 30 },
+                { label: '1m', sec: 60 },
+                { label: '2m (Default)', sec: 120 },
+                { label: '3m', sec: 180 },
+              ].map(({ label, sec }) => (
                 <button
                   key={sec}
                   type="button"
@@ -361,7 +368,7 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
                         'hover:bg-gray-700')
                   }
                 >
-                  {sec}s
+                  {label}
                 </button>
               ))}
             </div>
