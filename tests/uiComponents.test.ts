@@ -399,13 +399,14 @@ test('CreateGameModal UI: Renders countdown timer presets and input', () => {
     })
   );
 
-  assert.ok(html.includes('Question Countdown Timer'));
+  assert.ok(html.includes('Question Countdown Timer (Seconds)'));
   assert.ok(html.includes('Off'));
   assert.ok(html.includes('30s'));
   assert.ok(html.includes('1m'));
   assert.ok(html.includes('2m (Default)'));
   assert.ok(html.includes('3m'));
   assert.ok(html.includes('value="120"'));
+  assert.ok(html.includes('seconds'));
 });
 
 test('PlayerDisplay UI: Final Jeopardy tie-breaker renders category & question', () => {

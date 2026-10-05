@@ -325,7 +325,7 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold uppercase text-gray-300">
-                Question Countdown Timer
+                Question Countdown Timer (Seconds)
               </label>
               <span className="text-[11px] text-yellow-400 font-bold">
                 {timerSeconds
@@ -373,21 +373,32 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
               ))}
             </div>
 
-            <input
-              type="number"
-              min="0"
-              placeholder="Off (no timer)"
-              value={timerSeconds || ''}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                setTimerSeconds(val > 0 ? val : undefined);
-              }}
-              className={
-                'w-full px-3.5 py-2 bg-black/50 border border-blue-800 ' +
-                'rounded-xl text-yellow-400 font-mono font-bold text-sm ' +
-                'focus:border-yellow-400 focus:outline-none'
-              }
-            />
+            <div className="relative flex items-center">
+              <input
+                type="number"
+                min="0"
+                placeholder="Off (no timer)"
+                value={timerSeconds || ''}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  setTimerSeconds(val > 0 ? val : undefined);
+                }}
+                className={
+                  'w-full pl-3.5 pr-20 py-2 bg-black/50 border ' +
+                  'border-blue-800 rounded-xl text-yellow-400 font-mono ' +
+                  'font-bold text-sm focus:border-yellow-400 ' +
+                  'focus:outline-none'
+                }
+              />
+              <span
+                className={
+                  'absolute right-3.5 text-xs text-gray-400 font-bold ' +
+                  'uppercase pointer-events-none'
+                }
+              >
+                seconds
+              </span>
+            </div>
           </div>
         </div>
 
