@@ -277,11 +277,11 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
             </div>
           </div>
 
-          {/* Question Point Values */}
+          {/* Question Points */}
           <div>
             <div className="mb-1.5">
               <label className="text-xs font-bold uppercase text-gray-300">
-                Question Point Values ($)
+                Question Points
               </label>
             </div>
 
