@@ -196,11 +196,18 @@ class GameSimulation {
     roundIndex: number,
     categoryIndex: number,
     clueIndex: number,
-    firstAnsweringTeam: 1 | 2
+    firstAnsweringTeam: 1 | 2,
+    timerStartedAt?: number
   ): Promise<GameState> {
     return this.dispatch({
       type: 'SELECT_CLUE',
-      payload: { roundIndex, categoryIndex, clueIndex, firstAnsweringTeam },
+      payload: {
+        roundIndex,
+        categoryIndex,
+        clueIndex,
+        firstAnsweringTeam,
+        timerStartedAt,
+      },
     });
   }
 
@@ -222,6 +229,13 @@ class GameSimulation {
 
   async revealHint(): Promise<GameState> {
     return this.dispatch({ type: 'REVEAL_HINT' });
+  }
+
+  async revealMedia(timerStartedAt?: number): Promise<GameState> {
+    return this.dispatch({
+      type: 'REVEAL_MEDIA',
+      payload: timerStartedAt ? { timerStartedAt } : undefined,
+    });
   }
 
   async closeClue(): Promise<GameState> {
@@ -968,4 +982,156 @@ test(
     await sim.stop();
   }
 });
+
+// ---------------------------------------------------------------------------
+// SUITE 8: Question Countdown Timer - Triggers, Media Delay & Expiration
+// ---------------------------------------------------------------------------
+
+test(
+  'Simulation: Question Timer - clue without media starts countdown',
+  async () => {
+    const sim = await GameSimulation.start();
+    try {
+      const timerGame = createGameFromPreferences({
+        title: 'Countdown Simulation',
+        team1Name: 'Stars',
+        team2Name: 'Stripes',
+        numCategories: 3,
+        numQuestionsPerCategory: 3,
+        questionTimerSeconds: 30,
+      });
+
+      await sim.loadGame(timerGame);
+
+      const beforeState = await sim.getState();
+      assert.equal(beforeState.activeClue, null);
+
+      const now = Date.now();
+      await sim.selectClue(0, 0, 0, 1, now);
+
+      const activeState = await sim.getState();
+      assert.ok(activeState.activeClue);
+      assert.equal(activeState.activeClue.timerStartedAt, now);
+      assert.equal(activeState.config?.questionTimerSeconds, 30);
+    } finally {
+      await sim.stop();
+    }
+  }
+);
+
+test(
+  'Simulation: Question Timer - clue with media defers until reveal',
+  async () => {
+    const sim = await GameSimulation.start();
+    try {
+      const mediaGame = createGameFromPreferences({
+        title: 'Media Timer Simulation',
+        team1Name: 'Stars',
+        team2Name: 'Stripes',
+        numCategories: 3,
+        numQuestionsPerCategory: 3,
+        questionTimerSeconds: 45,
+      });
+
+      mediaGame.rounds[0].categories[0].clues[0].media = {
+        type: 'audio',
+        urlOrPath: 'sample.mp3',
+      };
+
+      await sim.loadGame(mediaGame);
+      await sim.selectClue(0, 0, 0, 1);
+
+      let state = await sim.getState();
+      assert.ok(state.activeClue);
+      assert.equal(
+        state.activeClue.timerStartedAt,
+        null,
+        'Timer must remain null before media is revealed'
+      );
+
+      const mediaRevealTime = Date.now();
+      await sim.revealMedia(mediaRevealTime);
+
+      state = await sim.getState();
+      assert.equal(
+        state.activeClue?.timerStartedAt,
+        mediaRevealTime,
+        'Timer must start when host reveals media'
+      );
+    } finally {
+      await sim.stop();
+    }
+  }
+);
+
+test(
+  'Simulation: Question Timer - expiration incurs zero auto side effects',
+  async () => {
+    const sim = await GameSimulation.start();
+    try {
+      const expiredGame = createGameFromPreferences({
+        title: 'Expired Timer Simulation',
+        team1Name: 'Stars',
+        team2Name: 'Stripes',
+        numCategories: 3,
+        numQuestionsPerCategory: 3,
+        questionTimerSeconds: 15,
+      });
+
+      await sim.loadGame(expiredGame);
+
+      // Clue started 25 seconds ago (10s past 15s limit)
+      const pastTime = Date.now() - 25000;
+      await sim.selectClue(0, 0, 0, 1, pastTime);
+
+      let state = await sim.getState();
+      assert.ok(state.activeClue, 'Clue must remain open upon timer expiry');
+      assert.equal(state.team1Score, 0);
+      assert.equal(state.team2Score, 0);
+      assert.equal(
+        state.config?.rounds[0].categories[0].clues[0].state,
+        'active'
+      );
+
+      // Host can still judge clue correct without restriction
+      await sim.answerCorrect(1);
+      state = await sim.getState();
+      assert.equal(state.team1Score, 100);
+      assert.equal(state.activeClue?.correctTeam, 1);
+
+      await sim.closeClue();
+      state = await sim.getState();
+      assert.equal(state.controllingTeam, 2);
+    } finally {
+      await sim.stop();
+    }
+  }
+);
+
+test(
+  'Simulation: Question Timer - unconfigured timer leaves timer null',
+  async () => {
+    const sim = await GameSimulation.start();
+    try {
+      const standardGame = createGameFromPreferences({
+        title: 'No Timer Simulation',
+        team1Name: 'Stars',
+        team2Name: 'Stripes',
+        numCategories: 3,
+        numQuestionsPerCategory: 3,
+      });
+
+      await sim.loadGame(standardGame);
+      await sim.selectClue(0, 0, 0, 1);
+
+      const state = await sim.getState();
+      assert.ok(state.activeClue);
+      assert.equal(state.activeClue.timerStartedAt, null);
+      assert.equal(state.config?.questionTimerSeconds, undefined);
+    } finally {
+      await sim.stop();
+    }
+  }
+);
+
 
