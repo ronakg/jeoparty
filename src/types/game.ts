@@ -64,6 +64,7 @@ export interface DefaultGamePreferences {
   hintPenalty: number;
   reboundPercentage: number;
   includeFinalJeopardy: boolean; // Optional tie-breaker
+  questionTimerSeconds?: number; // Optional countdown per question
 }
 
 export const DEFAULT_PREFERENCES: DefaultGamePreferences = {
@@ -157,6 +158,7 @@ export function createGameFromPreferences(
     pointProgression: [...pointValues],
     rounds,
     finalJeopardy,
+    questionTimerSeconds: prefs.questionTimerSeconds,
   };
 }
 
@@ -169,6 +171,7 @@ export interface GameConfig {
   pointProgression?: number[];
   rounds: Round[];
   finalJeopardy?: FinalJeopardy;
+  questionTimerSeconds?: number;
 }
 
 export interface ActiveClueSession {
@@ -190,6 +193,7 @@ export interface ActiveClueSession {
   incorrectTeams?: (1 | 2)[];
   correctTeam?: 1 | 2 | null;
   awardResult?: ClueAwardResult;
+  timerStartedAt?: number | null;
 }
 
 export interface GameState {
@@ -216,9 +220,10 @@ export type GameAction = (
         categoryIndex: number;
         clueIndex: number;
         firstAnsweringTeam: 1 | 2;
+        timerStartedAt?: number | null;
       };
     }
-  | { type: 'REVEAL_MEDIA' }
+  | { type: 'REVEAL_MEDIA'; payload?: { timerStartedAt?: number } }
   | { type: 'HIDE_MEDIA' }
   | { type: 'SET_MEDIA_PLAYING'; payload: { playing: boolean } }
   | { type: 'REVEAL_HINT' }

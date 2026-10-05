@@ -373,12 +373,15 @@ test(
     urlOrPath: 'local-file/inception.mp3',
   };
 
+  originalGame.questionTimerSeconds = 30;
+
   const yamlOutput = serializeGameConfigToYaml(originalGame);
   const reloadedGame = parseGameConfigFromYaml(yamlOutput);
 
   assert.equal(reloadedGame.title, 'Multimedia Championship');
   assert.equal(reloadedGame.team1Name, 'Red Team');
   assert.equal(reloadedGame.team2Name, 'Blue Team');
+  assert.equal(reloadedGame.questionTimerSeconds, 30);
 
   const reloadedClue = reloadedGame.rounds[0].categories[0].clues[0];
   assert.equal(reloadedClue.question, 'Name this movie');

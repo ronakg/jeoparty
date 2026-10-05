@@ -35,6 +35,7 @@ export interface CleanGameConfigFile {
   pointProgression: number[];
   hintPenalty?: number;
   reboundPercentage?: number;
+  questionTimerSeconds?: number;
   categories: CleanCategoryConfig[];
   tieBreaker?: CleanTieBreakerConfig;
 }
@@ -93,6 +94,10 @@ export function serializeGameConfigToYaml(config: GameConfig): string {
     categories,
   };
 
+  if (config.questionTimerSeconds && config.questionTimerSeconds > 0) {
+    cleanFile.questionTimerSeconds = config.questionTimerSeconds;
+  }
+
   if (
     config.finalJeopardy &&
     (config.finalJeopardy.category ||
@@ -142,6 +147,10 @@ export function parseGameConfigFromYaml(yamlText: string): GameConfig {
   const defaultHintDeduction =
     Number(data.hintPenalty ?? data.defaultHintDeduction) || 100;
   const reboundPercentage = Number(data.reboundPercentage) || 50;
+  const rawTimer =
+    data.questionTimerSeconds ?? data.questionTimer ?? data.timerSeconds;
+  const questionTimerSeconds =
+    Number(rawTimer) > 0 ? Number(rawTimer) : undefined;
 
   const rawPoints =
     data.pointProgression ?? data.points ?? data.cluePointValues;
@@ -263,5 +272,6 @@ export function parseGameConfigFromYaml(yamlText: string): GameConfig {
       },
     ],
     finalJeopardy,
+    questionTimerSeconds,
   };
 }

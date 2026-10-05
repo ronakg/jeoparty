@@ -1449,3 +1449,102 @@ test('Game Rules: DECLARE_CO_WINNERS resolves tied game immediately', () => {
   assert.equal(outcome.winner, 'tie');
   assert.equal(outcome.reason, 'regulation_tie');
 });
+
+test('Question Timer: starts on SELECT_CLUE when clue has no media', () => {
+  const game = createGameFromPreferences({
+    title: 'Timer Test',
+    team1Name: 'A',
+    team2Name: 'B',
+    numCategories: 3,
+    numQuestionsPerCategory: 3,
+    questionTimerSeconds: 30,
+  });
+
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: game,
+  });
+
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+      timerStartedAt: 100000,
+    },
+  });
+
+  assert.equal(state.activeClue?.timerStartedAt, 100000);
+});
+
+test('Question Timer: deferred when clue has media until REVEAL_MEDIA', () => {
+  const game = createGameFromPreferences({
+    title: 'Media Timer Test',
+    team1Name: 'A',
+    team2Name: 'B',
+    numCategories: 3,
+    numQuestionsPerCategory: 3,
+    questionTimerSeconds: 45,
+  });
+
+  game.rounds[0].categories[0].clues[0].media = {
+    type: 'image',
+    urlOrPath: 'test.jpg',
+  };
+
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: game,
+  });
+
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+
+  assert.equal(state.activeClue?.timerStartedAt, null);
+
+  state = gameReducer(state, {
+    type: 'REVEAL_MEDIA',
+    payload: { timerStartedAt: 200000 },
+  });
+
+  assert.equal(state.activeClue?.timerStartedAt, 200000);
+});
+
+test(
+  'Question Timer: timerStartedAt is null when timer is unconfigured',
+  () => {
+  const game = createGameFromPreferences({
+    title: 'No Timer Test',
+    team1Name: 'A',
+    team2Name: 'B',
+    numCategories: 3,
+    numQuestionsPerCategory: 3,
+  });
+
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: game,
+  });
+
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+
+  assert.equal(state.activeClue?.timerStartedAt, null);
+});
+

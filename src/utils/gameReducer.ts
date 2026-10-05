@@ -107,6 +107,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         };
       });
 
+      const hasMedia = Boolean(
+        targetClue.media &&
+          targetClue.media.type &&
+          targetClue.media.type !== 'none'
+      );
+      const timerConfigured = Boolean(
+        state.config.questionTimerSeconds &&
+          state.config.questionTimerSeconds > 0
+      );
+      const timerStartedAt =
+        timerConfigured && !hasMedia
+          ? (action.payload.timerStartedAt ?? Date.now())
+          : null;
+
       return {
         ...state,
         config: {
@@ -131,6 +145,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           lastJudgedResult: null,
           incorrectTeams: [],
           correctTeam: null,
+          timerStartedAt,
         },
       };
     }
@@ -164,12 +179,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'REVEAL_MEDIA': {
       if (!state.activeClue) return state;
+      const timerConfigured = Boolean(
+        state.config?.questionTimerSeconds &&
+          state.config.questionTimerSeconds > 0
+      );
+      const timerStartedAt =
+        state.activeClue.timerStartedAt ??
+        (timerConfigured
+          ? (action.payload?.timerStartedAt ?? Date.now())
+          : null);
+
       return {
         ...state,
         activeClue: {
           ...state.activeClue,
           mediaRevealed: true,
           mediaPlaying: true,
+          timerStartedAt,
         },
       };
     }
