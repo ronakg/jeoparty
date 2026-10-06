@@ -15,6 +15,13 @@ import {
 } from '../src/utils/gameYaml';
 import { isBoardComplete, getWinnerState } from '../src/utils/gameRules';
 import { defaultGame } from '../src/data/defaultGame';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import {
+  PlayerDisplay,
+  SCORE_SPIN_DURATION_MS,
+  calculateAnimatedScore,
+} from '../src/views/PlayerDisplay';
 
 /**
  * Creates an in-memory Duplex stream pair simulating a client-server socket.
@@ -1128,6 +1135,176 @@ test(
       assert.ok(state.activeClue);
       assert.equal(state.activeClue.timerStartedAt, null);
       assert.equal(state.config?.questionTimerSeconds, undefined);
+    } finally {
+      await sim.stop();
+    }
+  }
+);
+
+test(
+  'Simulation: Question Timer - countdown urgency transitions at 10s',
+  async () => {
+    const sim = await GameSimulation.start();
+    try {
+      const timerGame = createGameFromPreferences({
+        title: 'Timer Urgency Simulation',
+        team1Name: 'Stars',
+        team2Name: 'Stripes',
+        numCategories: 3,
+        numQuestionsPerCategory: 3,
+        questionTimerSeconds: 30,
+      });
+
+      await sim.loadGame(timerGame);
+
+      // 18s elapsed -> 12s remaining (>10s, calm state)
+      const calmTime = Date.now() - 18000;
+      await sim.selectClue(0, 0, 0, 1, calmTime);
+
+      let state = await sim.getState();
+      assert.ok(state.activeClue);
+      assert.equal(state.activeClue.timerStartedAt, calmTime);
+
+      let html = renderToStaticMarkup(
+        React.createElement(PlayerDisplay, {
+          state,
+          toMediaUrl: (p: string) => p,
+          onToggleFullScreen: () => {},
+        })
+      );
+      assert.ok(html.includes('00:12'));
+      assert.ok(html.includes('text-modern-gold'));
+      assert.ok(!html.includes('animate-timer-blink'));
+
+      // 20s elapsed -> 10s remaining (threshold: urgent blinking)
+      const urgentTime = Date.now() - 20000;
+      await sim.selectClue(0, 0, 1, 1, urgentTime);
+
+      state = await sim.getState();
+      assert.ok(state.activeClue);
+      assert.equal(state.activeClue.timerStartedAt, urgentTime);
+
+      html = renderToStaticMarkup(
+        React.createElement(PlayerDisplay, {
+          state,
+          toMediaUrl: (p: string) => p,
+          onToggleFullScreen: () => {},
+        })
+      );
+      assert.ok(html.includes('00:10'));
+      assert.ok(html.includes('animate-timer-blink'));
+      assert.ok(html.includes('text-amber-300'));
+
+      // 30s elapsed -> 0s remaining (expired state)
+      const expiredTime = Date.now() - 30000;
+      await sim.selectClue(0, 0, 2, 1, expiredTime);
+
+      state = await sim.getState();
+      html = renderToStaticMarkup(
+        React.createElement(PlayerDisplay, {
+          state,
+          toMediaUrl: (p: string) => p,
+          onToggleFullScreen: () => {},
+        })
+      );
+      assert.ok(html.includes('00:00'));
+      assert.ok(html.includes('text-rose-300'));
+      assert.ok(!html.includes('animate-timer-blink'));
+    } finally {
+      await sim.stop();
+    }
+  }
+);
+
+test(
+  'Simulation: Score Lifecycle - green points clear when next clue opens',
+  async () => {
+    const sim = await GameSimulation.start();
+    try {
+      const matchGame = createGameFromPreferences({
+        title: 'Score Lifecycle Simulation',
+        team1Name: 'Stars',
+        team2Name: 'Stripes',
+        numCategories: 3,
+        numQuestionsPerCategory: 3,
+      });
+
+      await sim.loadGame(matchGame);
+
+      // Question 1: Team 1 answers correctly
+      await sim.selectClue(0, 0, 0, 1);
+      await sim.answerCorrect(1);
+
+      let state = await sim.getState();
+      assert.equal(state.team1Score, 100);
+      assert.equal(state.activeClue?.correctTeam, 1);
+
+      // Question 2: Host closes Question 1 and selects Question 2
+      await sim.closeClue();
+      await sim.selectClue(0, 0, 1, 2);
+
+      state = await sim.getState();
+      assert.ok(state.activeClue);
+      assert.equal(state.activeClue.correctTeam, null);
+
+      // Render PlayerDisplay: score must be resting gold, not green
+      const html = renderToStaticMarkup(
+        React.createElement(PlayerDisplay, {
+          state,
+          toMediaUrl: (p: string) => p,
+          onToggleFullScreen: () => {},
+        })
+      );
+      assert.ok(html.includes('w-[0.65em]'));
+      assert.ok(html.includes('text-modern-gold'));
+      assert.ok(!html.includes('text-emerald-400 drop-shadow'));
+    } finally {
+      await sim.stop();
+    }
+  }
+);
+
+test(
+  'Simulation: Score Animation - correct answer triggers 1.5s spin duration',
+  async () => {
+    const sim = await GameSimulation.start();
+    try {
+      const matchGame = createGameFromPreferences({
+        title: 'Score Animation Simulation',
+        team1Name: 'Stars',
+        team2Name: 'Stripes',
+        numCategories: 3,
+        numQuestionsPerCategory: 3,
+      });
+
+      await sim.loadGame(matchGame);
+      await sim.selectClue(0, 0, 0, 1);
+      await sim.answerCorrect(1);
+
+      const state = await sim.getState();
+      assert.equal(state.team1Score, 100);
+      assert.equal(state.activeClue?.correctTeam, 1);
+      assert.equal(SCORE_SPIN_DURATION_MS, 1500);
+
+      // Verify that during the 1.5s window the calculation reports animating
+      const midStep = calculateAnimatedScore(
+        0,
+        100,
+        750,
+        SCORE_SPIN_DURATION_MS
+      );
+      assert.equal(midStep.isAnimating, true);
+      assert.ok(midStep.currentScore > 0 && midStep.currentScore <= 100);
+
+      // Verify that after 1.5s the calculation reports complete
+      const finalStep = calculateAnimatedScore(
+        0,
+        100,
+        1500,
+        SCORE_SPIN_DURATION_MS
+      );
+      assert.equal(finalStep.isAnimating, false);
+      assert.equal(finalStep.currentScore, 100);
     } finally {
       await sim.stop();
     }

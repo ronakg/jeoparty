@@ -152,7 +152,8 @@ export const MobileConnectModal: React.FC<MobileConnectModalProps> = ({
                 <span
                   className={
                     'text-[10px] px-2 py-0.5 rounded-full bg-blue-950 ' +
-                    'border border-blue-700/60 text-blue-300 font-mono'
+                    'border border-blue-700/60 text-blue-300 font-sans ' +
+                    'font-bold'
                   }
                 >
                   LAN Connect
@@ -238,8 +239,9 @@ export const MobileConnectModal: React.FC<MobileConnectModalProps> = ({
               value={targetUrl}
               className={
                 'flex-1 bg-black/60 border border-blue-900/70 rounded-lg ' +
-                'px-3 py-2 text-xs font-mono text-blue-200 select-all ' +
-                'focus:outline-none focus:border-yellow-400/80 truncate'
+                'px-3 py-2 text-xs font-sans font-medium text-blue-200 ' +
+                'select-all focus:outline-none focus:border-yellow-400/80 ' +
+                'truncate'
               }
             />
             <button

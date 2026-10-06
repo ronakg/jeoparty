@@ -141,8 +141,10 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
         alt="Clue Picture"
         className={
           'max-h-full max-w-full w-auto h-auto object-contain rounded-2xl ' +
-          'border-4 border-yellow-500/80 bg-black/95 p-1.5 md:p-2 ' +
-          `shadow-2xl block select-none ${className}`
+          'border border-white/15 bg-black/85 p-1.5 md:p-2 ' +
+          'shadow-[0_12px_40px_rgba(0,0,0,0.8)] block select-none ' +
+          'shrink min-h-0 ' +
+          className
         }
         style={{
           maxHeight: '100%',

@@ -23,10 +23,31 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['"Outfit"', 'system-ui', '-apple-system', 'sans-serif'],
-        serif: ['"Fraunces"', 'Georgia', 'serif'],
-        mono: ['"Space Grotesk"', 'monospace'],
+        sans: [
+          '"Plus Jakarta Sans"',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Text"',
+          'system-ui',
+          'sans-serif',
+        ],
+        display: [
+          '"Outfit"',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Display"',
+          'system-ui',
+          'sans-serif',
+        ],
+        serif: ['"Fraunces"', '"New York"', 'Georgia', 'serif'],
+        mono: [
+          '"Space Mono"',
+          '"SF Mono"',
+          'Menlo',
+          'Monaco',
+          'Consolas',
+          'monospace',
+        ],
       },
       boxShadow: {
         'tile': '0 10px 25px -5px rgba(2, 4, 18, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.18)',

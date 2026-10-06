@@ -311,8 +311,8 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
               onChange={(e) => handleCustomPointsChange(e.target.value)}
               className={
                 'w-full px-3.5 py-2 bg-black/50 border border-blue-800 ' +
-                'rounded-xl text-yellow-400 font-mono font-bold text-sm ' +
-                'focus:border-yellow-400 focus:outline-none'
+                'rounded-xl text-yellow-400 font-sans font-bold text-sm ' +
+                'tabular-nums focus:border-yellow-400 focus:outline-none'
               }
             />
           </div>
@@ -381,8 +381,8 @@ export const CreateGameModal: React.FC<CreateGameModalProps> = ({
                 }}
                 className={
                   'w-full pl-3.5 pr-20 py-2 bg-black/50 border ' +
-                  'border-blue-800 rounded-xl text-yellow-400 font-mono ' +
-                  'font-bold text-sm focus:border-yellow-400 ' +
+                  'border-blue-800 rounded-xl text-yellow-400 font-sans ' +
+                  'font-bold text-sm tabular-nums focus:border-yellow-400 ' +
                   'focus:outline-none'
                 }
               />
@@ -971,7 +971,12 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                   Active Turn
                 </span>
               )}
-              <span className="text-yellow-300 font-mono shrink-0">
+              <span
+                className={
+                  'text-yellow-300 font-display font-black tracking-tight ' +
+                  'tabular-nums shrink-0'
+                }
+              >
                 ${team1Score}
               </span>
             </button>
@@ -1003,7 +1008,12 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                   Active Turn
                 </span>
               )}
-              <span className="text-yellow-300 font-mono shrink-0">
+              <span
+                className={
+                  'text-yellow-300 font-display font-black tracking-tight ' +
+                  'tabular-nums shrink-0'
+                }
+              >
                 ${team2Score}
               </span>
             </button>
@@ -1264,7 +1274,11 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     type="number"
                     value={t1Wager}
                     onChange={(e) => setT1Wager(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-black/60 border border-blue-800 rounded-lg text-white font-mono text-sm"
+                    className={
+                      'w-full px-3 py-2 bg-black/60 border border-blue-800 ' +
+                      'rounded-lg text-white font-sans font-bold text-sm ' +
+                      'tabular-nums focus:border-yellow-400 focus:outline-none'
+                    }
                   />
                 </div>
                 <div>
@@ -1275,7 +1289,11 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     type="number"
                     value={t2Wager}
                     onChange={(e) => setT2Wager(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-black/60 border border-blue-800 rounded-lg text-white font-mono text-sm"
+                    className={
+                      'w-full px-3 py-2 bg-black/60 border border-blue-800 ' +
+                      'rounded-lg text-white font-sans font-bold text-sm ' +
+                      'tabular-nums focus:border-yellow-400 focus:outline-none'
+                    }
                   />
                 </div>
               </div>
@@ -1516,11 +1534,13 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                           }
                         >
                           <span
-                            className={`text-sm font-black font-mono ${
-                              isCompleted
+                            className={
+                              'text-sm font-black font-display ' +
+                              'tracking-tight tabular-nums ' +
+                              (isCompleted
                                 ? 'line-through text-slate-500'
-                                : 'text-amber-400'
-                            }`}
+                                : 'text-amber-400')
+                            }
                           >
                             ${clue.points}
                           </span>
@@ -1646,7 +1666,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                   <span
                     className={
                       'text-xl sm:text-2xl font-black text-yellow-400 ' +
-                      'font-mono'
+                      'font-display tracking-tight tabular-nums'
                     }
                   >
                     ${activeClue.currentAvailablePoints}
@@ -1668,14 +1688,15 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     <span
                       className={
                         'flex items-center gap-1 px-2 py-0.5 rounded ' +
-                        'text-xs font-mono font-bold ' +
+                        'text-xs font-display font-bold tabular-nums ' +
+                        'tracking-wide ' +
                         (!activeClue.timerStartedAt
                           ? 'bg-blue-950/60 text-blue-300 ' +
                             'border border-blue-800'
                           : hostTimerRemaining === 0
                             ? 'bg-rose-950/60 text-rose-300 ' +
                               'border border-rose-800'
-                            : hostTimerRemaining <= 5
+                            : hostTimerRemaining <= 10
                               ? 'bg-amber-950/60 text-amber-300 ' +
                                 'border border-amber-800'
                               : 'bg-blue-950/80 text-yellow-400 ' +
@@ -1739,7 +1760,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
               <span className="text-xs uppercase font-bold text-gray-500 block mb-1">
                 Question
               </span>
-              <p className="text-lg font-serif font-bold text-white">
+              <p className="text-lg font-display font-bold text-white">
                 {activeClueData.question}
               </p>
             </div>
@@ -2157,8 +2178,8 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     onChange={(e) => setTempTeam1Score(Number(e.target.value))}
                     className={
                       'flex-1 min-w-0 px-3 py-2 bg-black/60 border ' +
-                      'border-blue-800 rounded-lg text-white font-mono ' +
-                      'text-base font-bold'
+                      'border-blue-800 rounded-lg text-white font-sans ' +
+                      'text-base font-bold tabular-nums focus:border-yellow-400'
                     }
                   />
                   <button
@@ -2193,8 +2214,8 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     onChange={(e) => setTempTeam2Score(Number(e.target.value))}
                     className={
                       'flex-1 min-w-0 px-3 py-2 bg-black/60 border ' +
-                      'border-blue-800 rounded-lg text-white font-mono ' +
-                      'text-base font-bold'
+                      'border-blue-800 rounded-lg text-white font-sans ' +
+                      'text-base font-bold tabular-nums focus:border-yellow-400'
                     }
                   />
                   <button

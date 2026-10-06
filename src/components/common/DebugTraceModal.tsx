@@ -115,7 +115,8 @@ export const DebugTraceModal: React.FC<DebugTraceModalProps> = ({
                 <span
                   className={
                     'text-[10px] px-2 py-0.5 rounded-full bg-blue-950 ' +
-                    'border border-blue-700/60 text-blue-300 font-mono'
+                    'border border-blue-700/60 text-blue-300 font-sans ' +
+                    'font-bold'
                   }
                 >
                   {events.length} events
@@ -178,7 +179,7 @@ export const DebugTraceModal: React.FC<DebugTraceModalProps> = ({
         <div
           ref={scrollRef}
           className={
-            'flex-1 p-4 overflow-y-auto space-y-2 font-mono text-xs ' +
+            'flex-1 p-4 overflow-y-auto space-y-2 font-sans text-xs ' +
             'bg-[#030712] border-b border-blue-900/40 select-text'
           }
         >

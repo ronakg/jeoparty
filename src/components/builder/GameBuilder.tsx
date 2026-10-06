@@ -777,7 +777,8 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                                 <span
                                   className={
                                     'text-xs sm:text-sm font-black ' +
-                                    'text-yellow-400 font-mono'
+                                    'text-yellow-400 font-display ' +
+                                    'tracking-tight tabular-nums'
                                   }
                                 >
                                   ${clue.points}

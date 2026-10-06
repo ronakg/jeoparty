@@ -209,3 +209,85 @@ test(
   );
 });
 
+test('App Typography: index.html loads modern font suites and weights', () => {
+  const htmlPath = path.join(rootDir, 'index.html');
+  const html = fs.readFileSync(htmlPath, 'utf-8');
+
+  assert.ok(
+    html.includes('family=Space+Mono'),
+    'index.html must load Space Mono for fixed-pitch elements'
+  );
+  assert.ok(
+    !html.includes('Space+Grotesk'),
+    'index.html must not load proportional Space Grotesk'
+  );
+  assert.ok(
+    html.includes('Plus+Jakarta+Sans:wght@400'),
+    'index.html must load base weight 400 for Plus Jakarta Sans'
+  );
+  assert.ok(
+    html.includes('family=Fraunces'),
+    'index.html must load Fraunces variable serif'
+  );
+});
+
+test('App Typography: tailwind config defines robust font stacks', () => {
+  const tailwindPath = path.join(rootDir, 'tailwind.config.js');
+  const tailwind = fs.readFileSync(tailwindPath, 'utf-8');
+
+  assert.ok(
+    tailwind.includes('"Space Mono"') && tailwind.includes('"SF Mono"'),
+    'mono stack must use Space Mono with native SF Mono fallback'
+  );
+  assert.ok(
+    tailwind.includes('"New York"') && tailwind.includes('"Fraunces"'),
+    'serif stack must include Fraunces and New York'
+  );
+  assert.ok(
+    tailwind.includes('"SF Pro Display"') && tailwind.includes('"Outfit"'),
+    'display stack must include Outfit and SF Pro Display'
+  );
+});
+
+test('App Typography: index.css sets optical sizing and cleans CSS', () => {
+  const cssPath = path.join(rootDir, 'src/index.css');
+  const css = fs.readFileSync(cssPath, 'utf-8');
+
+  assert.ok(
+    css.includes('.font-serif') && css.includes('font-optical-sizing: auto'),
+    'index.css must configure optical sizing for serif typography'
+  );
+  assert.ok(
+    !css.includes('.font-num'),
+    'index.css must not retain unused .font-num class'
+  );
+});
+
+test('App Typography: source files contain zero fixed-width font-mono', () => {
+  const srcDir = path.join(rootDir, 'src');
+  const getSourceFiles = (dir: string): string[] => {
+    let files: string[] = [];
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files = files.concat(getSourceFiles(fullPath));
+      } else if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) {
+        files.push(fullPath);
+      }
+    }
+    return files;
+  };
+
+  const sourceFiles = getSourceFiles(srcDir);
+  assert.ok(sourceFiles.length > 0, 'Must find source files in src/');
+  for (const filePath of sourceFiles) {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const relativePath = path.relative(rootDir, filePath);
+    assert.ok(
+      !content.includes('font-mono'),
+      `File ${relativePath} must not contain font-mono`
+    );
+  }
+});
+

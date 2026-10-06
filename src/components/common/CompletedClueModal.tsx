@@ -97,8 +97,8 @@ export const CompletedClueModal: React.FC<CompletedClueModalProps> = ({
               </span>
               <h2
                 className={
-                  'text-base font-black uppercase tracking-wider ' +
-                  'text-amber-400 font-mono'
+                  'text-base font-black uppercase tracking-tight ' +
+                  'text-amber-400 font-display tabular-nums'
                 }
               >
                 ${clue.points}

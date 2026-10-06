@@ -2,7 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { PlayerDisplay, QuestionTimerBadge } from '../src/views/PlayerDisplay';
+import {
+  PlayerDisplay,
+  QuestionTimerBadge,
+  SCORE_SPIN_DURATION_MS,
+  calculateAnimatedScore,
+} from '../src/views/PlayerDisplay';
 import { AdminHost, CreateGameModal } from '../src/views/AdminHost';
 import { GameBuilder } from '../src/components/builder/GameBuilder';
 import { MediaRenderer } from '../src/components/common/MediaRenderer';
@@ -95,7 +100,7 @@ test('PlayerDisplay UI: Detailed question view has flat category & chunky points
   assert.ok(html.includes('text-blue-100'));
   assert.ok(html.includes('WORLD GEOGRAPHY'));
   assert.ok(html.includes('Danube River'));
-  assert.ok(html.includes('font-display font-black text-white'));
+  assert.ok(html.includes('font-display font-bold text-white'));
   assert.ok(html.includes('$100'));
   assert.ok(html.includes('text-modern-gold font-display leading-none'));
 });
@@ -114,12 +119,25 @@ test(
 
     const activeHtml = renderToStaticMarkup(
       React.createElement(QuestionTimerBadge, {
-        remaining: 20,
+        remaining: 11,
         isWaitingForMedia: false,
       })
     );
-    assert.ok(activeHtml.includes('00:20'));
+    assert.ok(activeHtml.includes('00:11'));
     assert.ok(activeHtml.includes('text-modern-gold'));
+    assert.ok(activeHtml.includes('font-display font-bold'));
+    assert.ok(!activeHtml.includes('font-mono'));
+    assert.ok(!activeHtml.includes('animate-timer-blink'));
+
+    const thresholdHtml = renderToStaticMarkup(
+      React.createElement(QuestionTimerBadge, {
+        remaining: 10,
+        isWaitingForMedia: false,
+      })
+    );
+    assert.ok(thresholdHtml.includes('00:10'));
+    assert.ok(thresholdHtml.includes('text-amber-300'));
+    assert.ok(thresholdHtml.includes('animate-timer-blink'));
 
     const urgentHtml = renderToStaticMarkup(
       React.createElement(QuestionTimerBadge, {
@@ -129,7 +147,7 @@ test(
     );
     assert.ok(urgentHtml.includes('00:04'));
     assert.ok(urgentHtml.includes('text-amber-300'));
-    assert.ok(urgentHtml.includes('animate-pulse'));
+    assert.ok(urgentHtml.includes('animate-timer-blink'));
 
     const expiredHtml = renderToStaticMarkup(
       React.createElement(QuestionTimerBadge, {
@@ -139,6 +157,7 @@ test(
     );
     assert.ok(expiredHtml.includes('00:00'));
     assert.ok(expiredHtml.includes('text-rose-300'));
+    assert.ok(!expiredHtml.includes('animate-timer-blink'));
   }
 );
 
@@ -177,6 +196,46 @@ test(
 
     assert.ok(html.includes('00:25'));
     assert.ok(html.includes('tabular-nums'));
+  }
+);
+
+test(
+  'PlayerDisplay UI: Question timer renders blink animation at 10s and down',
+  () => {
+    const timerGame = {
+      ...defaultGame,
+      questionTimerSeconds: 30,
+    };
+
+    let state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: timerGame,
+    });
+
+    const now = Date.now();
+    // 20s elapsed -> 10s remaining (threshold)
+    state = gameReducer(state, {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 0,
+        clueIndex: 0,
+        firstAnsweringTeam: 1,
+        timerStartedAt: now - 20000,
+      },
+    });
+
+    const html = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+
+    assert.ok(html.includes('00:10'));
+    assert.ok(html.includes('animate-timer-blink'));
+    assert.ok(html.includes('text-amber-300'));
   }
 );
 
@@ -273,6 +332,89 @@ test('PlayerDisplay UI: Hint revealed renders hint card with deduction', () => {
   assert.ok(html.includes('Capital of Hungary.'));
 });
 
+test('PlayerDisplay UI: Score resets to resting gold on next question', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+
+  // Clue 1: Team 1 answers correctly
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  state = gameReducer(state, {
+    type: 'ANSWER_CORRECT',
+    payload: { team: 1 },
+  });
+
+  assert.equal(state.team1Score, 100);
+  assert.equal(state.activeClue?.correctTeam, 1);
+
+  // Close Clue 1 and open Clue 2
+  state = gameReducer(state, { type: 'CLOSE_CLUE' });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 1,
+      firstAnsweringTeam: 2,
+    },
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(html.includes('w-[0.65em]'));
+  assert.ok(html.includes('text-modern-gold'));
+  assert.ok(!html.includes('text-emerald-400 drop-shadow'));
+});
+
+test('PlayerDisplay UI: Points animation spins for roughly 1.5 seconds', () => {
+  assert.equal(SCORE_SPIN_DURATION_MS, 1500);
+
+  // At start (0ms), score remains startScore and isAnimating is true
+  const initial = calculateAnimatedScore(200, 600, 0, SCORE_SPIN_DURATION_MS);
+  assert.equal(initial.currentScore, 200);
+  assert.equal(initial.isAnimating, true);
+
+  // Midway (750ms), score has counted up and continues spinning
+  const mid = calculateAnimatedScore(200, 600, 750, SCORE_SPIN_DURATION_MS);
+  assert.ok(mid.currentScore > 200 && mid.currentScore < 600);
+  assert.equal(mid.isAnimating, true);
+
+  // Late progress (1400ms), still spinning near the target
+  const late = calculateAnimatedScore(200, 600, 1400, SCORE_SPIN_DURATION_MS);
+  assert.ok(late.currentScore >= 590);
+  assert.equal(late.isAnimating, true);
+
+  // Target duration (1500ms), resolves to endScore and finishes animation
+  const complete = calculateAnimatedScore(
+    200,
+    600,
+    1500,
+    SCORE_SPIN_DURATION_MS
+  );
+  assert.equal(complete.currentScore, 600);
+  assert.equal(complete.isAnimating, false);
+
+  // Identity check when start score equals end score
+  const identity = calculateAnimatedScore(600, 600, 0, SCORE_SPIN_DURATION_MS);
+  assert.equal(identity.currentScore, 600);
+  assert.equal(identity.isAnimating, false);
+});
+
 test('PlayerDisplay UI: Footer score displays tabular slots for each digit', () => {
   let state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
@@ -361,6 +503,8 @@ test('AdminHost UI: Clue grid applies Option 1 contrast and omits answer preview
   assert.ok(html.includes('bg-[#0c2356]'));
   assert.ok(html.includes('bg-[#0e1f42]'));
   assert.ok(html.includes('text-amber-400'));
+  assert.ok(html.includes('font-display tracking-tight tabular-nums'));
+  assert.ok(!html.includes('font-mono'));
   assert.ok(html.includes('text-slate-100'));
 
   // Question text remains visible as sneak peek for host
@@ -448,7 +592,7 @@ test('PlayerDisplay UI: Final Jeopardy tie-breaker renders category & question',
   );
 
   assert.ok(html.includes('Exposition Universelle'));
-  assert.ok(html.includes('font-display font-black text-white'));
+  assert.ok(html.includes('font-display font-bold text-white'));
   assert.ok(
     html.includes('from-[#071c59] to-[#041038]'),
     'Tie-breaker container must use calibrated royal sapphire gradient'
@@ -1249,3 +1393,165 @@ test(
     );
   }
 );
+
+test(
+  'PlayerDisplay UI: Clue questions unify on font-display typography',
+  () => {
+    let state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: defaultGame,
+    });
+    state = gameReducer(state, {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 0,
+        clueIndex: 0,
+        firstAnsweringTeam: 1,
+      },
+    });
+
+    const playerHtml = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+
+    const adminHtml = renderToStaticMarkup(
+      React.createElement(AdminHost, {
+        state,
+        dispatch: () => {},
+        openDisplayWindow: () => {},
+        onOpenBuilder: () => {},
+        onGameCreated: () => {},
+      })
+    );
+
+    assert.ok(
+      playerHtml.includes('font-display font-bold text-white'),
+      'PlayerDisplay clue question must use font-display font-bold'
+    );
+    assert.ok(
+      adminHtml.includes('font-display font-bold text-white'),
+      'AdminHost clue question must use matching font-display font-bold'
+    );
+  }
+);
+
+test('PlayerDisplay UI: Active clue renders spotlight and points HUD', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(
+    html.includes('ellipse_at_center'),
+    'Stage must render sapphire spotlight gradient'
+  );
+  assert.ok(
+    html.includes('tracking-[0.15em]'),
+    'Category badge must render marquee tracking'
+  );
+  assert.ok(
+    html.includes('text-modern-gold font-display leading-none'),
+    'Points must render in modern gold display typography'
+  );
+  assert.ok(
+    !html.includes('border-amber-400/35'),
+    'Points must not render with boxed border'
+  );
+  assert.ok(
+    html.includes('border-amber-400'),
+    'Active team podium must render uniform amber border'
+  );
+  assert.ok(
+    !html.includes('h-0.5 bg-gradient-to-r from-amber-400'),
+    'Podium must not render uneven top light bar'
+  );
+
+  const answeredState = gameReducer(state, {
+    type: 'ANSWER_CORRECT',
+    payload: { team: 1 },
+  });
+  const answeredHtml = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state: answeredState,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(
+    answeredHtml.includes('border-emerald-500'),
+    'Podium must render clean emerald border on correct answer'
+  );
+});
+
+test('PlayerDisplay UI: Media clue renders responsive split columns', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+
+  if (state.config) {
+    state.config.rounds[0].categories[0].clues[0].media = {
+      type: 'image',
+      urlOrPath: 'sample.png',
+    };
+  }
+
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  state = gameReducer(state, { type: 'REVEAL_MEDIA' });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(
+    html.includes('md:flex-row'),
+    'Media clue must render split columns on wide displays'
+  );
+  assert.ok(
+    html.includes('self-stretch'),
+    'Media column must stretch to full height of stage'
+  );
+  assert.ok(
+    html.includes('object-contain'),
+    'Image must enforce object-contain'
+  );
+  assert.ok(
+    html.includes('shadow-[0_12px_40px_rgba(0,0,0,0.8)]'),
+    'Image must render in cinematic shadow frame'
+  );
+});

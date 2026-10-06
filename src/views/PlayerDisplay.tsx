@@ -18,39 +18,66 @@ interface PlayerDisplayProps {
   onToggleFullScreen: () => void;
 }
 
-const useAnimatedScore = (targetScore: number, msPerHundred = 500) => {
+export const SCORE_SPIN_DURATION_MS = 1500;
+
+export const calculateAnimatedScore = (
+  startScore: number,
+  endScore: number,
+  elapsedMs: number,
+  durationMs: number = SCORE_SPIN_DURATION_MS
+): { currentScore: number; isAnimating: boolean } => {
+  if (startScore === endScore) {
+    return { currentScore: endScore, isAnimating: false };
+  }
+  const diff = endScore - startScore;
+  const progress = Math.min(Math.max(0, elapsedMs) / durationMs, 1);
+  const easeOut = 1 - Math.pow(1 - progress, 3);
+  const currentScore =
+    progress < 1 ? Math.round(startScore + diff * easeOut) : endScore;
+  return { currentScore, isAnimating: progress < 1 };
+};
+
+export const useAnimatedScore = (
+  targetScore: number,
+  clueKey?: string | null,
+  duration: number = SCORE_SPIN_DURATION_MS
+) => {
   const [displayScore, setDisplayScore] = useState(targetScore);
   const prevScoreRef = useRef(targetScore);
+  const prevClueKeyRef = useRef(clueKey);
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
+    // Snap immediately to target score and clear animation on clue changes
+    if (prevClueKeyRef.current !== clueKey) {
+      prevClueKeyRef.current = clueKey;
+      prevScoreRef.current = targetScore;
+      setDisplayScore(targetScore);
+      setIsAnimating(false);
+      return;
+    }
+
     const startScore = prevScoreRef.current;
     const endScore = targetScore;
     prevScoreRef.current = targetScore;
 
     if (startScore === endScore) {
       setDisplayScore(endScore);
+      setIsAnimating(false);
       return;
     }
 
-    const diff = endScore - startScore;
-    // Half a second (500ms) per 100 points
-    const duration = Math.max(
-      250,
-      Math.round((Math.abs(diff) / 100) * msPerHundred)
-    );
     const startTime = performance.now();
     let animationFrameId: number;
     setIsAnimating(true);
 
     const step = (currentTime: number) => {
       const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-      const current = Math.round(startScore + diff * easeOut);
-      setDisplayScore(current);
+      const { currentScore, isAnimating: stillAnimating } =
+        calculateAnimatedScore(startScore, endScore, elapsed, duration);
+      setDisplayScore(currentScore);
 
-      if (progress < 1) {
+      if (stillAnimating) {
         animationFrameId = requestAnimationFrame(step);
       } else {
         setDisplayScore(endScore);
@@ -62,8 +89,10 @@ const useAnimatedScore = (targetScore: number, msPerHundred = 500) => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      setIsAnimating(false);
+      setDisplayScore(endScore);
     };
-  }, [targetScore, msPerHundred]);
+  }, [targetScore, clueKey, duration]);
 
   return { displayScore, isAnimating };
 };
@@ -188,7 +217,7 @@ export const QuestionTimerBadge: React.FC<{
         className={
           'flex items-center gap-1.5 px-3 py-1 rounded-full border ' +
           'bg-[#060e24]/80 border-blue-500/25 text-blue-300/70 ' +
-          'font-mono font-bold text-xs sm:text-sm tracking-wider ' +
+          'font-display font-bold text-xs sm:text-sm tracking-wider ' +
           'tabular-nums'
         }
         title="Timer starts when media is shown"
@@ -200,19 +229,21 @@ export const QuestionTimerBadge: React.FC<{
   }
 
   const isExpired = remaining === 0;
-  const isUrgent = remaining > 0 && remaining <= 5;
+  const isUrgent = remaining > 0 && remaining <= 10;
 
   return (
     <div
+      key={isUrgent ? remaining : 'timer'}
       className={
         'flex items-center gap-1.5 px-3 py-1 rounded-full border ' +
-        'font-mono font-bold text-xs sm:text-sm tracking-wider ' +
+        'font-display font-bold text-xs sm:text-sm tracking-wider ' +
         'tabular-nums transition-colors duration-200 ' +
         (isExpired
-          ? 'bg-rose-950/40 border-rose-500/50 text-rose-300'
+          ? 'bg-rose-950/60 border-rose-500/60 text-rose-300 ' +
+            'shadow-[0_0_15px_rgba(244,63,94,0.4)]'
           : isUrgent
-            ? 'bg-amber-950/40 border-amber-500/50 text-amber-300 ' +
-              'animate-pulse'
+            ? 'bg-amber-950/50 border-amber-500/60 text-amber-300 ' +
+              'animate-timer-blink shadow-[0_0_15px_rgba(245,158,11,0.35)]'
             : 'bg-[#060e24]/80 border-blue-400/30 text-modern-gold')
       }
     >
@@ -239,10 +270,15 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
   const { config, currentRoundIndex, team1Score, team2Score, activeClue } =
     state;
 
+  const activeClueKey = activeClue
+    ? `${activeClue.roundIndex}-${activeClue.categoryIndex}-` +
+      `${activeClue.clueIndex}`
+    : null;
+
   const { displayScore: t1DisplayScore, isAnimating: t1Animating } =
-    useAnimatedScore(team1Score);
+    useAnimatedScore(team1Score, activeClueKey);
   const { displayScore: t2DisplayScore, isAnimating: t2Animating } =
-    useAnimatedScore(team2Score);
+    useAnimatedScore(team2Score, activeClueKey);
 
   const isClueResolved = Boolean(
     activeClue?.correctTeam ||
@@ -376,9 +412,13 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
       if (lastJudgedTrigger !== triggerKey) {
         setLastJudgedTrigger(triggerKey);
         setAwardedTeam(activeClue.correctTeam ?? null);
-        const timer = setTimeout(() => setAwardedTeam(null), 1200);
+        const timer = setTimeout(() => setAwardedTeam(null), 1500);
         return () => clearTimeout(timer);
       }
+    } else {
+      setLastJudgedTrigger(null);
+      setIsShaking(false);
+      setAwardedTeam(null);
     }
   }, [
     activeClue,
@@ -477,17 +517,31 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         !isIncorrect &&
         !activeClue.answerRevealed &&
         activeClue.currentAnsweringTeam === teamId;
+      const isRoundActive =
+        !activeClue.correctTeam && !activeClue.answerRevealed;
+      const isHighlighted =
+        isRoundActive && (isAnswering || (isOriginTurn && !isIncorrect));
 
-      let borderClass = 'border border-blue-900/50 bg-[#060d22]';
+      let borderClass =
+        'border border-blue-900/40 bg-[#050b1d]/70 opacity-75';
       if (isCorrect) {
         borderClass =
-          'border-2 border-emerald-500 bg-emerald-950/30' +
+          'border border-emerald-500 bg-emerald-950/30 ' +
+          'bg-gradient-to-b from-emerald-500/15 via-[#06241a] to-[#03150f] ' +
+          'shadow-[0_0_20px_rgba(16,185,129,0.3)]' +
           (awardedTeam === teamId ? ' animate-podium-award' : '');
       } else if (isIncorrect) {
-        borderClass = 'border-2 border-rose-500/80 bg-rose-950/30';
+        borderClass =
+          'border border-rose-500/80 ' +
+          'bg-gradient-to-b from-rose-950/25 to-[#0f0407] opacity-60';
       } else if (isAnswering) {
         borderClass =
-          'border-2 bg-[#09173a] border-blue-400 animate-border-blink';
+          'border border-amber-400 bg-[#050b1d]/70 ' +
+          'shadow-[0_0_20px_rgba(251,191,36,0.3)] animate-border-blink';
+      } else if (isHighlighted) {
+        borderClass =
+          'border border-amber-400/80 bg-[#050b1d]/70 ' +
+          'shadow-[0_0_15px_rgba(251,191,36,0.2)]';
       }
 
       let badge = null;
@@ -544,14 +598,15 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         );
       }
 
-      return { borderClass, badge };
+      return { borderClass, badge, isHighlighted };
     }
 
     // 2. On the board (activeClue is null)
     const isTurn = state.controllingTeam === teamId;
     const borderClass = isTurn
-      ? 'border-2 bg-[#09173a] border-blue-400/80 shadow-md'
-      : 'border border-blue-900/50 bg-[#060d22]';
+      ? 'border border-amber-400/80 bg-[#050b1d]/70 ' +
+        'shadow-[0_0_15px_rgba(251,191,36,0.2)]'
+      : 'border border-blue-900/40 bg-[#050b1d]/70 opacity-75';
     const badge = isTurn ? (
       <span
         className={
@@ -563,7 +618,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
       </span>
     ) : null;
 
-    return { borderClass, badge };
+    return { borderClass, badge, isHighlighted: isTurn };
   };
 
   return (
@@ -777,7 +832,11 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                     ? config.team2Name
                     : config.team1Name}
                 </span>
-                <span className="text-slate-500 font-mono font-bold">
+                <span
+                  className={
+                    'text-slate-500 font-display font-bold tabular-nums'
+                  }
+                >
                   ${winnerState.winner === 'team1' ? team2Score : team1Score}
                 </span>
               </div>
@@ -835,8 +894,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 >
                   <p
                     className={
-                      'text-3xl md:text-5xl font-display font-black ' +
-                      'text-white leading-snug tracking-tight ' +
+                      'text-3xl md:text-5xl font-display font-bold ' +
+                      'text-white leading-snug tracking-normal ' +
                       'drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]'
                     }
                   >
@@ -905,10 +964,10 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
           /* Active Clue View */
           <div
             className={
-              `flex-1 flex flex-col justify-between p-6 md:p-8 lg:p-10 ` +
-              `rounded-2xl bg-gradient-to-b from-[#071c59] to-[#041038] ` +
-              `shadow-2xl relative overflow-hidden transition-all ` +
-              `duration-300 ` +
+              `flex-1 min-h-0 h-full flex flex-col justify-between p-6 ` +
+              `md:p-8 lg:p-10 rounded-2xl bg-gradient-to-b from-[#071c59] ` +
+              `to-[#041038] shadow-2xl relative overflow-hidden ` +
+              `transition-all duration-300 ` +
               (isShaking
                 ? 'animate-shake !border-2 !border-rose-500 ' +
                   'shadow-[0_0_35px_rgba(244,63,94,0.45)] '
@@ -922,10 +981,20 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                     'animate-modern-enter ')
             }
           >
+            {/* Ambient Sapphire Spotlight & Horizon Light */}
             <div
               className={
-                'absolute inset-0 bg-radial from-blue-600/10 via-transparent ' +
-                'to-transparent pointer-events-none'
+                'absolute inset-0 ' +
+                'bg-[radial-gradient(ellipse_at_center,' +
+                '_var(--tw-gradient-stops))] ' +
+                'from-blue-600/20 via-[#06174a]/60 to-[#020517] ' +
+                'pointer-events-none'
+              }
+            />
+            <div
+              className={
+                'absolute -top-24 left-1/2 -translate-x-1/2 w-3/4 h-48 ' +
+                'bg-blue-500/15 blur-3xl pointer-events-none'
               }
             />
 
@@ -933,18 +1002,21 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
             <div
               className={
                 'w-full flex items-center justify-between border-b ' +
-                'border-white/[0.08] pb-3 mb-2 relative z-10'
+                'border-white/[0.08] pb-3 mb-2 relative z-10 shrink-0'
               }
             >
-              <span
+              <div
                 className={
-                  'px-4 py-1.5 rounded-full bg-blue-500/20 text-blue-100 ' +
-                  'text-sm md:text-base font-extrabold uppercase ' +
-                  'tracking-wide font-display'
+                  'inline-flex items-center px-4 py-1.5 rounded-xl ' +
+                  'bg-blue-500/20 border border-blue-400/30 text-blue-100 ' +
+                  'text-xs sm:text-sm md:text-base font-extrabold uppercase ' +
+                  'tracking-[0.15em] font-display backdrop-blur shadow-sm'
                 }
               >
-                {currentRound?.categories[activeClue.categoryIndex]?.name}
-              </span>
+                <span>
+                  {currentRound?.categories[activeClue.categoryIndex]?.name}
+                </span>
+              </div>
 
               <div className="flex items-center gap-3 sm:gap-4">
                 {timerState.enabled && (
@@ -966,8 +1038,9 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 )}
                 <span
                   className={
-                    'text-xl sm:text-2xl md:text-3xl font-black ' +
-                    'tracking-tight text-modern-gold font-display leading-none'
+                    'text-2xl sm:text-3xl md:text-4xl font-black ' +
+                    'tracking-tight text-modern-gold font-display ' +
+                    'leading-none'
                   }
                 >
                   ${activeClue.currentAvailablePoints}
@@ -976,37 +1049,23 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
             </div>
 
             {/* Central Question & Media Presentation */}
-            <div
-              className={
-                'flex-1 flex flex-col items-center relative z-10 ' +
-                (showActiveMedia
-                  ? 'justify-start pt-2 overflow-hidden '
-                  : 'justify-center my-auto ') +
-                'text-center max-w-5xl px-4 py-2 mx-auto w-full min-h-0'
-              }
-            >
-              <h2
+            {showActiveMedia &&
+            activeClueData.media &&
+            activeClueData.media.type !== 'none' ? (
+              <div
                 className={
-                  showActiveMedia
-                    ? 'shrink-0 text-base sm:text-lg md:text-xl ' +
-                      'font-display font-black text-slate-100 ' +
-                      'tracking-tight leading-snug mb-2 ' +
-                      'drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] line-clamp-3'
-                    : 'text-3xl md:text-5xl lg:text-6xl font-display ' +
-                      'font-black text-white tracking-tight leading-snug ' +
-                      'md:leading-tight ' +
-                      'drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]'
+                  'flex-1 w-full max-w-6xl mx-auto flex flex-col ' +
+                  'md:flex-row items-center justify-center gap-6 md:gap-8 ' +
+                  'px-4 py-2 min-h-0 h-full max-h-full relative z-10 ' +
+                  'overflow-hidden'
                 }
               >
-                {activeClueData.question}
-              </h2>
-
-              {/* In-Card Media Display */}
-              {showActiveMedia && activeClueData.media && (
+                {/* Left Column: Featured Media */}
                 <div
                   className={
                     'flex-1 min-h-0 w-full flex items-center ' +
-                    'justify-center overflow-hidden py-1'
+                    'justify-center overflow-hidden py-1 h-full max-h-full ' +
+                    'self-stretch'
                   }
                 >
                   <MediaRenderer
@@ -1019,104 +1078,246 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                     className="max-h-full max-w-full"
                   />
                 </div>
-              )}
 
-              {/* Both Teams Answered Incorrectly */}
-              {activeClue.incorrectTeams &&
-                activeClue.incorrectTeams.length >= 2 &&
-                !activeClue.answerRevealed && (
-                  <div
+                {/* Right Column: Question & Auxiliary Content */}
+                <div
+                  className={
+                    'flex-1 w-full flex flex-col items-center md:items-start ' +
+                    'justify-center text-center md:text-left min-h-0'
+                  }
+                >
+                  <h2
                     className={
-                      'mt-6 px-6 py-3 rounded-2xl bg-gray-900 border ' +
-                      'border-rose-500/50 flex items-center justify-center ' +
-                      'gap-3 max-w-2xl w-full'
+                      'shrink-0 text-2xl sm:text-3xl md:text-4xl lg:text-5xl ' +
+                      'font-display font-bold text-white tracking-normal ' +
+                      'leading-snug drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)] ' +
+                      'mb-4'
                     }
                   >
-                    <XCircle className="w-5 h-5 text-rose-400 shrink-0" />
-                    <span
+                    {activeClueData.question}
+                  </h2>
+
+                  {/* Both Teams Answered Incorrectly */}
+                  {activeClue.incorrectTeams &&
+                    activeClue.incorrectTeams.length >= 2 &&
+                    !activeClue.answerRevealed && (
+                      <div
+                        className={
+                          'mb-4 px-6 py-3 rounded-2xl bg-gray-900 border ' +
+                          'border-rose-500/50 flex items-center gap-3 w-full'
+                        }
+                      >
+                        <XCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                        <span
+                          className={
+                            'text-sm font-bold uppercase tracking-wide ' +
+                            'text-rose-200 font-display'
+                          }
+                        >
+                          Both teams missed! No points awarded.
+                        </span>
+                      </div>
+                    )}
+
+                  {/* Text Hint Card */}
+                  {activeClue.hintRevealed &&
+                    activeClueData.hint &&
+                    activeClueData.hint.trim() && (
+                      <div
+                        className={
+                          'mb-4 px-6 py-4 rounded-2xl bg-amber-950/40 border ' +
+                          'border-amber-500/30 backdrop-blur-md ' +
+                          'shadow-[0_4px_24px_rgba(245,194,66,0.15)] ' +
+                          'flex items-center gap-4 w-full animate-modern-enter'
+                        }
+                      >
+                        <div
+                          className={
+                            'p-2 rounded-xl bg-amber-400/20 text-amber-300 ' +
+                            'shrink-0'
+                          }
+                        >
+                          <HelpCircle className="w-6 h-6" />
+                        </div>
+                        <div className="text-left">
+                          <span
+                            className={
+                              'text-[11px] uppercase tracking-widest ' +
+                              'text-amber-400 font-extrabold block'
+                            }
+                          >
+                            Hint (-$
+                            {activeClueData.hintDeduction ??
+                              config.defaultHintDeduction ??
+                              100}{' '}
+                            pts)
+                          </span>
+                          <span
+                            className={
+                              'text-xl md:text-2xl font-display italic ' +
+                              'text-amber-100 font-medium'
+                            }
+                          >
+                            "{activeClueData.hint}"
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Correct Answer Reveal Banner */}
+                  {activeClue.answerRevealed && (
+                    <div
                       className={
-                        'text-sm font-bold uppercase tracking-wide ' +
-                        'text-rose-200 font-display'
+                        'px-8 py-3.5 rounded-2xl bg-emerald-950/70 border ' +
+                        'border-emerald-400/50 flex items-center gap-3 ' +
+                        'animate-modern-enter shadow-tile w-full ' +
+                        (activeClue.correctTeam
+                          ? 'shadow-[0_0_35px_rgba(16,185,129,0.35)] '
+                          : '')
                       }
                     >
-                      Both teams missed! No points awarded.
+                      <CheckCircle2
+                        className={
+                          'w-6 h-6 text-emerald-400 shrink-0 ' +
+                          (activeClue.correctTeam
+                            ? 'animate-victory-burst'
+                            : '')
+                        }
+                      />
+                      <span
+                        className={
+                          'text-2xl md:text-3xl lg:text-4xl font-black ' +
+                          'uppercase tracking-wide text-white font-display ' +
+                          'drop-shadow-[0_2px_12px_rgba(16,185,129,0.6)]'
+                        }
+                      >
+                        {activeClueData.answer}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Text-Only Clue: Hero Centered Presentation */
+              <div
+                className={
+                  'flex-1 flex flex-col items-center justify-center ' +
+                  'my-auto text-center max-w-5xl px-4 py-2 mx-auto ' +
+                  'w-full min-h-0 relative z-10'
+                }
+              >
+                <h2
+                  className={
+                    'text-3xl md:text-5xl lg:text-6xl font-display ' +
+                    'font-bold text-white tracking-normal leading-snug ' +
+                    'md:leading-tight drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]'
+                  }
+                >
+                  {activeClueData.question}
+                </h2>
+
+                {/* Both Teams Answered Incorrectly */}
+                {activeClue.incorrectTeams &&
+                  activeClue.incorrectTeams.length >= 2 &&
+                  !activeClue.answerRevealed && (
+                    <div
+                      className={
+                        'mt-6 px-6 py-3 rounded-2xl bg-gray-900 border ' +
+                        'border-rose-500/50 flex items-center justify-center ' +
+                        'gap-3 max-w-2xl w-full'
+                      }
+                    >
+                      <XCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                      <span
+                        className={
+                          'text-sm font-bold uppercase tracking-wide ' +
+                          'text-rose-200 font-display'
+                        }
+                      >
+                        Both teams missed! No points awarded.
+                      </span>
+                    </div>
+                  )}
+
+                {/* Text Hint Card */}
+                {activeClue.hintRevealed &&
+                  activeClueData.hint &&
+                  activeClueData.hint.trim() && (
+                    <div
+                      className={
+                        'mt-6 px-6 py-4 rounded-2xl bg-amber-950/40 border ' +
+                        'border-amber-500/30 backdrop-blur-md ' +
+                        'shadow-[0_4px_24px_rgba(245,194,66,0.15)] ' +
+                        'flex items-center gap-4 max-w-3xl animate-modern-enter'
+                      }
+                    >
+                      <div
+                        className={
+                          'p-2 rounded-xl bg-amber-400/20 text-amber-300 ' +
+                          'shrink-0'
+                        }
+                      >
+                        <HelpCircle className="w-6 h-6" />
+                      </div>
+                      <div className="text-left">
+                        <span
+                          className={
+                            'text-[11px] uppercase tracking-widest ' +
+                            'text-amber-400 font-extrabold block'
+                          }
+                        >
+                          Hint (-$
+                          {activeClueData.hintDeduction ??
+                            config.defaultHintDeduction ??
+                            100}{' '}
+                          pts)
+                        </span>
+                        <span
+                          className={
+                            'text-xl md:text-2xl font-display italic ' +
+                            'text-amber-100 font-medium'
+                          }
+                        >
+                          "{activeClueData.hint}"
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Correct Answer Reveal Banner */}
+                {activeClue.answerRevealed && (
+                  <div
+                    className={
+                      'mt-6 px-8 py-3.5 rounded-2xl bg-emerald-950/70 ' +
+                      'border border-emerald-400/50 flex items-center ' +
+                      'justify-center gap-3 animate-modern-enter ' +
+                      'shadow-tile ' +
+                      (activeClue.correctTeam
+                        ? 'shadow-[0_0_35px_rgba(16,185,129,0.35)] '
+                        : '')
+                    }
+                  >
+                    <CheckCircle2
+                      className={
+                        'w-6 h-6 text-emerald-400 shrink-0 ' +
+                        (activeClue.correctTeam
+                          ? 'animate-victory-burst'
+                          : '')
+                      }
+                    />
+                    <span
+                      className={
+                        'text-2xl md:text-3xl lg:text-4xl font-black ' +
+                        'uppercase tracking-wide text-white font-display ' +
+                        'drop-shadow-[0_2px_12px_rgba(16,185,129,0.6)]'
+                      }
+                    >
+                      {activeClueData.answer}
                     </span>
                   </div>
                 )}
-
-              {/* Text Hint Card */}
-              {activeClue.hintRevealed &&
-                activeClueData.hint &&
-                activeClueData.hint.trim() && (
-                  <div
-                    className={
-                      'mt-6 px-6 py-4 rounded-2xl bg-amber-950/40 border ' +
-                      'border-amber-500/30 flex items-center gap-4 ' +
-                      'max-w-3xl animate-modern-enter'
-                    }
-                  >
-                    <div
-                      className={
-                        'p-2 rounded-xl bg-amber-400/20 text-amber-300 shrink-0'
-                      }
-                    >
-                      <HelpCircle className="w-6 h-6" />
-                    </div>
-                    <div className="text-left">
-                      <span
-                        className={
-                          'text-[11px] uppercase tracking-widest ' +
-                          'text-amber-400 font-extrabold block'
-                        }
-                      >
-                        Hint (-$
-                        {activeClueData.hintDeduction ??
-                          config.defaultHintDeduction ??
-                          100}{' '}
-                        pts)
-                      </span>
-                      <span
-                        className={
-                          'text-xl md:text-2xl font-editorial italic ' +
-                          'text-amber-100 font-medium'
-                        }
-                      >
-                        "{activeClueData.hint}"
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-              {/* Correct Answer Reveal Banner */}
-              {activeClue.answerRevealed && (
-                <div
-                  className={
-                    'mt-6 px-8 py-3.5 rounded-2xl bg-emerald-950/70 border ' +
-                    'border-emerald-400/50 flex items-center justify-center ' +
-                    'gap-3 animate-modern-enter shadow-tile ' +
-                    (activeClue.correctTeam
-                      ? 'shadow-[0_0_35px_rgba(16,185,129,0.35)] '
-                      : '')
-                  }
-                >
-                  <CheckCircle2
-                    className={
-                      'w-6 h-6 text-emerald-400 shrink-0 ' +
-                      (activeClue.correctTeam ? 'animate-victory-burst' : '')
-                    }
-                  />
-                  <span
-                    className={
-                      'text-2xl md:text-3xl lg:text-4xl font-black uppercase ' +
-                      'tracking-wide text-white font-display ' +
-                      'drop-shadow-[0_2px_12px_rgba(16,185,129,0.6)]'
-                    }
-                  >
-                    {activeClueData.answer}
-                  </span>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         ) : (
           /* VIEW 3: MODERN JEOPARDY BOARD GRID */
@@ -1269,8 +1470,9 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
             return (
               <div
                 className={
-                  'px-5 py-3 md:py-3.5 rounded-xl transition-all ' +
+                  'relative px-5 py-3 md:py-3.5 rounded-xl transition-all ' +
                   'duration-300 flex items-center justify-between ' +
+                  'overflow-hidden ' +
                   t1.borderClass
                 }
               >
@@ -1298,7 +1500,10 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 </div>
                 <TabularScore
                   score={t1DisplayScore}
-                  isAnimating={t1Animating}
+                  isAnimating={
+                    t1Animating &&
+                    (!activeClue || activeClue.correctTeam === 1)
+                  }
                 />
               </div>
             );
@@ -1310,8 +1515,9 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
             return (
               <div
                 className={
-                  'px-5 py-3 md:py-3.5 rounded-xl transition-all ' +
+                  'relative px-5 py-3 md:py-3.5 rounded-xl transition-all ' +
                   'duration-300 flex items-center justify-between ' +
+                  'overflow-hidden ' +
                   t2.borderClass
                 }
               >
@@ -1339,7 +1545,10 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 </div>
                 <TabularScore
                   score={t2DisplayScore}
-                  isAnimating={t2Animating}
+                  isAnimating={
+                    t2Animating &&
+                    (!activeClue || activeClue.correctTeam === 2)
+                  }
                 />
               </div>
             );
