@@ -17,7 +17,9 @@ import { defaultGame } from '../src/data/defaultGame';
 import { initialGameState, gameReducer } from '../src/utils/gameReducer';
 import { createGameFromPreferences } from '../src/types/game';
 
-test('PlayerDisplay UI: Waiting screen displays logo, tagline, and message', () => {
+test(
+  'PlayerDisplay UI: Waiting screen displays logo, tagline, and message',
+  () => {
   const html = renderToStaticMarkup(
     React.createElement(PlayerDisplay, {
       state: initialGameState,
@@ -32,7 +34,9 @@ test('PlayerDisplay UI: Waiting screen displays logo, tagline, and message', () 
   assert.ok(!html.includes('Player Board'));
 });
 
-test('PlayerDisplay UI: Active Board Grid renders categories and clue tiles', () => {
+test(
+  'PlayerDisplay UI: Active Board Grid renders categories and clue tiles',
+  () => {
   const state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -73,7 +77,9 @@ test('PlayerDisplay UI: Active Board Grid renders categories and clue tiles', ()
   );
 });
 
-test('PlayerDisplay UI: Detailed question view has flat category & chunky points', () => {
+test(
+  'PlayerDisplay UI: Detailed question view has flat category & chunky points',
+  () => {
   let state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -108,138 +114,137 @@ test('PlayerDisplay UI: Detailed question view has flat category & chunky points
 test(
   'QuestionTimerBadge UI: Renders waiting, active, urgent, and expired',
   () => {
-    const waitingHtml = renderToStaticMarkup(
-      React.createElement(QuestionTimerBadge, {
-        remaining: 30,
-        isWaitingForMedia: true,
-      })
-    );
-    assert.ok(waitingHtml.includes('00:30'));
-    assert.ok(waitingHtml.includes('Timer starts when media is shown'));
+  const waitingHtml = renderToStaticMarkup(
+    React.createElement(QuestionTimerBadge, {
+      remaining: 30,
+      isWaitingForMedia: true,
+    })
+  );
+  assert.ok(waitingHtml.includes('00:30'));
+  assert.ok(waitingHtml.includes('Timer starts when media is shown'));
 
-    const activeHtml = renderToStaticMarkup(
-      React.createElement(QuestionTimerBadge, {
-        remaining: 11,
-        isWaitingForMedia: false,
-      })
-    );
-    assert.ok(activeHtml.includes('00:11'));
-    assert.ok(activeHtml.includes('text-modern-gold'));
-    assert.ok(activeHtml.includes('font-display font-bold'));
-    assert.ok(!activeHtml.includes('font-mono'));
-    assert.ok(!activeHtml.includes('animate-timer-blink'));
+  const activeHtml = renderToStaticMarkup(
+    React.createElement(QuestionTimerBadge, {
+      remaining: 11,
+      isWaitingForMedia: false,
+    })
+  );
+  assert.ok(activeHtml.includes('00:11'));
+  assert.ok(activeHtml.includes('text-modern-gold'));
+  assert.ok(activeHtml.includes('font-display font-bold'));
+  assert.ok(!activeHtml.includes('font-mono'));
+  assert.ok(!activeHtml.includes('animate-timer-blink'));
 
-    const thresholdHtml = renderToStaticMarkup(
-      React.createElement(QuestionTimerBadge, {
-        remaining: 10,
-        isWaitingForMedia: false,
-      })
-    );
-    assert.ok(thresholdHtml.includes('00:10'));
-    assert.ok(thresholdHtml.includes('text-amber-300'));
-    assert.ok(thresholdHtml.includes('animate-timer-blink'));
+  const thresholdHtml = renderToStaticMarkup(
+    React.createElement(QuestionTimerBadge, {
+      remaining: 10,
+      isWaitingForMedia: false,
+    })
+  );
+  assert.ok(thresholdHtml.includes('00:10'));
+  assert.ok(thresholdHtml.includes('text-amber-300'));
+  assert.ok(thresholdHtml.includes('animate-timer-blink'));
 
-    const urgentHtml = renderToStaticMarkup(
-      React.createElement(QuestionTimerBadge, {
-        remaining: 4,
-        isWaitingForMedia: false,
-      })
-    );
-    assert.ok(urgentHtml.includes('00:04'));
-    assert.ok(urgentHtml.includes('text-amber-300'));
-    assert.ok(urgentHtml.includes('animate-timer-blink'));
+  const urgentHtml = renderToStaticMarkup(
+    React.createElement(QuestionTimerBadge, {
+      remaining: 4,
+      isWaitingForMedia: false,
+    })
+  );
+  assert.ok(urgentHtml.includes('00:04'));
+  assert.ok(urgentHtml.includes('text-amber-300'));
+  assert.ok(urgentHtml.includes('animate-timer-blink'));
 
-    const expiredHtml = renderToStaticMarkup(
-      React.createElement(QuestionTimerBadge, {
-        remaining: 0,
-        isWaitingForMedia: false,
-      })
-    );
-    assert.ok(expiredHtml.includes('00:00'));
-    assert.ok(expiredHtml.includes('text-rose-300'));
-    assert.ok(!expiredHtml.includes('animate-timer-blink'));
-  }
-);
+  const expiredHtml = renderToStaticMarkup(
+    React.createElement(QuestionTimerBadge, {
+      remaining: 0,
+      isWaitingForMedia: false,
+    })
+  );
+  assert.ok(expiredHtml.includes('00:00'));
+  assert.ok(expiredHtml.includes('text-rose-300'));
+  assert.ok(!expiredHtml.includes('animate-timer-blink'));
+});
 
 test(
   'PlayerDisplay UI: Question timer renders countdown on active clue',
   () => {
-    const timerGame = {
-      ...defaultGame,
-      questionTimerSeconds: 30,
-    };
+  const timerGame = {
+    ...defaultGame,
+    questionTimerSeconds: 30,
+  };
 
-    let state = gameReducer(initialGameState, {
-      type: 'LOAD_GAME',
-      payload: timerGame,
-    });
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: timerGame,
+  });
 
-    const now = Date.now();
-    state = gameReducer(state, {
-      type: 'SELECT_CLUE',
-      payload: {
-        roundIndex: 0,
-        categoryIndex: 0,
-        clueIndex: 0,
-        firstAnsweringTeam: 1,
-        timerStartedAt: now - 5000,
-      },
-    });
+  const now = Date.now();
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+      timerStartedAt: now - 5000,
+    },
+  });
 
-    const html = renderToStaticMarkup(
-      React.createElement(PlayerDisplay, {
-        state,
-        toMediaUrl: (p: string) => p,
-        onToggleFullScreen: () => {},
-      })
-    );
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
 
-    assert.ok(html.includes('00:25'));
-    assert.ok(html.includes('tabular-nums'));
-  }
-);
+  assert.ok(html.includes('00:25'));
+  assert.ok(html.includes('tabular-nums'));
+});
 
 test(
   'PlayerDisplay UI: Question timer renders blink animation at 10s and down',
   () => {
-    const timerGame = {
-      ...defaultGame,
-      questionTimerSeconds: 30,
-    };
+  const timerGame = {
+    ...defaultGame,
+    questionTimerSeconds: 30,
+  };
 
-    let state = gameReducer(initialGameState, {
-      type: 'LOAD_GAME',
-      payload: timerGame,
-    });
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: timerGame,
+  });
 
-    const now = Date.now();
-    // 20s elapsed -> 10s remaining (threshold)
-    state = gameReducer(state, {
-      type: 'SELECT_CLUE',
-      payload: {
-        roundIndex: 0,
-        categoryIndex: 0,
-        clueIndex: 0,
-        firstAnsweringTeam: 1,
-        timerStartedAt: now - 20000,
-      },
-    });
+  const now = Date.now();
+  // 20s elapsed -> 10s remaining (threshold)
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+      timerStartedAt: now - 20000,
+    },
+  });
 
-    const html = renderToStaticMarkup(
-      React.createElement(PlayerDisplay, {
-        state,
-        toMediaUrl: (p: string) => p,
-        onToggleFullScreen: () => {},
-      })
-    );
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
 
-    assert.ok(html.includes('00:10'));
-    assert.ok(html.includes('animate-timer-blink'));
-    assert.ok(html.includes('text-amber-300'));
-  }
-);
+  assert.ok(html.includes('00:10'));
+  assert.ok(html.includes('animate-timer-blink'));
+  assert.ok(html.includes('text-amber-300'));
+});
 
-test('PlayerDisplay UI: Wrong answer displays red border around clue box', () => {
+test(
+  'PlayerDisplay UI: Wrong answer displays red border around clue box',
+  () => {
   let state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -270,7 +275,9 @@ test('PlayerDisplay UI: Wrong answer displays red border around clue box', () =>
   assert.ok(html.includes('Missed'));
 });
 
-test('PlayerDisplay UI: Answer revealed banner renders with chunky font', () => {
+test(
+  'PlayerDisplay UI: Answer revealed banner renders with chunky font',
+  () => {
   let state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -415,7 +422,9 @@ test('PlayerDisplay UI: Points animation spins for roughly 1.5 seconds', () => {
   assert.equal(identity.isAnimating, false);
 });
 
-test('PlayerDisplay UI: Footer score displays tabular slots for each digit', () => {
+test(
+  'PlayerDisplay UI: Footer score displays tabular slots for each digit',
+  () => {
   let state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -453,14 +462,21 @@ test('AdminHost UI: Setup screen renders logo, tagline, and actions', () => {
 
   assert.ok(html.includes('stage-ambient'));
   assert.ok(html.includes('ambient-grid'));
+  assert.ok(html.includes('animate-stage-aura'));
   assert.ok(html.includes('logo.svg'));
   assert.ok(html.includes('Trivia, Team Fights &amp; Petty Rivalries'));
+  assert.ok(html.includes('text-amber-200/80'));
+  assert.ok(html.includes('font-display'));
   assert.ok(html.includes('Create New Game'));
   assert.ok(html.includes('Load Game File'));
   assert.ok(html.includes('Load Sample Game'));
+  assert.ok(!html.includes('hover:underline'));
+  assert.ok(!html.includes('lucide-sparkles'));
 });
 
-test('AdminHost UI: Active console has no green dot and has big X Close Game', () => {
+test(
+  'AdminHost UI: Active console has no green dot and has big X Close Game',
+  () => {
   const state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -480,10 +496,15 @@ test('AdminHost UI: Active console has no green dot and has big X Close Game', (
   assert.ok(!html.includes('rounded-full bg-emerald-400 animate-pulse'));
   assert.ok(!html.includes('(alternates automatically)'));
   assert.ok(html.includes('Board Turn:'));
+  assert.ok(html.includes('border-yellow-400'));
+  assert.ok(!html.includes('Active Turn'));
+  assert.ok(!html.includes('ring-yellow-400'));
   assert.ok(html.includes('Close Game'));
 });
 
-test('AdminHost UI: Clue grid applies Option 1 contrast and omits answer previews', () => {
+test(
+  'AdminHost UI: Clue grid applies Option 1 contrast and omits answer previews',
+  () => {
   const state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -528,7 +549,12 @@ test('GameBuilder UI: Renders game settings and clue editor', () => {
   );
 
   assert.ok(html.includes('Game Builder'));
-  assert.ok(html.includes('Ultimate Trivia Championship'));
+  assert.ok(html.includes('placeholder="Game Title"'));
+  assert.ok(html.includes('placeholder="Team 1"'));
+  assert.ok(html.includes('placeholder="Team 2"'));
+  assert.ok(html.includes('value="Ultimate Trivia Championship"'));
+  assert.ok(html.includes('value="Champions"'));
+  assert.ok(html.includes('value="Challengers"'));
   assert.ok(html.includes('WORLD GEOGRAPHY'));
   assert.ok(html.includes('Close Game'));
   assert.ok(html.includes('Question Timer'));
@@ -536,6 +562,40 @@ test('GameBuilder UI: Renders game settings and clue editor', () => {
   assert.ok(html.includes('lucide-play'));
   assert.ok(!html.includes('lucide-sparkles'));
 });
+
+test(
+  'GameBuilder UI: Renders tie-breaker category select from main board',
+  () => {
+    const html = renderToStaticMarkup(
+      React.createElement(GameBuilder, {
+        currentConfig: defaultGame,
+        initialTab: 'tiebreaker',
+        onSaveSuccess: () => {},
+        onSaveAndPlay: () => {},
+        onCloseGame: () => {},
+        saveGameFile: async () => true,
+        selectMediaFile: async () => null,
+      })
+    );
+
+    assert.ok(html.includes('Tie-Breaker Question'));
+    assert.ok(html.includes('Tie-Breaker Category'));
+    assert.ok(html.includes('<select'));
+    assert.ok(
+      html.includes('<option value="WORLD GEOGRAPHY">WORLD GEOGRAPHY</option>')
+    );
+    assert.ok(
+      html.includes(
+        '<option value="SCIENCE &amp; NATURE">SCIENCE &amp; NATURE</option>'
+      )
+    );
+    assert.ok(
+      html.includes(
+        '<option value="SPACE EXPLORATION">SPACE EXPLORATION</option>'
+      )
+    );
+  }
+);
 
 test('CreateGameModal UI: Renders countdown timer presets and input', () => {
   const html = renderToStaticMarkup(
@@ -559,7 +619,9 @@ test('CreateGameModal UI: Renders countdown timer presets and input', () => {
   assert.ok(!html.includes('lucide-sparkles'));
 });
 
-test('PlayerDisplay UI: Final Jeopardy tie-breaker renders category & question', () => {
+test(
+  'PlayerDisplay UI: Final Jeopardy tie-breaker renders category & question',
+  () => {
   let state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -582,6 +644,19 @@ test('PlayerDisplay UI: Final Jeopardy tie-breaker renders category & question',
   assert.ok(html.includes('FAMOUS LANDMARKS'));
   assert.ok(html.includes('Teams are submitting secret wagers'));
 
+  state = gameReducer(state, {
+    type: 'FJ_SET_WAGERS',
+    payload: { team1Wager: 300, team2Wager: 400 },
+  });
+  html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+  assert.ok(html.includes('Wagers locked in'));
+
   state = gameReducer(state, { type: 'FJ_REVEAL_QUESTION' });
   html = renderToStaticMarkup(
     React.createElement(PlayerDisplay, {
@@ -603,7 +678,67 @@ test('PlayerDisplay UI: Final Jeopardy tie-breaker renders category & question',
   );
 });
 
-test('AdminHost UI: Clue judging modal displays judging buttons & hint controls', () => {
+test('AdminHost UI: Tie-breaker panel toggles wager lock feedback', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SET_ROUND',
+    payload: { roundIndex: -1 },
+  });
+
+  let html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      toMediaUrl: (p: string) => p,
+      onOpenDisplay: () => {},
+      onResetGame: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Lock Wagers'));
+  assert.ok(!html.includes('Wagers Locked in'));
+
+  state = gameReducer(state, {
+    type: 'FJ_SET_WAGERS',
+    payload: { team1Wager: 500, team2Wager: 500 },
+  });
+
+  html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      toMediaUrl: (p: string) => p,
+      onOpenDisplay: () => {},
+      onResetGame: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Wagers Locked in'));
+  assert.ok(html.includes('Edit Wagers'));
+  assert.ok(html.includes('disabled=""'));
+
+  state = gameReducer(state, { type: 'FJ_UNLOCK_WAGERS' });
+
+  html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      toMediaUrl: (p: string) => p,
+      onOpenDisplay: () => {},
+      onResetGame: () => {},
+    })
+  );
+
+  assert.ok(html.includes('Lock Wagers'));
+  assert.ok(!html.includes('Wagers Locked in'));
+});
+
+test(
+  'AdminHost UI: Clue judging modal displays judging buttons & hint controls',
+  () => {
   let state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -642,7 +777,9 @@ test('AdminHost UI: Clue judging modal displays judging buttons & hint controls'
   assert.ok(html.includes('bg-blue-600 text-white'));
 });
 
-test('AdminHost UI: First incorrect answer offers rebound option with skip', () => {
+test(
+  'AdminHost UI: First incorrect answer offers rebound option with skip',
+  () => {
   let state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -685,6 +822,7 @@ test('MediaRenderer UI: Omits controls when showControls is false', () => {
     })
   );
   assert.ok(videoHtml.includes('<video'));
+  assert.ok(videoHtml.includes('loop'));
   assert.ok(!videoHtml.includes('controls'));
 
   const audioHtml = renderToStaticMarkup(
@@ -695,6 +833,7 @@ test('MediaRenderer UI: Omits controls when showControls is false', () => {
     })
   );
   assert.ok(audioHtml.includes('<audio'));
+  assert.ok(audioHtml.includes('loop'));
   assert.ok(!audioHtml.includes('controls'));
 
   const withControls = renderToStaticMarkup(
@@ -706,6 +845,53 @@ test('MediaRenderer UI: Omits controls when showControls is false', () => {
   );
   assert.ok(withControls.includes('controls'));
 });
+
+test(
+  'MediaRenderer UI: Renders media with loop and playsInline attributes',
+  () => {
+    const videoHtml = renderToStaticMarkup(
+      React.createElement(MediaRenderer, {
+        media: { type: 'video', urlOrPath: 'sample.mp4' },
+        resolvedUrl: 'media://sample.mp4',
+      })
+    );
+    assert.ok(videoHtml.includes('playsinline'));
+    assert.ok(videoHtml.includes('preload="auto"'));
+    assert.ok(!videoHtml.includes('autoplay'));
+
+    const audioHtml = renderToStaticMarkup(
+      React.createElement(MediaRenderer, {
+        media: { type: 'audio', urlOrPath: 'sample.mp3' },
+        resolvedUrl: 'media://sample.mp3',
+      })
+    );
+    assert.ok(audioHtml.includes('preload="auto"'));
+    assert.ok(!audioHtml.includes('autoplay'));
+  }
+);
+
+test(
+  'MediaRenderer UI: Propagates autoPlay attribute when requested',
+  () => {
+    const videoHtml = renderToStaticMarkup(
+      React.createElement(MediaRenderer, {
+        media: { type: 'video', urlOrPath: 'sample.mp4' },
+        resolvedUrl: 'media://sample.mp4',
+        autoPlay: true,
+      })
+    );
+    assert.ok(videoHtml.includes('autoplay'));
+
+    const audioHtml = renderToStaticMarkup(
+      React.createElement(MediaRenderer, {
+        media: { type: 'audio', urlOrPath: 'sample.mp3' },
+        resolvedUrl: 'media://sample.mp3',
+        autoPlay: true,
+      })
+    );
+    assert.ok(audioHtml.includes('autoplay'));
+  }
+);
 
 test('PlayerDisplay UI: Active video clue renders without controls', () => {
   let state = gameReducer(initialGameState, {
@@ -774,7 +960,9 @@ test('MediaRenderer UI: YouTube masks title when showControls is false', () => {
   assert.ok(!unmaskedHtml.includes('controls=0'));
 });
 
-test('PlayerDisplay UI: Active media vanishes on ANSWER_CORRECT for all types', () => {
+test(
+  'PlayerDisplay UI: Active media vanishes on ANSWER_CORRECT for all types',
+  () => {
   const mediaCases: Array<{
     type: 'video' | 'youtube' | 'image' | 'audio';
     url: string;
@@ -854,7 +1042,9 @@ test('PlayerDisplay UI: Active media vanishes on ANSWER_CORRECT for all types', 
   }
 });
 
-test('PlayerDisplay UI: Active media vanishes on REVEAL_ANSWER & rebound miss', () => {
+test(
+  'PlayerDisplay UI: Active media vanishes on REVEAL_ANSWER & rebound miss',
+  () => {
   let state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -912,7 +1102,9 @@ test('PlayerDisplay UI: Active media vanishes on REVEAL_ANSWER & rebound miss', 
   assert.ok(!missHtml.includes('<video'));
 });
 
-test('PlayerDisplay UI: Active media layout prevents overlap with shrink-0', () => {
+test(
+  'PlayerDisplay UI: Active media layout prevents overlap with shrink-0',
+  () => {
   let state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
     payload: defaultGame,
@@ -953,7 +1145,9 @@ test('PlayerDisplay UI: Active media layout prevents overlap with shrink-0', () 
   assert.ok(html.includes('max-h-full max-w-full'));
 });
 
-test('PlayerDisplay UI: Winner screen renders when regulation ends with winner', () => {
+test(
+  'PlayerDisplay UI: Winner screen renders when regulation ends with winner',
+  () => {
   const customGame = createGameFromPreferences({
     title: 'Champions League',
     team1Name: 'Gryffindor',
@@ -1019,7 +1213,9 @@ test('PlayerDisplay UI: Winner screen renders when regulation ends with winner',
   );
 });
 
-test('PlayerDisplay UI: Co-winners screen renders when tied without tie-breaker', () => {
+test(
+  'PlayerDisplay UI: Co-winners screen renders when tied without tie-breaker',
+  () => {
   const customGame = createGameFromPreferences({
     title: 'Tie Battle',
     team1Name: 'Red Owls',
@@ -1100,7 +1296,9 @@ test('AdminHost UI: Game completed banner renders on victory', () => {
   assert.ok(html.includes('Winner screen active on player display'));
 });
 
-test('AdminHost UI: Regulation tied banner renders when tie-breaker available', () => {
+test(
+  'AdminHost UI: Regulation tied banner renders when tie-breaker available',
+  () => {
   const customGame = createGameFromPreferences({
     title: 'Tied With FJ',
     team1Name: 'Team X',
@@ -1344,101 +1542,93 @@ test(
   );
 });
 
-test(
-  'AdminHost UI: Mobile host panel enables 2D touch scroll',
-  () => {
-    const state = gameReducer(initialGameState, {
-      type: 'LOAD_GAME',
-      payload: defaultGame,
-    });
+test('AdminHost UI: Mobile host panel enables 2D touch scroll', () => {
+  const state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
 
-    const html = renderToStaticMarkup(
-      React.createElement(AdminHost, {
-        state,
-        dispatch: () => {},
-        openDisplayWindow: () => {},
-        onOpenBuilder: () => {},
-        onGameCreated: () => {},
-      })
-    );
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      openDisplayWindow: () => {},
+      onOpenBuilder: () => {},
+      onGameCreated: () => {},
+    })
+  );
 
-    // Dynamic viewport height prevents cutoff
-    assert.ok(
-      html.includes('h-[100dvh]') &&
-        html.includes('max-h-[100dvh]'),
-      'Root must use dynamic viewport height'
-    );
+  // Dynamic viewport height prevents cutoff
+  assert.ok(
+    html.includes('h-[100dvh]') && html.includes('max-h-[100dvh]'),
+    'Root must use dynamic viewport height'
+  );
 
-    // Main must NOT be a scroll container to avoid
-    // nested scroller gesture conflicts on mobile
-    assert.ok(
-      html.includes('overflow-hidden'),
-      'Main must be overflow-hidden'
-    );
+  // Main must NOT be a scroll container to avoid
+  // nested scroller gesture conflicts on mobile
+  assert.ok(html.includes('overflow-hidden'), 'Main must be overflow-hidden');
 
-    // Grid wrapper is the sole 2D touch scroller
-    assert.ok(
-      html.includes('overflow-auto') &&
-        html.includes('touch-pan-x') &&
-        html.includes('touch-pan-y') &&
-        html.includes('pb-20') &&
-        html.includes('min-h-0'),
-      'Grid wrapper must be sole 2D touch scroller'
-    );
+  // Grid wrapper is the sole 2D touch scroller
+  assert.ok(
+    html.includes('overflow-auto') &&
+      html.includes('touch-pan-x') &&
+      html.includes('touch-pan-y') &&
+      html.includes('pb-20') &&
+      html.includes('min-h-0'),
+    'Grid wrapper must be sole 2D touch scroller'
+  );
 
-    // Category headers stay pinned on scroll
-    assert.ok(
-      html.includes('sticky top-0 z-10'),
-      'Category headers must be sticky'
-    );
-  }
-);
+  // Category headers stay pinned on scroll
+  assert.ok(
+    html.includes('sticky top-0 z-10'),
+    'Category headers must be sticky'
+  );
+});
 
 test(
   'PlayerDisplay UI: Clue questions unify on font-display typography',
   () => {
-    let state = gameReducer(initialGameState, {
-      type: 'LOAD_GAME',
-      payload: defaultGame,
-    });
-    state = gameReducer(state, {
-      type: 'SELECT_CLUE',
-      payload: {
-        roundIndex: 0,
-        categoryIndex: 0,
-        clueIndex: 0,
-        firstAnsweringTeam: 1,
-      },
-    });
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
 
-    const playerHtml = renderToStaticMarkup(
-      React.createElement(PlayerDisplay, {
-        state,
-        toMediaUrl: (p: string) => p,
-        onToggleFullScreen: () => {},
-      })
-    );
+  const playerHtml = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
 
-    const adminHtml = renderToStaticMarkup(
-      React.createElement(AdminHost, {
-        state,
-        dispatch: () => {},
-        openDisplayWindow: () => {},
-        onOpenBuilder: () => {},
-        onGameCreated: () => {},
-      })
-    );
+  const adminHtml = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      openDisplayWindow: () => {},
+      onOpenBuilder: () => {},
+      onGameCreated: () => {},
+    })
+  );
 
-    assert.ok(
-      playerHtml.includes('font-display font-bold text-white'),
-      'PlayerDisplay clue question must use font-display font-bold'
-    );
-    assert.ok(
-      adminHtml.includes('font-display font-bold text-white'),
-      'AdminHost clue question must use matching font-display font-bold'
-    );
-  }
-);
+  assert.ok(
+    playerHtml.includes('font-display font-bold text-white'),
+    'PlayerDisplay clue question must use font-display font-bold'
+  );
+  assert.ok(
+    adminHtml.includes('font-display font-bold text-white'),
+    'AdminHost clue question must use matching font-display font-bold'
+  );
+});
 
 test('PlayerDisplay UI: Active clue renders spotlight and points HUD', () => {
   let state = gameReducer(initialGameState, {

@@ -1,0 +1,70 @@
+title: Minimal Test Game
+team1: Team Alpha
+team2: Team Omega
+pointProgression:
+  - 100
+  - 200
+  - 300
+hintPenalty: 50
+reboundPercentage: 50
+questionTimerSeconds: 15
+categories:
+  - name: SIGHT & SOUND
+    questions:
+      - title: What geometric shape is rendered inside this graphic?
+        answer: Circle
+        hint: It has no corners or edges.
+        media:
+          type: image
+          url: "media/test_image.svg"
+      - title: Listen to this audio tone and identify the musical pitch.
+        answer: 440 Hz Concert Pitch A
+        hint: Standard orchestral tuning reference.
+        media:
+          type: audio
+          url: "media/test_audio.wav"
+      - title: Identify the music video in this YouTube embed.
+        answer: Never Gonna Give You Up
+        hint: 1987 dance-pop hit.
+        media:
+          type: youtube
+          url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  - name: AVI & WEBM
+    questions:
+      - title: Watch this AVI video clip and identify what is shown.
+        answer: Video clip
+        hint: A sample AVI video clip.
+        media:
+          type: video
+          url: "media/file_example_AVI_1280_1_5MG.avi"
+      - title: Watch this WebM video clip and identify what is shown.
+        answer: Video clip
+        hint: A sample WebM video clip.
+        media:
+          type: video
+          url: "media/file_example_WEBM_640_1_4MB.webm"
+      - title: What standard protocol secures web browsing with encryption?
+        answer: HTTPS
+        hint: Hypertext Transfer Protocol Secure.
+  - name: MOV & MP4
+    questions:
+      - title: Watch this QuickTime MOV clip and identify what is shown.
+        answer: Video clip
+        hint: A sample QuickTime MOV video clip.
+        media:
+          type: video
+          url: "media/file_example_MOV_1280_1_4MB.mov"
+      - title: Watch this MP4 video clip and identify what is shown.
+        answer: Video clip
+        hint: A sample MP4 video clip.
+        media:
+          type: video
+          url: "media/file_example_MP4_640_3MG.mp4"
+      - title: What is the capital city of France?
+        answer: Paris
+        hint: The City of Light.
+tieBreaker:
+  category: SIGHT & SOUND
+  title: What unit of frequency measures sound waves in cycles per second?
+  answer: Hertz (Hz)
+  hint: Named after German physicist Heinrich Hertz.

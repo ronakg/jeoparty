@@ -712,6 +712,82 @@ test('YAML Game File: Clean format contains only configuration, zero gameplay st
   assert.equal(parsed.rounds[0].categories[0].clues[1].points, 200);
 });
 
+test('Game Config: minimal_test_game.yaml parses 3x3 board layout', () => {
+  const yamlPath = path.join(process.cwd(), 'minimal_test_game.yaml');
+  assert.ok(fs.existsSync(yamlPath), 'minimal_test_game.yaml must exist');
+  const yamlText = fs.readFileSync(yamlPath, 'utf-8');
+  const config = parseGameConfigFromYaml(yamlText);
+
+  assert.equal(config.title, 'Minimal Test Game');
+  assert.equal(config.rounds.length, 1);
+  assert.equal(config.rounds[0].categories.length, 3);
+  const cat1Clues = config.rounds[0].categories[0].clues;
+  const cat2Clues = config.rounds[0].categories[1].clues;
+  const cat3Clues = config.rounds[0].categories[2].clues;
+  assert.equal(cat1Clues.length, 3);
+  assert.equal(cat2Clues.length, 3);
+  assert.equal(cat3Clues.length, 3);
+
+  // Check Sight & Sound (image, audio, youtube)
+  assert.equal(cat1Clues[0].media?.type, 'image');
+  assert.equal(cat1Clues[0].media?.urlOrPath, 'media/test_image.svg');
+  assert.equal(cat1Clues[1].media?.type, 'audio');
+  assert.equal(cat1Clues[1].media?.urlOrPath, 'media/test_audio.wav');
+  assert.equal(cat1Clues[2].media?.type, 'youtube');
+  assert.ok(cat1Clues[2].media?.urlOrPath.includes('youtube.com'));
+
+  // Check AVI & WebM (avi, webm, text)
+  assert.equal(cat2Clues[0].media?.type, 'video');
+  assert.equal(
+    cat2Clues[0].media?.urlOrPath,
+    'media/file_example_AVI_1280_1_5MG.avi'
+  );
+  assert.equal(cat2Clues[1].media?.type, 'video');
+  assert.equal(
+    cat2Clues[1].media?.urlOrPath,
+    'media/file_example_WEBM_640_1_4MB.webm'
+  );
+  assert.equal(cat2Clues[2].media, undefined);
+  assert.equal(cat2Clues[2].answer, 'HTTPS');
+
+  // Check MOV & MP4 (mov, mp4, text)
+  assert.equal(cat3Clues[0].media?.type, 'video');
+  assert.equal(
+    cat3Clues[0].media?.urlOrPath,
+    'media/file_example_MOV_1280_1_4MB.mov'
+  );
+  assert.equal(cat3Clues[1].media?.type, 'video');
+  assert.equal(
+    cat3Clues[1].media?.urlOrPath,
+    'media/file_example_MP4_640_3MG.mp4'
+  );
+  assert.equal(cat3Clues[2].media, undefined);
+  assert.equal(cat3Clues[2].answer, 'Paris');
+
+  // Check hints
+  assert.ok(cat1Clues[0].hint, 'Image clue must have hint');
+  assert.ok(cat1Clues[1].hint, 'Audio clue must have hint');
+  assert.ok(cat1Clues[2].hint, 'YouTube clue must have hint');
+  assert.ok(cat2Clues[0].hint, 'AVI clue must have hint');
+  assert.ok(cat2Clues[1].hint, 'WebM clue must have hint');
+  assert.ok(cat2Clues[2].hint, 'Non-media 1 clue must have hint');
+  assert.ok(cat3Clues[0].hint, 'MOV clue must have hint');
+  assert.ok(cat3Clues[1].hint, 'MP4 clue must have hint');
+  assert.ok(cat3Clues[2].hint, 'Non-media 2 clue must have hint');
+
+  // Check timer and tie breaker
+  assert.equal(config.questionTimerSeconds, 15);
+  assert.ok(config.finalJeopardy);
+  assert.equal(config.finalJeopardy.category, 'SIGHT & SOUND');
+  assert.equal(
+    config.finalJeopardy.question,
+    'What unit of frequency measures sound waves in cycles per second?'
+  );
+  assert.equal(config.finalJeopardy.answer, 'Hertz (Hz)');
+  assert.ok(config.finalJeopardy.hint);
+  assert.equal(config.finalJeopardy.media, undefined);
+});
+
 test('YouTube Utils: parseYouTubeTimestamp parses diverse timestamp formats into seconds', () => {
   assert.equal(parseYouTubeTimestamp('90'), 90);
   assert.equal(parseYouTubeTimestamp('90s'), 90);
@@ -1108,7 +1184,6 @@ test('Hint Deductions: Points clamp to zero when deduction exceeds clue value', 
   });
   // Add hint to first clue
   customConfig.rounds[0].categories[0].clues[0].hint = 'Helpful hint';
-  customConfig.rounds[0].categories[0].clues[0].hintDeduction = 100;
 
   let state = gameReducer(initialGameState, {
     type: 'LOAD_GAME',
@@ -1181,6 +1256,24 @@ test('Final Jeopardy: FJ_REVEAL_QUESTION reveals question in state', () => {
 
   state = gameReducer(state, { type: 'FJ_REVEAL_QUESTION' });
   assert.equal(state.config?.finalJeopardy?.questionRevealed, true);
+});
+
+test('Final Jeopardy: FJ_SET_WAGERS locks and FJ_UNLOCK_WAGERS unlocks', () => {
+  let state = createLoadedState();
+  assert.equal(state.config?.finalJeopardy?.wagersLocked ?? false, false);
+
+  state = gameReducer(state, {
+    type: 'FJ_SET_WAGERS',
+    payload: { team1Wager: 500, team2Wager: 400 },
+  });
+  assert.equal(state.config?.finalJeopardy?.wagersLocked, true);
+  assert.equal(state.config?.finalJeopardy?.team1Wager, 500);
+  assert.equal(state.config?.finalJeopardy?.team2Wager, 400);
+
+  state = gameReducer(state, { type: 'FJ_UNLOCK_WAGERS' });
+  assert.equal(state.config?.finalJeopardy?.wagersLocked, false);
+  assert.equal(state.config?.finalJeopardy?.team1Wager, 500);
+  assert.equal(state.config?.finalJeopardy?.team2Wager, 400);
 });
 
 test('Media Actions: ANSWER_CORRECT hides and halts media playback', () => {
@@ -1561,5 +1654,3 @@ test('Time Format: formatTimerMmSs zero-pads minutes and seconds', () => {
   assert.equal(formatTimerMmSs(3600), '60:00');
   assert.equal(formatTimerMmSs(-10), '00:00');
 });
-
-

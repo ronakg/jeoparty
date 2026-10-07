@@ -26,36 +26,133 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const playPromiseRef = useRef<Promise<void> | null>(null);
+  const lastLoggedSecRef = useRef<number>(-1);
+  const shouldPlayRef = useRef<boolean>(isPlaying);
+
+  useEffect(() => {
+    shouldPlayRef.current = isPlaying;
+  }, [isPlaying]);
+
+  const safePlay = (el: HTMLMediaElement, type: string) => {
+    shouldPlayRef.current = true;
+    if (el.ended) {
+      el.currentTime = 0;
+    }
+    const logInfo =
+      `readyState=${el.readyState}, paused=${el.paused}, ` +
+      `currentTime=${el.currentTime.toFixed(2)}`;
+    window.electronAPI?.writeTraceLog?.(
+      `[RENDERER] ${type} play() requested (${logInfo})`
+    );
+    const promise = el.play();
+    playPromiseRef.current = promise;
+    promise
+      .then(() => {
+        if (playPromiseRef.current === promise) {
+          playPromiseRef.current = null;
+        }
+        window.electronAPI?.writeTraceLog?.(
+          `[RENDERER] ${type} play() resolved ` +
+            `(cur=${el.currentTime.toFixed(2)})`
+        );
+      })
+      .catch((err: unknown) => {
+        if (playPromiseRef.current === promise) {
+          playPromiseRef.current = null;
+        }
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return;
+        }
+        const msg =
+          `[RENDERER] ${type} play rejected: ` +
+          (err instanceof Error ? err.message : String(err));
+        console.error(msg);
+        window.electronAPI?.writeTraceLog?.(msg);
+      });
+  };
+
+  const safePause = (
+    el: HTMLMediaElement,
+    type: string,
+    reason = 'control'
+  ) => {
+    const status = `${reason}, paused=${el.paused}`;
+    window.electronAPI?.writeTraceLog?.(
+      `[RENDERER] ${type} pause() requested (${status})`
+    );
+    if (playPromiseRef.current) {
+      playPromiseRef.current
+        .then(() => {
+          if (!shouldPlayRef.current) {
+            window.electronAPI?.writeTraceLog?.(
+              `[RENDERER] ${type} executing deferred pause (${reason})`
+            );
+            el.pause();
+          } else {
+            window.electronAPI?.writeTraceLog?.(
+              `[RENDERER] ${type} ignoring deferred pause (${reason}): ` +
+                'shouldPlay=true'
+            );
+          }
+        })
+        .catch(() => {
+          if (!shouldPlayRef.current) {
+            el.pause();
+          }
+        });
+    } else {
+      if (!shouldPlayRef.current) {
+        el.pause();
+      }
+    }
+  };
+
+  const handleCanPlay = (el: HTMLMediaElement, type: string) => {
+    window.electronAPI?.writeTraceLog?.(
+      `[RENDERER] ${type} canplay ` +
+        `(readyState=${el.readyState}, paused=${el.paused})`
+    );
+    if (shouldPlayRef.current && el.paused) {
+      safePlay(el, type);
+    }
+  };
 
   // Sync play/pause commands from parent (Admin controls)
   useEffect(() => {
-    if (media.type === 'audio' && audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play().catch(() => {});
-      } else {
-        audioRef.current.pause();
-      }
-    } else if (media.type === 'video' && videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.play().catch(() => {});
-      } else {
-        videoRef.current.pause();
-      }
-    }
-  }, [isPlaying, media.type]);
+    const el =
+      media.type === 'audio'
+        ? audioRef.current
+        : media.type === 'video'
+          ? videoRef.current
+          : null;
 
-  // Clean up playback and streams when component unmounts
+    if (!el) return;
+
+    if (isPlaying) {
+      shouldPlayRef.current = true;
+      safePlay(el, media.type === 'audio' ? 'Audio' : 'Video');
+    } else {
+      shouldPlayRef.current = false;
+      safePause(
+        el,
+        media.type === 'audio' ? 'Audio' : 'Video',
+        'prop-change'
+      );
+    }
+  }, [isPlaying, media.type, resolvedUrl]);
+
+  // Clean up playback when component unmounts
   useEffect(() => {
-    const audioEl = audioRef.current;
-    const videoEl = videoRef.current;
     return () => {
+      shouldPlayRef.current = false;
+      const audioEl = audioRef.current;
+      const videoEl = videoRef.current;
       if (audioEl) {
-        audioEl.pause();
-        audioEl.src = '';
+        safePause(audioEl, 'Audio', 'unmount');
       }
       if (videoEl) {
-        videoEl.pause();
-        videoEl.src = '';
+        safePause(videoEl, 'Video', 'unmount');
       }
     };
   }, []);
@@ -179,9 +276,76 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
           src={resolvedUrl}
           controls={showControls}
           autoPlay={autoPlay}
+          loop
+          playsInline
+          preload="auto"
           className="w-full h-full object-contain"
-          onPlay={() => onPlayStateChange?.(true)}
-          onPause={() => onPlayStateChange?.(false)}
+          onCanPlay={(e) => handleCanPlay(e.currentTarget, 'Video')}
+          onPlay={() => {
+            window.electronAPI?.writeTraceLog?.(
+              '[RENDERER] Video onPlay event fired'
+            );
+            onPlayStateChange?.(true);
+          }}
+          onPause={() => {
+            const status = `shouldPlay=${shouldPlayRef.current}`;
+            window.electronAPI?.writeTraceLog?.(
+              `[RENDERER] Video onPause event fired (${status})`
+            );
+            if (shouldPlayRef.current) {
+              window.electronAPI?.writeTraceLog?.(
+                '[RENDERER] Video resuming after unexpected pause'
+              );
+              if (videoRef.current) {
+                safePlay(videoRef.current, 'Video');
+              }
+            } else {
+              onPlayStateChange?.(false);
+            }
+          }}
+          onEnded={() => {
+            window.electronAPI?.writeTraceLog?.(
+              '[RENDERER] Video onEnded event fired'
+            );
+            onPlayStateChange?.(false);
+          }}
+          onTimeUpdate={(e) => {
+            const sec = Math.floor(e.currentTarget.currentTime);
+            if (sec !== lastLoggedSecRef.current && sec <= 5) {
+              lastLoggedSecRef.current = sec;
+              const dur = e.currentTarget.duration
+                ? e.currentTarget.duration.toFixed(1)
+                : '?';
+              window.electronAPI?.writeTraceLog?.(
+                `[RENDERER] Video progress: ${sec}s / ${dur}s`
+              );
+            }
+          }}
+          onWaiting={() => {
+            window.electronAPI?.writeTraceLog?.(
+              '[RENDERER] Video waiting / buffering'
+            );
+          }}
+          onStalled={() => {
+            window.electronAPI?.writeTraceLog?.(
+              '[RENDERER] Video playback stalled'
+            );
+          }}
+          onError={(e) => {
+            const err = e.currentTarget.error;
+            const msg =
+              '[RENDERER] Video element error: ' +
+              (err ? `${err.code}: ${err.message}` : 'unknown error') +
+              ' | url: ' +
+              resolvedUrl;
+            console.error(msg);
+            window.electronAPI?.writeTraceLog?.(msg);
+          }}
+          onLoadedData={() => {
+            window.electronAPI?.writeTraceLog?.(
+              `[RENDERER] Video data loaded: ${resolvedUrl}`
+            );
+          }}
         />
       </div>
     );
@@ -239,8 +403,75 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
           ref={audioRef}
           src={resolvedUrl}
           controls={showControls}
-          onPlay={() => onPlayStateChange?.(true)}
-          onPause={() => onPlayStateChange?.(false)}
+          autoPlay={autoPlay}
+          loop
+          preload="auto"
+          onCanPlay={(e) => handleCanPlay(e.currentTarget, 'Audio')}
+          onPlay={() => {
+            window.electronAPI?.writeTraceLog?.(
+              '[RENDERER] Audio onPlay event fired'
+            );
+            onPlayStateChange?.(true);
+          }}
+          onPause={() => {
+            const status = `shouldPlay=${shouldPlayRef.current}`;
+            window.electronAPI?.writeTraceLog?.(
+              `[RENDERER] Audio onPause event fired (${status})`
+            );
+            if (shouldPlayRef.current) {
+              window.electronAPI?.writeTraceLog?.(
+                '[RENDERER] Audio resuming after unexpected pause'
+              );
+              if (audioRef.current) {
+                safePlay(audioRef.current, 'Audio');
+              }
+            } else {
+              onPlayStateChange?.(false);
+            }
+          }}
+          onEnded={() => {
+            window.electronAPI?.writeTraceLog?.(
+              '[RENDERER] Audio onEnded event fired'
+            );
+            onPlayStateChange?.(false);
+          }}
+          onTimeUpdate={(e) => {
+            const sec = Math.floor(e.currentTarget.currentTime);
+            if (sec !== lastLoggedSecRef.current && sec <= 5) {
+              lastLoggedSecRef.current = sec;
+              const dur = e.currentTarget.duration
+                ? e.currentTarget.duration.toFixed(1)
+                : '?';
+              window.electronAPI?.writeTraceLog?.(
+                `[RENDERER] Audio progress: ${sec}s / ${dur}s`
+              );
+            }
+          }}
+          onWaiting={() => {
+            window.electronAPI?.writeTraceLog?.(
+              '[RENDERER] Audio waiting / buffering'
+            );
+          }}
+          onStalled={() => {
+            window.electronAPI?.writeTraceLog?.(
+              '[RENDERER] Audio playback stalled'
+            );
+          }}
+          onError={(e) => {
+            const err = e.currentTarget.error;
+            const msg =
+              '[RENDERER] Audio element error: ' +
+              (err ? `${err.code}: ${err.message}` : 'unknown error') +
+              ' | url: ' +
+              resolvedUrl;
+            console.error(msg);
+            window.electronAPI?.writeTraceLog?.(msg);
+          }}
+          onLoadedData={() => {
+            window.electronAPI?.writeTraceLog?.(
+              `[RENDERER] Audio data loaded: ${resolvedUrl}`
+            );
+          }}
           className="w-full mt-2"
         />
       </div>

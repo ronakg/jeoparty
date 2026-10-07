@@ -290,4 +290,3 @@ test('App Typography: source files contain zero fixed-width font-mono', () => {
     );
   }
 });
-

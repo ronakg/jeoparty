@@ -4,16 +4,16 @@ import {
   ipcMain,
   dialog,
   protocol,
-  net,
   nativeImage,
   session,
   shell,
+  net,
 } from 'electron';
 import http from 'http';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { initialGameState, gameReducer } from '../src/utils/gameReducer';
 import {
   GameAction,
@@ -25,17 +25,24 @@ import {
   serializeGameConfigToYaml,
   parseGameConfigFromYaml,
 } from '../src/utils/gameYaml';
+import {
+  createGameArchive,
+  extractGameArchive,
+  cleanupActiveTempDirs,
+} from './archive';
 
 app.name = 'JeoPARTY!';
 if (typeof app.setName === 'function') {
   app.setName('JeoPARTY!');
 }
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let adminWindow: BrowserWindow | null = null;
 let displayWindow: BrowserWindow | null = null;
+let activeGameDirectory: string | null = null;
 
 let currentState: GameState = { ...initialGameState };
 
@@ -208,6 +215,33 @@ function createDisplayWindow() {
   });
 }
 
+const MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
+  '.wav': 'audio/wav',
+  '.mp3': 'audio/mpeg',
+  '.ogg': 'audio/ogg',
+  '.m4a': 'audio/mp4',
+  '.aac': 'audio/aac',
+  '.flac': 'audio/flac',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.mov': 'video/quicktime',
+  '.avi': 'video/x-msvideo',
+  '.mkv': 'video/x-matroska',
+  '.wasm': 'application/wasm',
+};
+
 // Register media:// custom protocol for local media streaming
 protocol.registerSchemesAsPrivileged([
   {
@@ -254,15 +288,19 @@ app.whenReady().then(async () => {
         filePath = filePath.slice(1);
       }
 
-      // If not directly on disk, search relative to project root or resources
+      // If not on disk, search relative to active game, project, or resources
       if (!fs.existsSync(filePath)) {
         const cleanPath = filePath.replace(/^\/+/, '');
+        const candidateActive =
+          activeGameDirectory && path.join(activeGameDirectory, cleanPath);
         const candidate1 = path.join(app.getAppPath(), cleanPath);
         const candidate2 = path.join(process.cwd(), cleanPath);
         const candidate3 = path.join(app.getAppPath(), 'resources', cleanPath);
         const candidate4 = path.join(process.cwd(), 'resources', cleanPath);
 
-        if (fs.existsSync(candidate1)) {
+        if (candidateActive && fs.existsSync(candidateActive)) {
+          filePath = candidateActive;
+        } else if (fs.existsSync(candidate1)) {
           filePath = candidate1;
         } else if (fs.existsSync(candidate2)) {
           filePath = candidate2;
@@ -273,16 +311,46 @@ app.whenReady().then(async () => {
         }
       }
 
-      const fileUrl = new URL(`file://${filePath}`).toString();
-      const resp = await net.fetch(fileUrl);
-      const headers = new Headers(resp.headers);
-      headers.set('Access-Control-Allow-Origin', '*');
-      return new Response(resp.body, {
-        status: resp.status,
-        statusText: resp.statusText,
-        headers,
-      });
-    } catch {
+      appendTraceLog(
+        `[PROTOCOL] URL: ${request.url} | ` +
+          `range: ${request.headers.get('range') || 'none'}`
+      );
+
+      if (!fs.existsSync(filePath)) {
+        appendTraceLog(`[PROTOCOL] File not found: ${filePath}`);
+        return new Response('Media file not found', { status: 404 });
+      }
+
+      const stat = fs.statSync(filePath);
+      appendTraceLog(
+        `[PROTOCOL] Serving via net.fetch: ${filePath} (${stat.size} bytes)`
+      );
+      const fileUrl = pathToFileURL(filePath).toString();
+
+      try {
+        return await net.fetch(fileUrl, {
+          bypassCustomProtocolHandlers: true,
+        });
+      } catch (fetchErr) {
+        const errMsg =
+          fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+        appendTraceLog(`[PROTOCOL] net.fetch failed: ${errMsg}`);
+        const fileBuffer = fs.readFileSync(filePath);
+        const ext = path.extname(filePath).toLowerCase();
+        const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+        return new Response(fileBuffer, {
+          status: 200,
+          headers: {
+            'Content-Type': contentType,
+            'Content-Length': String(fileBuffer.byteLength),
+            'Accept-Ranges': 'bytes',
+            'Access-Control-Allow-Origin': '*',
+          },
+        });
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      appendTraceLog(`[PROTOCOL] Handler error: ${errMsg}`);
       return new Response('Media file not found', { status: 404 });
     }
   });
@@ -301,6 +369,7 @@ app.whenReady().then(async () => {
 });
 
 app.on('before-quit', () => {
+  cleanupActiveTempDirs();
   if (httpServer) {
     httpServer.close();
     httpServer = null;
@@ -312,25 +381,6 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
-
-const MIME_TYPES: Record<string, string> = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
-  '.webp': 'image/webp',
-  '.ico': 'image/x-icon',
-  '.wav': 'audio/wav',
-  '.mp3': 'audio/mpeg',
-  '.mp4': 'video/mp4',
-  '.wasm': 'application/wasm',
-};
 
 function getLanIp(): string {
   const ifaces = os.networkInterfaces();
@@ -680,8 +730,8 @@ ipcMain.handle('open-game-file', async (event) => {
   const win = BrowserWindow.fromWebContents(event.sender) || adminWindow;
   if (!win) return null;
   const result = await dialog.showOpenDialog(win, {
-    title: 'Open Jeopardy Game File',
-    filters: [{ name: 'Jeopardy Game YAML', extensions: ['yaml', 'yml'] }],
+    title: 'Open Jeopardy Game Package',
+    filters: [{ name: 'Jeopardy Game Package', extensions: ['jeopardy'] }],
     properties: ['openFile'],
   });
 
@@ -690,11 +740,13 @@ ipcMain.handle('open-game-file', async (event) => {
   }
 
   try {
-    const content = fs.readFileSync(result.filePaths[0], 'utf-8');
+    const archiveResult = await extractGameArchive(result.filePaths[0]);
+    activeGameDirectory = archiveResult.extractedDir;
+    const content = fs.readFileSync(archiveResult.yamlPath, 'utf-8');
     const parsed = parseGameConfigFromYaml(content);
     return parsed;
   } catch (err) {
-    console.error('Failed to parse game YAML:', err);
+    console.error('Failed to open game package:', err);
     return null;
   }
 });
@@ -709,12 +761,12 @@ ipcMain.handle('save-game-file', async (event, config: GameConfig) => {
         .replace(/[^a-z0-9]+/g, '_')
         .replace(/^_+|_+$/g, '')
     : 'jeopardy';
-  const defaultPath = `${safeTitle || 'jeopardy'}_game.yaml`;
+  const defaultPath = `${safeTitle || 'jeopardy'}.jeopardy`;
 
   const result = await dialog.showSaveDialog(win, {
-    title: 'Save Jeopardy Game File',
+    title: 'Save Jeopardy Game Package',
     defaultPath,
-    filters: [{ name: 'Jeopardy Game YAML', extensions: ['yaml', 'yml'] }],
+    filters: [{ name: 'Jeopardy Game Package', extensions: ['jeopardy'] }],
   });
 
   if (result.canceled || !result.filePath) {
@@ -722,15 +774,77 @@ ipcMain.handle('save-game-file', async (event, config: GameConfig) => {
   }
 
   let filePath = result.filePath;
-  if (!filePath.endsWith('.yaml') && !filePath.endsWith('.yml')) {
-    filePath += '.yaml';
+  if (!filePath.endsWith('.jeopardy')) {
+    filePath += '.jeopardy';
   }
 
   try {
-    fs.writeFileSync(filePath, serializeGameConfigToYaml(config), 'utf-8');
+    const mediaFiles = new Map<string, string>();
+    const clonedConfig: GameConfig = JSON.parse(JSON.stringify(config));
+
+    let mediaCounter = 1;
+    const processClueMedia = (media?: { type: string; urlOrPath: string }) => {
+      if (!media || media.type === 'none' || !media.urlOrPath) {
+        return;
+      }
+      const rawUrl = media.urlOrPath.trim();
+      if (
+        rawUrl.startsWith('http://') ||
+        rawUrl.startsWith('https://') ||
+        rawUrl.startsWith('data:')
+      ) {
+        return;
+      }
+
+      let sourceDiskPath = rawUrl;
+      if (
+        !fs.existsSync(sourceDiskPath) &&
+        activeGameDirectory &&
+        fs.existsSync(path.join(activeGameDirectory, rawUrl))
+      ) {
+        sourceDiskPath = path.join(activeGameDirectory, rawUrl);
+      }
+
+      if (fs.existsSync(sourceDiskPath)) {
+        const ext = path.extname(sourceDiskPath) || '';
+        const base = path.basename(sourceDiskPath, ext);
+        const cleanBase = base.replace(/[^a-zA-Z0-9_-]+/g, '_');
+        const safeBase = `${cleanBase}_${mediaCounter++}${ext}`;
+        const archiveRelPath = `media/${safeBase}`;
+        mediaFiles.set(archiveRelPath, sourceDiskPath);
+        media.urlOrPath = archiveRelPath;
+      }
+    };
+
+    if (clonedConfig.rounds) {
+      for (const round of clonedConfig.rounds) {
+        if (round.categories) {
+          for (const cat of round.categories) {
+            if (cat.clues) {
+              for (const clue of cat.clues) {
+                if (clue.media) {
+                  processClueMedia(clue.media);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (clonedConfig.finalJeopardy?.media) {
+      processClueMedia(clonedConfig.finalJeopardy.media);
+    }
+
+    const serializedYaml = serializeGameConfigToYaml(clonedConfig);
+    await createGameArchive(filePath, serializedYaml, mediaFiles);
+
+    const reloaded = await extractGameArchive(filePath);
+    activeGameDirectory = reloaded.extractedDir;
+
     return true;
   } catch (err) {
-    console.error('Failed to save game YAML:', err);
+    console.error('Failed to save game package:', err);
     return false;
   }
 });

@@ -165,4 +165,3 @@ export function formatTimerMmSs(totalSeconds: number): string {
   const ss = seconds.toString().padStart(2, '0');
   return `${mm}:${ss}`;
 }
-

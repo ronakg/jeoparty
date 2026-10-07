@@ -5,7 +5,6 @@ export interface CleanQuestionConfig {
   title: string;
   answer: string;
   hint?: string;
-  hintDeduction?: number;
   media?: {
     type: 'image' | 'audio' | 'video' | 'youtube';
     url: string;
@@ -65,12 +64,6 @@ export function serializeGameConfigToYaml(config: GameConfig): string {
         };
         if (clue.hint && String(clue.hint).trim()) {
           cleanQ.hint = String(clue.hint).trim();
-        }
-        if (
-          clue.hintDeduction !== undefined &&
-          clue.hintDeduction !== config.defaultHintDeduction
-        ) {
-          cleanQ.hintDeduction = clue.hintDeduction;
         }
         const mediaUrl = clue.media?.urlOrPath || (clue.media as any)?.url;
         if (clue.media && clue.media.type !== 'none' && mediaUrl) {
@@ -213,10 +206,6 @@ export function parseGameConfigFromYaml(yamlText: string): GameConfig {
           hint: rawQ.hint ? String(rawQ.hint) : '',
           state: 'unopened',
         };
-
-        if (rawQ.hintDeduction !== undefined) {
-          clue.hintDeduction = Number(rawQ.hintDeduction);
-        }
 
         if (rawQ.media && rawQ.media.type && rawQ.media.type !== 'none') {
           clue.media = {

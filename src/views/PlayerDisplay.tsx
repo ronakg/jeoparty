@@ -282,8 +282,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
 
   const isClueResolved = Boolean(
     activeClue?.correctTeam ||
-      activeClue?.answerRevealed ||
-      (activeClue?.incorrectTeams && activeClue.incorrectTeams.length >= 2)
+    activeClue?.answerRevealed ||
+    (activeClue?.incorrectTeams && activeClue.incorrectTeams.length >= 2)
   );
 
   const timerState = useQuestionTimer(
@@ -522,8 +522,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
       const isHighlighted =
         isRoundActive && (isAnswering || (isOriginTurn && !isIncorrect));
 
-      let borderClass =
-        'border border-blue-900/40 bg-[#050b1d]/70 opacity-75';
+      let borderClass = 'border border-blue-900/40 bg-[#050b1d]/70 opacity-75';
       if (isCorrect) {
         borderClass =
           'border border-emerald-500 bg-emerald-950/30 ' +
@@ -912,7 +911,9 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                         resolvedUrl={toMediaUrl(
                           config.finalJeopardy.media.urlOrPath
                         )}
+                        isPlaying={true}
                         showControls={false}
+                        autoPlay={true}
                         fullScreen={true}
                       />
                     </div>
@@ -949,13 +950,25 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
               <div
                 className={
                   'flex items-center gap-3 px-6 py-3 rounded-2xl ' +
-                  'bg-[#060e24] border border-blue-900/60 text-slate-300 ' +
-                  'text-sm font-semibold tracking-wider'
+                  (config.finalJeopardy?.wagersLocked
+                    ? 'bg-[#061838] border-emerald-500/40 text-emerald-300 '
+                    : 'bg-[#060e24] border-blue-900/60 text-slate-300 ') +
+                  'border text-sm font-semibold tracking-wider'
                 }
               >
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span
+                  className={
+                    'w-2 h-2 rounded-full ' +
+                    (config.finalJeopardy?.wagersLocked
+                      ? 'bg-emerald-400 animate-pulse'
+                      : 'bg-amber-400')
+                  }
+                />
                 <span>
-                  Teams are submitting secret wagers... Clue will appear shortly
+                  {config.finalJeopardy?.wagersLocked
+                    ? 'Wagers locked in. Clue will appear shortly'
+                    : 'Teams are submitting secret wagers... ' +
+                      'Clue will appear shortly'}
                 </span>
               </div>
             )}
@@ -1069,11 +1082,12 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                   }
                 >
                   <MediaRenderer
+                    key={toMediaUrl(activeClueData.media.urlOrPath)}
                     media={activeClueData.media}
                     resolvedUrl={toMediaUrl(activeClueData.media.urlOrPath)}
                     isPlaying={activeClue.mediaPlaying}
                     showControls={false}
-                    autoPlay={true}
+                    autoPlay={Boolean(activeClue.mediaPlaying)}
                     fullScreen={false}
                     className="max-h-full max-w-full"
                   />
@@ -1147,10 +1161,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                             }
                           >
                             Hint (-$
-                            {activeClueData.hintDeduction ??
-                              config.defaultHintDeduction ??
-                              100}{' '}
-                            pts)
+                            {config.defaultHintDeduction ?? 100} pts)
                           </span>
                           <span
                             className={
@@ -1267,10 +1278,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                           }
                         >
                           Hint (-$
-                          {activeClueData.hintDeduction ??
-                            config.defaultHintDeduction ??
-                            100}{' '}
-                          pts)
+                          {config.defaultHintDeduction ?? 100} pts)
                         </span>
                         <span
                           className={
@@ -1300,9 +1308,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                     <CheckCircle2
                       className={
                         'w-6 h-6 text-emerald-400 shrink-0 ' +
-                        (activeClue.correctTeam
-                          ? 'animate-victory-burst'
-                          : '')
+                        (activeClue.correctTeam ? 'animate-victory-burst' : '')
                       }
                     />
                     <span
@@ -1501,8 +1507,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 <TabularScore
                   score={t1DisplayScore}
                   isAnimating={
-                    t1Animating &&
-                    (!activeClue || activeClue.correctTeam === 1)
+                    t1Animating && (!activeClue || activeClue.correctTeam === 1)
                   }
                 />
               </div>
@@ -1546,8 +1551,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 <TabularScore
                   score={t2DisplayScore}
                   isAnimating={
-                    t2Animating &&
-                    (!activeClue || activeClue.correctTeam === 2)
+                    t2Animating && (!activeClue || activeClue.correctTeam === 2)
                   }
                 />
               </div>

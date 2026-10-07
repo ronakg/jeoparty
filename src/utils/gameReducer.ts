@@ -109,12 +109,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       const hasMedia = Boolean(
         targetClue.media &&
-          targetClue.media.type &&
-          targetClue.media.type !== 'none'
+        targetClue.media.type &&
+        targetClue.media.type !== 'none'
       );
       const timerConfigured = Boolean(
         state.config.questionTimerSeconds &&
-          state.config.questionTimerSeconds > 0
+        state.config.questionTimerSeconds > 0
       );
       const timerStartedAt =
         timerConfigured && !hasMedia
@@ -160,8 +160,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ];
       // Do not reveal or deduct points if clue has no hint or an empty hint string
       if (!clue?.hint || !clue.hint.trim()) return state;
-      const deduction =
-        clue?.hintDeduction ?? state.config.defaultHintDeduction ?? 100;
+      const deduction = state.config.defaultHintDeduction ?? 100;
       const newPoints = Math.max(
         0,
         state.activeClue.currentAvailablePoints - deduction
@@ -181,7 +180,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (!state.activeClue) return state;
       const timerConfigured = Boolean(
         state.config?.questionTimerSeconds &&
-          state.config.questionTimerSeconds > 0
+        state.config.questionTimerSeconds > 0
       );
       const timerStartedAt =
         state.activeClue.timerStartedAt ??
@@ -606,6 +605,21 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             team1Wager: action.payload.team1Wager,
             team2Wager: action.payload.team2Wager,
             wagersLocked: true,
+          },
+        },
+      };
+    }
+
+    case 'FJ_UNLOCK_WAGERS': {
+      if (!state.config || !state.config.finalJeopardy) return state;
+      const { finalJeopardy } = state.config;
+      return {
+        ...state,
+        config: {
+          ...state.config,
+          finalJeopardy: {
+            ...finalJeopardy,
+            wagersLocked: false,
           },
         },
       };

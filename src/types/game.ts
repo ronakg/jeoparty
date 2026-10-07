@@ -19,7 +19,6 @@ export interface Clue {
   question: string;
   answer: string;
   hint?: string;
-  hintDeduction?: number; // Configurable fixed deduction, defaults to game-level setting
   media?: MediaClue;
   state: ClueState;
   result?: ClueAwardResult;
@@ -251,6 +250,7 @@ export type GameAction = (
       type: 'FJ_SET_WAGERS';
       payload: { team1Wager: number; team2Wager: number };
     }
+  | { type: 'FJ_UNLOCK_WAGERS' }
   | { type: 'FJ_REVEAL_QUESTION' }
   | {
       type: 'FJ_JUDGE';

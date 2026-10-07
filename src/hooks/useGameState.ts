@@ -6,6 +6,13 @@ import {
   parseGameConfigFromYaml,
 } from '../utils/gameYaml';
 import { tracer, computeStateDelta } from '../utils/tracer';
+import {
+  toMediaUrlBrowser,
+  sanitizeGameFileName,
+  createActionId,
+  createSeenActionIdTracker,
+  mergeIncomingState,
+} from './gameStateHelpers';
 
 // Wipe any lingering localStorage keys from older versions to prevent restoring past games
 if (typeof window !== 'undefined') {
@@ -72,13 +79,7 @@ export function useGameState() {
             undefined,
             delta
           );
-          setState((prev) => ({
-            ...event.data.state,
-            displayWindowOpen:
-              event.data.state.displayWindowOpen !== undefined
-                ? event.data.state.displayWindowOpen
-                : prev.displayWindowOpen,
-          }));
+          setState((prev) => mergeIncomingState(prev, event.data.state));
           stateRef.current = event.data.state;
         } else if (event.data.type === 'REQUEST_STATE') {
           tracer.record(
@@ -154,17 +155,7 @@ export function useGameState() {
   // Cross-device LAN sync via Vite HMR WebSocket in development
   useEffect(() => {
     const hot = import.meta.hot;
-    const seenActionIds = new Set<string>();
-
-    const recordSeenId = (id: string): boolean => {
-      if (seenActionIds.has(id)) return false;
-      seenActionIds.add(id);
-      if (seenActionIds.size > 200) {
-        const first = seenActionIds.values().next().value;
-        if (first) seenActionIds.delete(first);
-      }
-      return true;
-    };
+    const recordSeenId = createSeenActionIdTracker(200);
 
     const handleStateBroadcast = (payload: { state?: GameState }) => {
       if (!payload?.state) return;
@@ -193,13 +184,7 @@ export function useGameState() {
         undefined,
         delta
       );
-      setState((prev) => ({
-        ...payload.state!,
-        displayWindowOpen:
-          payload.state!.displayWindowOpen !== undefined
-            ? payload.state!.displayWindowOpen
-            : prev.displayWindowOpen,
-      }));
+      setState((prev) => mergeIncomingState(prev, payload.state!));
       stateRef.current = payload.state;
     };
 
@@ -303,9 +288,7 @@ export function useGameState() {
 
   const dispatch = useCallback(
     (action: GameAction) => {
-      const actionId =
-        action._actionId ||
-        `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const actionId = action._actionId || createActionId();
       const actionWithId: GameAction = {
         ...action,
         _actionId: actionId,
@@ -444,8 +427,11 @@ export function useGameState() {
         const [fileHandle] = await (window as any).showOpenFilePicker({
           types: [
             {
-              description: 'Jeopardy Game YAML (*.yaml, *.yml)',
-              accept: { 'text/yaml': ['.yaml', '.yml'] },
+              description: 'Jeopardy Game Package (*.jeopardy, *.yaml)',
+              accept: {
+                'application/x-zip-compressed': ['.jeopardy'],
+                'text/yaml': ['.yaml', '.yml'],
+              },
             },
           ],
           multiple: false,
@@ -466,7 +452,7 @@ export function useGameState() {
     return new Promise((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = '.yaml,.yml';
+      input.accept = '.jeopardy,.yaml,.yml';
       input.onchange = (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (!file) return resolve(null);
@@ -497,14 +483,7 @@ export function useGameState() {
       }
 
       const yamlContent = serializeGameConfigToYaml(config);
-      const rawTitle = config.title?.trim();
-      const safeTitle = rawTitle
-        ? rawTitle
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '_')
-            .replace(/^_+|_+$/g, '')
-        : 'jeopardy';
-      const fileName = `${safeTitle || 'jeopardy'}_game.yaml`;
+      const fileName = sanitizeGameFileName(config.title);
 
       // Modern browser File System Access API
       if (typeof window !== 'undefined' && 'showSaveFilePicker' in window) {
@@ -513,12 +492,11 @@ export function useGameState() {
             suggestedName: fileName,
             types: [
               {
-                description: 'Jeopardy Game YAML (*.yaml, *.yml)',
+                description: 'Jeopardy Game Package (*.jeopardy)',
                 accept: {
+                  'application/x-zip-compressed': ['.jeopardy'],
                   'application/yaml': ['.yaml', '.yml'],
                   'text/yaml': ['.yaml', '.yml'],
-                  'application/x-yaml': ['.yaml', '.yml'],
-                  'text/plain': ['.yaml', '.yml'],
                 },
               },
             ],
@@ -528,7 +506,8 @@ export function useGameState() {
           await writable.close();
           return true;
         } catch (err: any) {
-          // If the user cancelled the dialog, return false so state stays unsaved
+          // If the user cancelled the dialog, return false so state
+          // stays unsaved
           if (err?.name === 'AbortError') {
             return false;
           }
@@ -600,15 +579,7 @@ export function useGameState() {
       if (isElectron && window.electronAPI) {
         return window.electronAPI.toMediaUrl(filePath);
       }
-      if (
-        filePath.startsWith('http://') ||
-        filePath.startsWith('https://') ||
-        filePath.startsWith('data:')
-      ) {
-        return filePath;
-      }
-      // Web browser mode: normalize relative path for static serving from public/
-      return filePath.startsWith('/') ? filePath : `/${filePath}`;
+      return toMediaUrlBrowser(filePath);
     },
     [isElectron]
   );

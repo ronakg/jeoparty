@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import http from 'node:http';
+import path from 'node:path';
 import { Duplex } from 'node:stream';
 import { initialGameState, gameReducer } from '../src/utils/gameReducer';
 import {
@@ -245,6 +247,17 @@ class GameSimulation {
     });
   }
 
+  async setMediaPlaying(playing: boolean): Promise<GameState> {
+    return this.dispatch({
+      type: 'SET_MEDIA_PLAYING',
+      payload: { playing },
+    });
+  }
+
+  async hideMedia(): Promise<GameState> {
+    return this.dispatch({ type: 'HIDE_MEDIA' });
+  }
+
   async closeClue(): Promise<GameState> {
     return this.dispatch({ type: 'CLOSE_CLUE' });
   }
@@ -274,14 +287,15 @@ class GameSimulation {
     return this.dispatch({ type: 'SET_ROUND', payload: { roundIndex } });
   }
 
-  async setWagers(
-    team1Wager: number,
-    team2Wager: number
-  ): Promise<GameState> {
+  async setWagers(team1Wager: number, team2Wager: number): Promise<GameState> {
     return this.dispatch({
       type: 'FJ_SET_WAGERS',
       payload: { team1Wager, team2Wager },
     });
+  }
+
+  async unlockWagers(): Promise<GameState> {
+    return this.dispatch({ type: 'FJ_UNLOCK_WAGERS' });
   }
 
   async revealTieBreakerQuestion(): Promise<GameState> {
@@ -314,61 +328,56 @@ class GameSimulation {
 test(
   'Simulation: Game Creation - custom dimensions and point progression',
   () => {
-    const config = createGameFromPreferences({
-      title: 'Science Bowl 2026',
-      team1Name: 'Protons',
-      team2Name: 'Electrons',
-      numCategories: 4,
-      numQuestionsPerCategory: 5,
-      cluePointValues: [200, 400, 600, 800, 1000],
-      hintPenalty: 75,
-      reboundPercentage: 50,
-      includeFinalJeopardy: true,
-    });
+  const config = createGameFromPreferences({
+    title: 'Science Bowl 2026',
+    team1Name: 'Protons',
+    team2Name: 'Electrons',
+    numCategories: 4,
+    numQuestionsPerCategory: 5,
+    cluePointValues: [200, 400, 600, 800, 1000],
+    hintPenalty: 75,
+    reboundPercentage: 50,
+    includeFinalJeopardy: true,
+  });
 
-    assert.equal(config.title, 'Science Bowl 2026');
-    assert.equal(config.team1Name, 'Protons');
-    assert.equal(config.team2Name, 'Electrons');
-    assert.equal(config.defaultHintDeduction, 75);
-    assert.equal(config.reboundPercentage, 50);
+  assert.equal(config.title, 'Science Bowl 2026');
+  assert.equal(config.team1Name, 'Protons');
+  assert.equal(config.team2Name, 'Electrons');
+  assert.equal(config.defaultHintDeduction, 75);
+  assert.equal(config.reboundPercentage, 50);
 
-    const categories = config.rounds[0].categories;
-    assert.equal(categories.length, 4, 'Must create exactly 4 categories');
+  const categories = config.rounds[0].categories;
+  assert.equal(categories.length, 4, 'Must create exactly 4 categories');
 
-    for (const cat of categories) {
-      assert.equal(cat.clues.length, 5, 'Must create 5 clues per category');
-      assert.deepEqual(
-        cat.clues.map((c) => c.points),
-        [200, 400, 600, 800, 1000],
-        'Points must match configured custom progression'
-      );
-    }
-
-    assert.ok(
-      config.finalJeopardy,
-      'Must configure tie-breaker when requested'
+  for (const cat of categories) {
+    assert.equal(cat.clues.length, 5, 'Must create 5 clues per category');
+    assert.deepEqual(
+      cat.clues.map((c) => c.points),
+      [200, 400, 600, 800, 1000],
+      'Points must match configured custom progression'
     );
   }
-);
+
+  assert.ok(config.finalJeopardy, 'Must configure tie-breaker when requested');
+});
 
 test(
   'Simulation: Game Creation - extrapolates points when questions exceed array',
   () => {
-    const config = createGameFromPreferences({
-      numCategories: 3,
-      numQuestionsPerCategory: 5,
-      cluePointValues: [100, 200, 300], // Only 3 provided, 5 needed
-    });
+  const config = createGameFromPreferences({
+    numCategories: 3,
+    numQuestionsPerCategory: 5,
+    cluePointValues: [100, 200, 300], // Only 3 provided, 5 needed
+  });
 
-    const clues = config.rounds[0].categories[0].clues;
-    assert.equal(clues.length, 5);
-    assert.deepEqual(
-      clues.map((c) => c.points),
-      [100, 200, 300, 400, 500],
-      'Must extrapolate point values linearly to match question count'
-    );
-  }
-);
+  const clues = config.rounds[0].categories[0].clues;
+  assert.equal(clues.length, 5);
+  assert.deepEqual(
+    clues.map((c) => c.points),
+    [100, 200, 300, 400, 500],
+    'Must extrapolate point values linearly to match question count'
+  );
+});
 
 // ---------------------------------------------------------------------------
 // SUITE 2: File Persistence Roundtrip & Clean Export Integrity
@@ -555,9 +564,7 @@ test(
   }
 });
 
-test(
-  'Simulation: Rebound Flow - double miss awards zero points',
-  async () => {
+test('Simulation: Rebound Flow - double miss awards zero points', async () => {
   const sim = await GameSimulation.start();
   try {
     await sim.loadGame(defaultGame);
@@ -752,7 +759,20 @@ test(
     // Advance to tie-breaker round (-1)
     await sim.setRound(-1);
     await sim.revealTieBreakerQuestion();
-    await sim.setWagers(100, 100);
+
+    // Lock initial wagers
+    state = await sim.setWagers(100, 100);
+    assert.equal(state.config?.finalJeopardy?.wagersLocked, true);
+
+    // Host unlocks to edit wagers
+    state = await sim.unlockWagers();
+    assert.equal(state.config?.finalJeopardy?.wagersLocked, false);
+
+    // Re-lock updated wagers
+    state = await sim.setWagers(150, 100);
+    assert.equal(state.config?.finalJeopardy?.wagersLocked, true);
+    assert.equal(state.config?.finalJeopardy?.team1Wager, 150);
+
     await sim.judgeTieBreaker(true, false);
     state = await sim.getState();
 
@@ -997,267 +1017,386 @@ test(
 test(
   'Simulation: Question Timer - clue without media starts countdown',
   async () => {
-    const sim = await GameSimulation.start();
-    try {
-      const timerGame = createGameFromPreferences({
-        title: 'Countdown Simulation',
-        team1Name: 'Stars',
-        team2Name: 'Stripes',
-        numCategories: 3,
-        numQuestionsPerCategory: 3,
-        questionTimerSeconds: 30,
-      });
+  const sim = await GameSimulation.start();
+  try {
+    const timerGame = createGameFromPreferences({
+      title: 'Countdown Simulation',
+      team1Name: 'Stars',
+      team2Name: 'Stripes',
+      numCategories: 3,
+      numQuestionsPerCategory: 3,
+      questionTimerSeconds: 30,
+    });
 
-      await sim.loadGame(timerGame);
+    await sim.loadGame(timerGame);
 
-      const beforeState = await sim.getState();
-      assert.equal(beforeState.activeClue, null);
+    const beforeState = await sim.getState();
+    assert.equal(beforeState.activeClue, null);
 
-      const now = Date.now();
-      await sim.selectClue(0, 0, 0, 1, now);
+    const now = Date.now();
+    await sim.selectClue(0, 0, 0, 1, now);
 
-      const activeState = await sim.getState();
-      assert.ok(activeState.activeClue);
-      assert.equal(activeState.activeClue.timerStartedAt, now);
-      assert.equal(activeState.config?.questionTimerSeconds, 30);
-    } finally {
-      await sim.stop();
-    }
+    const activeState = await sim.getState();
+    assert.ok(activeState.activeClue);
+    assert.equal(activeState.activeClue.timerStartedAt, now);
+    assert.equal(activeState.config?.questionTimerSeconds, 30);
+  } finally {
+    await sim.stop();
   }
-);
+});
 
 test(
   'Simulation: Question Timer - clue with media defers until reveal',
   async () => {
-    const sim = await GameSimulation.start();
-    try {
-      const mediaGame = createGameFromPreferences({
-        title: 'Media Timer Simulation',
-        team1Name: 'Stars',
-        team2Name: 'Stripes',
-        numCategories: 3,
-        numQuestionsPerCategory: 3,
-        questionTimerSeconds: 45,
-      });
+  const sim = await GameSimulation.start();
+  try {
+    const mediaGame = createGameFromPreferences({
+      title: 'Media Timer Simulation',
+      team1Name: 'Stars',
+      team2Name: 'Stripes',
+      numCategories: 3,
+      numQuestionsPerCategory: 3,
+      questionTimerSeconds: 45,
+    });
 
-      mediaGame.rounds[0].categories[0].clues[0].media = {
-        type: 'audio',
-        urlOrPath: 'sample.mp3',
-      };
+    mediaGame.rounds[0].categories[0].clues[0].media = {
+      type: 'audio',
+      urlOrPath: 'sample.mp3',
+    };
 
-      await sim.loadGame(mediaGame);
-      await sim.selectClue(0, 0, 0, 1);
+    await sim.loadGame(mediaGame);
+    await sim.selectClue(0, 0, 0, 1);
 
-      let state = await sim.getState();
-      assert.ok(state.activeClue);
-      assert.equal(
-        state.activeClue.timerStartedAt,
-        null,
-        'Timer must remain null before media is revealed'
-      );
+    let state = await sim.getState();
+    assert.ok(state.activeClue);
+    assert.equal(
+      state.activeClue.timerStartedAt,
+      null,
+      'Timer must remain null before media is revealed'
+    );
 
-      const mediaRevealTime = Date.now();
-      await sim.revealMedia(mediaRevealTime);
+    const mediaRevealTime = Date.now();
+    await sim.revealMedia(mediaRevealTime);
 
-      state = await sim.getState();
-      assert.equal(
-        state.activeClue?.timerStartedAt,
-        mediaRevealTime,
-        'Timer must start when host reveals media'
-      );
-    } finally {
-      await sim.stop();
-    }
+    state = await sim.getState();
+    assert.equal(
+      state.activeClue?.timerStartedAt,
+      mediaRevealTime,
+      'Timer must start when host reveals media'
+    );
+  } finally {
+    await sim.stop();
   }
-);
+});
+
+test(
+  'Simulation: Media Playback - controls media playing and reveal state',
+  async () => {
+  const sim = await GameSimulation.start();
+  try {
+    const mediaGame = createGameFromPreferences({
+      title: 'Media Playback Simulation',
+      team1Name: 'Alpha',
+      team2Name: 'Beta',
+      numCategories: 3,
+      numQuestionsPerCategory: 3,
+    });
+    mediaGame.rounds[0].categories[0].clues[0].media = {
+      type: 'video',
+      urlOrPath: 'media/test_video.mp4',
+    };
+
+    await sim.loadGame(mediaGame);
+    await sim.selectClue(0, 0, 0, 1);
+
+    let state = await sim.getState();
+    assert.equal(state.activeClue?.mediaRevealed, false);
+    assert.equal(state.activeClue?.mediaPlaying, false);
+
+    await sim.revealMedia();
+    state = await sim.getState();
+    assert.equal(state.activeClue?.mediaRevealed, true);
+    assert.equal(state.activeClue?.mediaPlaying, true);
+
+    await sim.setMediaPlaying(false);
+    state = await sim.getState();
+    assert.equal(state.activeClue?.mediaRevealed, true);
+    assert.equal(state.activeClue?.mediaPlaying, false);
+
+    await sim.setMediaPlaying(true);
+    state = await sim.getState();
+    assert.equal(state.activeClue?.mediaPlaying, true);
+
+    await sim.hideMedia();
+    state = await sim.getState();
+    assert.equal(state.activeClue?.mediaRevealed, false);
+    assert.equal(state.activeClue?.mediaPlaying, false);
+  } finally {
+    await sim.stop();
+  }
+});
 
 test(
   'Simulation: Question Timer - expiration incurs zero auto side effects',
   async () => {
-    const sim = await GameSimulation.start();
-    try {
-      const expiredGame = createGameFromPreferences({
-        title: 'Expired Timer Simulation',
-        team1Name: 'Stars',
-        team2Name: 'Stripes',
-        numCategories: 3,
-        numQuestionsPerCategory: 3,
-        questionTimerSeconds: 15,
-      });
+  const sim = await GameSimulation.start();
+  try {
+    const expiredGame = createGameFromPreferences({
+      title: 'Expired Timer Simulation',
+      team1Name: 'Stars',
+      team2Name: 'Stripes',
+      numCategories: 3,
+      numQuestionsPerCategory: 3,
+      questionTimerSeconds: 15,
+    });
 
-      await sim.loadGame(expiredGame);
+    await sim.loadGame(expiredGame);
 
-      // Clue started 25 seconds ago (10s past 15s limit)
-      const pastTime = Date.now() - 25000;
-      await sim.selectClue(0, 0, 0, 1, pastTime);
+    // Clue started 25 seconds ago (10s past 15s limit)
+    const pastTime = Date.now() - 25000;
+    await sim.selectClue(0, 0, 0, 1, pastTime);
 
-      let state = await sim.getState();
-      assert.ok(state.activeClue, 'Clue must remain open upon timer expiry');
-      assert.equal(state.team1Score, 0);
-      assert.equal(state.team2Score, 0);
-      assert.equal(
-        state.config?.rounds[0].categories[0].clues[0].state,
-        'active'
-      );
+    let state = await sim.getState();
+    assert.ok(state.activeClue, 'Clue must remain open upon timer expiry');
+    assert.equal(state.team1Score, 0);
+    assert.equal(state.team2Score, 0);
+    assert.equal(
+      state.config?.rounds[0].categories[0].clues[0].state,
+      'active'
+    );
 
-      // Host can still judge clue correct without restriction
-      await sim.answerCorrect(1);
-      state = await sim.getState();
-      assert.equal(state.team1Score, 100);
-      assert.equal(state.activeClue?.correctTeam, 1);
+    // Host can still judge clue correct without restriction
+    await sim.answerCorrect(1);
+    state = await sim.getState();
+    assert.equal(state.team1Score, 100);
+    assert.equal(state.activeClue?.correctTeam, 1);
 
-      await sim.closeClue();
-      state = await sim.getState();
-      assert.equal(state.controllingTeam, 2);
-    } finally {
-      await sim.stop();
-    }
+    await sim.closeClue();
+    state = await sim.getState();
+    assert.equal(state.controllingTeam, 2);
+  } finally {
+    await sim.stop();
   }
-);
+});
 
 test(
   'Simulation: Question Timer - unconfigured timer leaves timer null',
   async () => {
-    const sim = await GameSimulation.start();
-    try {
-      const standardGame = createGameFromPreferences({
-        title: 'No Timer Simulation',
-        team1Name: 'Stars',
-        team2Name: 'Stripes',
-        numCategories: 3,
-        numQuestionsPerCategory: 3,
-      });
+  const sim = await GameSimulation.start();
+  try {
+    const standardGame = createGameFromPreferences({
+      title: 'No Timer Simulation',
+      team1Name: 'Stars',
+      team2Name: 'Stripes',
+      numCategories: 3,
+      numQuestionsPerCategory: 3,
+    });
 
-      await sim.loadGame(standardGame);
-      await sim.selectClue(0, 0, 0, 1);
+    await sim.loadGame(standardGame);
+    await sim.selectClue(0, 0, 0, 1);
 
-      const state = await sim.getState();
-      assert.ok(state.activeClue);
-      assert.equal(state.activeClue.timerStartedAt, null);
-      assert.equal(state.config?.questionTimerSeconds, undefined);
-    } finally {
-      await sim.stop();
-    }
+    const state = await sim.getState();
+    assert.ok(state.activeClue);
+    assert.equal(state.activeClue.timerStartedAt, null);
+    assert.equal(state.config?.questionTimerSeconds, undefined);
+  } finally {
+    await sim.stop();
   }
-);
+});
 
 test(
   'Simulation: Question Timer - countdown urgency transitions at 10s',
   async () => {
-    const sim = await GameSimulation.start();
-    try {
-      const timerGame = createGameFromPreferences({
-        title: 'Timer Urgency Simulation',
-        team1Name: 'Stars',
-        team2Name: 'Stripes',
-        numCategories: 3,
-        numQuestionsPerCategory: 3,
-        questionTimerSeconds: 30,
-      });
+  const sim = await GameSimulation.start();
+  try {
+    const timerGame = createGameFromPreferences({
+      title: 'Timer Urgency Simulation',
+      team1Name: 'Stars',
+      team2Name: 'Stripes',
+      numCategories: 3,
+      numQuestionsPerCategory: 3,
+      questionTimerSeconds: 30,
+    });
 
-      await sim.loadGame(timerGame);
+    await sim.loadGame(timerGame);
 
-      // 18s elapsed -> 12s remaining (>10s, calm state)
-      const calmTime = Date.now() - 18000;
-      await sim.selectClue(0, 0, 0, 1, calmTime);
+    // 18s elapsed -> 12s remaining (>10s, calm state)
+    const calmTime = Date.now() - 18000;
+    await sim.selectClue(0, 0, 0, 1, calmTime);
 
-      let state = await sim.getState();
-      assert.ok(state.activeClue);
-      assert.equal(state.activeClue.timerStartedAt, calmTime);
+    let state = await sim.getState();
+    assert.ok(state.activeClue);
+    assert.equal(state.activeClue.timerStartedAt, calmTime);
 
-      let html = renderToStaticMarkup(
-        React.createElement(PlayerDisplay, {
-          state,
-          toMediaUrl: (p: string) => p,
-          onToggleFullScreen: () => {},
-        })
-      );
-      assert.ok(html.includes('00:12'));
-      assert.ok(html.includes('text-modern-gold'));
-      assert.ok(!html.includes('animate-timer-blink'));
+    let html = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+    assert.ok(html.includes('00:12'));
+    assert.ok(html.includes('text-modern-gold'));
+    assert.ok(!html.includes('animate-timer-blink'));
 
-      // 20s elapsed -> 10s remaining (threshold: urgent blinking)
-      const urgentTime = Date.now() - 20000;
-      await sim.selectClue(0, 0, 1, 1, urgentTime);
+    // 20s elapsed -> 10s remaining (threshold: urgent blinking)
+    const urgentTime = Date.now() - 20000;
+    await sim.selectClue(0, 0, 1, 1, urgentTime);
 
-      state = await sim.getState();
-      assert.ok(state.activeClue);
-      assert.equal(state.activeClue.timerStartedAt, urgentTime);
+    state = await sim.getState();
+    assert.ok(state.activeClue);
+    assert.equal(state.activeClue.timerStartedAt, urgentTime);
 
-      html = renderToStaticMarkup(
-        React.createElement(PlayerDisplay, {
-          state,
-          toMediaUrl: (p: string) => p,
-          onToggleFullScreen: () => {},
-        })
-      );
-      assert.ok(html.includes('00:10'));
-      assert.ok(html.includes('animate-timer-blink'));
-      assert.ok(html.includes('text-amber-300'));
+    html = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+    assert.ok(html.includes('00:10'));
+    assert.ok(html.includes('animate-timer-blink'));
+    assert.ok(html.includes('text-amber-300'));
 
-      // 30s elapsed -> 0s remaining (expired state)
-      const expiredTime = Date.now() - 30000;
-      await sim.selectClue(0, 0, 2, 1, expiredTime);
+    // 30s elapsed -> 0s remaining (expired state)
+    const expiredTime = Date.now() - 30000;
+    await sim.selectClue(0, 0, 2, 1, expiredTime);
 
-      state = await sim.getState();
-      html = renderToStaticMarkup(
-        React.createElement(PlayerDisplay, {
-          state,
-          toMediaUrl: (p: string) => p,
-          onToggleFullScreen: () => {},
-        })
-      );
-      assert.ok(html.includes('00:00'));
-      assert.ok(html.includes('text-rose-300'));
-      assert.ok(!html.includes('animate-timer-blink'));
-    } finally {
-      await sim.stop();
-    }
+    state = await sim.getState();
+    html = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+    assert.ok(html.includes('00:00'));
+    assert.ok(html.includes('text-rose-300'));
+    assert.ok(!html.includes('animate-timer-blink'));
+  } finally {
+    await sim.stop();
   }
-);
+});
 
 test(
   'Simulation: Score Lifecycle - green points clear when next clue opens',
   async () => {
+  const sim = await GameSimulation.start();
+  try {
+    const matchGame = createGameFromPreferences({
+      title: 'Score Lifecycle Simulation',
+      team1Name: 'Stars',
+      team2Name: 'Stripes',
+      numCategories: 3,
+      numQuestionsPerCategory: 3,
+    });
+
+    await sim.loadGame(matchGame);
+
+    // Question 1: Team 1 answers correctly
+    await sim.selectClue(0, 0, 0, 1);
+    await sim.answerCorrect(1);
+
+    let state = await sim.getState();
+    assert.equal(state.team1Score, 100);
+    assert.equal(state.activeClue?.correctTeam, 1);
+
+    // Question 2: Host closes Question 1 and selects Question 2
+    await sim.closeClue();
+    await sim.selectClue(0, 0, 1, 2);
+
+    state = await sim.getState();
+    assert.ok(state.activeClue);
+    assert.equal(state.activeClue.correctTeam, null);
+
+    // Render PlayerDisplay: score must be resting gold, not green
+    const html = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+    assert.ok(html.includes('w-[0.65em]'));
+    assert.ok(html.includes('text-modern-gold'));
+    assert.ok(!html.includes('text-emerald-400 drop-shadow'));
+  } finally {
+    await sim.stop();
+  }
+});
+
+test(
+  'Simulation: Score Animation - correct answer triggers 1.5s spin duration',
+  async () => {
+  const sim = await GameSimulation.start();
+  try {
+    const matchGame = createGameFromPreferences({
+      title: 'Score Animation Simulation',
+      team1Name: 'Stars',
+      team2Name: 'Stripes',
+      numCategories: 3,
+      numQuestionsPerCategory: 3,
+    });
+
+    await sim.loadGame(matchGame);
+    await sim.selectClue(0, 0, 0, 1);
+    await sim.answerCorrect(1);
+
+    const state = await sim.getState();
+    assert.equal(state.team1Score, 100);
+    assert.equal(state.activeClue?.correctTeam, 1);
+    assert.equal(SCORE_SPIN_DURATION_MS, 1500);
+
+    // Verify that during the 1.5s window the calculation reports animating
+    const midStep = calculateAnimatedScore(0, 100, 750, SCORE_SPIN_DURATION_MS);
+    assert.equal(midStep.isAnimating, true);
+    assert.ok(midStep.currentScore > 0 && midStep.currentScore <= 100);
+
+    // Verify that after 1.5s the calculation reports complete
+    const finalStep = calculateAnimatedScore(
+      0,
+      100,
+      1500,
+      SCORE_SPIN_DURATION_MS
+    );
+    assert.equal(finalStep.isAnimating, false);
+    assert.equal(finalStep.currentScore, 100);
+  } finally {
+    await sim.stop();
+  }
+});
+
+test(
+  'Simulation: Tie-Breaker - category belongs to main board categories',
+  async () => {
     const sim = await GameSimulation.start();
     try {
-      const matchGame = createGameFromPreferences({
-        title: 'Score Lifecycle Simulation',
-        team1Name: 'Stars',
-        team2Name: 'Stripes',
-        numCategories: 3,
-        numQuestionsPerCategory: 3,
-      });
-
-      await sim.loadGame(matchGame);
-
-      // Question 1: Team 1 answers correctly
-      await sim.selectClue(0, 0, 0, 1);
-      await sim.answerCorrect(1);
-
-      let state = await sim.getState();
-      assert.equal(state.team1Score, 100);
-      assert.equal(state.activeClue?.correctTeam, 1);
-
-      // Question 2: Host closes Question 1 and selects Question 2
-      await sim.closeClue();
-      await sim.selectClue(0, 0, 1, 2);
-
-      state = await sim.getState();
-      assert.ok(state.activeClue);
-      assert.equal(state.activeClue.correctTeam, null);
-
-      // Render PlayerDisplay: score must be resting gold, not green
-      const html = renderToStaticMarkup(
-        React.createElement(PlayerDisplay, {
-          state,
-          toMediaUrl: (p: string) => p,
-          onToggleFullScreen: () => {},
-        })
+      const yamlPath = path.resolve(
+        process.cwd(),
+        'tests/fixtures/minimal_game/game.yaml'
       );
-      assert.ok(html.includes('w-[0.65em]'));
-      assert.ok(html.includes('text-modern-gold'));
-      assert.ok(!html.includes('text-emerald-400 drop-shadow'));
+      const rawYaml = fs.readFileSync(yamlPath, 'utf-8');
+      const game = parseGameConfigFromYaml(rawYaml);
+
+      await sim.loadGame(game);
+      const state = await sim.getState();
+
+      const boardCategories = (state.config?.rounds || []).flatMap((r) =>
+        r.categories.map((c) => c.name)
+      );
+      const tieCategory = state.config?.finalJeopardy?.category;
+
+      assert.ok(tieCategory, 'Tie-breaker category must exist');
+      assert.ok(
+        boardCategories.includes(tieCategory),
+        `Tie-breaker category ${tieCategory} must belong to board categories`
+      );
+
+      // Transition to tie-breaker round
+      await sim.setRound(-1);
+      const tieState = await sim.getState();
+      assert.equal(tieState.currentRoundIndex, -1);
+      assert.equal(tieState.config?.finalJeopardy?.category, tieCategory);
     } finally {
       await sim.stop();
     }
@@ -1265,50 +1404,48 @@ test(
 );
 
 test(
-  'Simulation: Score Animation - correct answer triggers 1.5s spin duration',
+  'Simulation: Game Editing - updates title and team names via reload',
   async () => {
     const sim = await GameSimulation.start();
     try {
       const matchGame = createGameFromPreferences({
-        title: 'Score Animation Simulation',
-        team1Name: 'Stars',
-        team2Name: 'Stripes',
-        numCategories: 3,
-        numQuestionsPerCategory: 3,
+        title: 'Initial Title',
+        team1Name: 'Team Red',
+        team2Name: 'Team Blue',
+        numRounds: 1,
+        numCategories: 1,
+        numQuestionsPerCategory: 1,
       });
 
       await sim.loadGame(matchGame);
+      let state = await sim.getState();
+      assert.equal(state.config?.title, 'Initial Title');
+      assert.equal(state.config?.team1Name, 'Team Red');
+      assert.equal(state.config?.team2Name, 'Team Blue');
+
+      // Edit title and team names and reload
+      const updatedGame = {
+        ...matchGame,
+        title: 'Updated Grand Final',
+        team1Name: 'Champions',
+        team2Name: 'Challengers',
+      };
+
+      await sim.loadGame(updatedGame);
+      state = await sim.getState();
+      assert.equal(state.config?.title, 'Updated Grand Final');
+      assert.equal(state.config?.team1Name, 'Champions');
+      assert.equal(state.config?.team2Name, 'Challengers');
+
+      // Verify answering clue operates with new team configuration
       await sim.selectClue(0, 0, 0, 1);
       await sim.answerCorrect(1);
-
-      const state = await sim.getState();
+      state = await sim.getState();
       assert.equal(state.team1Score, 100);
       assert.equal(state.activeClue?.correctTeam, 1);
-      assert.equal(SCORE_SPIN_DURATION_MS, 1500);
-
-      // Verify that during the 1.5s window the calculation reports animating
-      const midStep = calculateAnimatedScore(
-        0,
-        100,
-        750,
-        SCORE_SPIN_DURATION_MS
-      );
-      assert.equal(midStep.isAnimating, true);
-      assert.ok(midStep.currentScore > 0 && midStep.currentScore <= 100);
-
-      // Verify that after 1.5s the calculation reports complete
-      const finalStep = calculateAnimatedScore(
-        0,
-        100,
-        1500,
-        SCORE_SPIN_DURATION_MS
-      );
-      assert.equal(finalStep.isAnimating, false);
-      assert.equal(finalStep.currentScore, 100);
     } finally {
       await sim.stop();
     }
   }
 );
-
 

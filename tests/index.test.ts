@@ -4,3 +4,6 @@ import './appConfig.test';
 import './tracer.test';
 import './qrCode.test';
 import './simulation.test';
+import './useGameState.test';
+import './archive.test';
+import './gamePackage.test';

@@ -22,36 +22,46 @@ import {
 import { parseYouTubeUrl, formatSecondsToTime } from '../../utils/youtube';
 
 export interface GameBuilderProps {
-  currentConfig: GameConfig | null;
+  currentConfig?: GameConfig | null;
+  initialConfig?: GameConfig | null;
   lastSavedYaml?: string | null;
+  initialTab?: 'board' | 'tiebreaker';
   onSaveSuccess?: (savedYaml: string) => void;
   onSaveAndPlay: (config: GameConfig) => void;
-  onCloseGame: () => void;
-  saveGameFile: (config: GameConfig) => Promise<boolean>;
-  selectMediaFile: (
+  onCloseGame?: () => void;
+  onClose?: () => void;
+  saveGameFile?: (config: GameConfig) => Promise<boolean>;
+  selectMediaFile?: (
     type: 'image' | 'audio' | 'video'
   ) => Promise<string | null>;
+  toMediaUrl?: (path: string) => string;
 }
 
 export const GameBuilder: React.FC<GameBuilderProps> = ({
   currentConfig,
+  initialConfig,
   lastSavedYaml,
+  initialTab,
   onSaveSuccess,
   onSaveAndPlay,
   onCloseGame,
-  saveGameFile,
-  selectMediaFile,
+  onClose,
+  saveGameFile = async () => true,
+  selectMediaFile = async () => null,
 }) => {
-  const [config, setConfig] = useState<GameConfig>(() =>
-    currentConfig
-      ? JSON.parse(JSON.stringify(currentConfig))
-      : createGameFromPreferences()
-  );
+  const [config, setConfig] = useState<GameConfig>(() => {
+    const base = currentConfig ?? initialConfig;
+    return base
+      ? JSON.parse(JSON.stringify(base))
+      : createGameFromPreferences();
+  });
 
   const [savedYaml, setSavedYaml] = useState<string | null>(
     () => lastSavedYaml ?? null
   );
-  const [activeTab, setActiveTab] = useState<'board' | 'tiebreaker'>('board');
+  const [activeTab, setActiveTab] = useState<'board' | 'tiebreaker'>(
+    initialTab ?? 'board'
+  );
   const [selectedRoundIdx, setSelectedRoundIdx] = useState(0);
   const [selectedCatIdx, setSelectedCatIdx] = useState(0);
   const [selectedClueIdx, setSelectedClueIdx] = useState<number | null>(null);
@@ -87,7 +97,7 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
       : null;
 
   const firstCategoryRef = useRef<HTMLInputElement>(null);
-  const tieBreakerCategoryRef = useRef<HTMLInputElement>(null);
+  const tieBreakerCategoryRef = useRef<HTMLSelectElement>(null);
   const questionInputRef = useRef<HTMLTextAreaElement>(null);
   const prevClueIdxRef = useRef<number | null>(null);
   const prevTabRef = useRef<string | null>(null);
@@ -242,17 +252,44 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
     return count;
   }, [config]);
 
+  const availableCategories = useMemo(() => {
+    const list: string[] = [];
+    for (const round of config.rounds) {
+      for (const cat of round.categories) {
+        const trimmed = cat.name.trim();
+        if (trimmed && !list.includes(trimmed)) {
+          list.push(trimmed);
+        }
+      }
+    }
+    return list;
+  }, [config.rounds]);
+
   const hasIncompleteCategories = useMemo(() => {
     for (const round of config.rounds) {
       for (const cat of round.categories) {
         if (!cat.name.trim()) return true;
       }
     }
-    if (config.finalJeopardy && !config.finalJeopardy.category.trim()) {
-      return true;
+    if (config.finalJeopardy) {
+      const tieCat = config.finalJeopardy.category.trim();
+      if (!tieCat) return true;
+      if (
+        availableCategories.length > 0 &&
+        !availableCategories.includes(tieCat)
+      ) {
+        return true;
+      }
     }
     return false;
-  }, [config]);
+  }, [config.rounds, config.finalJeopardy, availableCategories]);
+
+  const isTieBreakerCategoryInvalid = Boolean(
+    config.finalJeopardy &&
+    availableCategories.length > 0 &&
+    config.finalJeopardy.category.trim() &&
+    !availableCategories.includes(config.finalJeopardy.category.trim())
+  );
 
   const isGameValid =
     remainingQuestionsCount === 0 &&
@@ -266,7 +303,9 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
     : remainingQuestionsCount > 0
       ? `${remainingQuestionsCount} question` +
         `${remainingQuestionsCount === 1 ? '' : 's'} remaining`
-      : 'Category name is required';
+      : isTieBreakerCategoryInvalid
+        ? 'Tie-breaker category must match a main game category'
+        : 'Category name is required';
 
   // Close game handler
   const handleClose = () => {
@@ -275,7 +314,11 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
       : 'You have unsaved changes. Are you sure you want to close this ' +
         'game and return to setup? All unsaved changes will be lost.';
     if (window.confirm(confirmMsg)) {
-      onCloseGame();
+      if (onCloseGame) {
+        onCloseGame();
+      } else if (onClose) {
+        onClose();
+      }
     }
   };
 
@@ -336,7 +379,7 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
             title={
               isSaved
                 ? 'Game is saved to disk'
-                : 'You have unsaved changes. Click to save to YAML file.'
+                : 'You have unsaved changes. Click to save game package.'
             }
           >
             {!isSaved && (
@@ -411,55 +454,91 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
             'sm:gap-4 items-center'
           }
         >
-          <div className="flex flex-col justify-center min-w-0">
-            <span
+          <div className="min-w-0">
+            <label
               className={
-                'text-[10px] sm:text-[11px] font-bold uppercase ' +
-                'text-gray-400 block tracking-wider truncate'
+                'text-[10px] sm:text-xs font-bold uppercase ' +
+                'text-gray-400 block mb-0.5 sm:mb-1 truncate'
               }
             >
               Game Title
-            </span>
-            <span
-              className="text-xs sm:text-sm font-black text-yellow-400 truncate"
-              title={config.title}
-            >
-              {config.title}
-            </span>
+            </label>
+            <input
+              type="text"
+              value={config.title}
+              onChange={(e) =>
+                setConfig({ ...config, title: e.target.value })
+              }
+              placeholder="Game Title"
+              className={
+                'w-full min-w-0 px-2 sm:px-3 py-1 sm:py-1.5 bg-black/60 ' +
+                'border rounded-lg text-yellow-400 font-bold text-xs ' +
+                'sm:text-sm focus:outline-none transition-all ' +
+                (!config.title.trim()
+                  ? 'border-amber-500/80 bg-amber-950/40 ' +
+                    'focus:border-yellow-400'
+                  : 'border-blue-800 focus:border-yellow-400 ' +
+                    'focus:bg-blue-950')
+              }
+            />
           </div>
 
-          <div className="flex flex-col justify-center min-w-0">
-            <span
+          <div className="min-w-0">
+            <label
               className={
-                'text-[10px] sm:text-[11px] font-bold uppercase ' +
-                'text-gray-400 block tracking-wider truncate'
+                'text-[10px] sm:text-xs font-bold uppercase ' +
+                'text-gray-400 block mb-0.5 sm:mb-1 truncate'
               }
             >
               Team 1 Name
-            </span>
-            <span
-              className="text-xs sm:text-sm font-bold text-white truncate"
-              title={config.team1Name}
-            >
-              {config.team1Name}
-            </span>
+            </label>
+            <input
+              type="text"
+              value={config.team1Name}
+              onChange={(e) =>
+                setConfig({ ...config, team1Name: e.target.value })
+              }
+              placeholder="Team 1"
+              className={
+                'w-full min-w-0 px-2 sm:px-3 py-1 sm:py-1.5 bg-black/60 ' +
+                'border rounded-lg text-white font-bold text-xs ' +
+                'sm:text-sm focus:outline-none transition-all ' +
+                (!config.team1Name.trim()
+                  ? 'border-amber-500/80 bg-amber-950/40 ' +
+                    'focus:border-yellow-400'
+                  : 'border-blue-800 focus:border-yellow-400 ' +
+                    'focus:bg-blue-950')
+              }
+            />
           </div>
 
-          <div className="flex flex-col justify-center min-w-0">
-            <span
+          <div className="min-w-0">
+            <label
               className={
-                'text-[10px] sm:text-[11px] font-bold uppercase ' +
-                'text-gray-400 block tracking-wider truncate'
+                'text-[10px] sm:text-xs font-bold uppercase ' +
+                'text-gray-400 block mb-0.5 sm:mb-1 truncate'
               }
             >
               Team 2 Name
-            </span>
-            <span
-              className="text-xs sm:text-sm font-bold text-white truncate"
-              title={config.team2Name}
-            >
-              {config.team2Name}
-            </span>
+            </label>
+            <input
+              type="text"
+              value={config.team2Name}
+              onChange={(e) =>
+                setConfig({ ...config, team2Name: e.target.value })
+              }
+              placeholder="Team 2"
+              className={
+                'w-full min-w-0 px-2 sm:px-3 py-1 sm:py-1.5 bg-black/60 ' +
+                'border rounded-lg text-white font-bold text-xs ' +
+                'sm:text-sm focus:outline-none transition-all ' +
+                (!config.team2Name.trim()
+                  ? 'border-amber-500/80 bg-amber-950/40 ' +
+                    'focus:border-yellow-400'
+                  : 'border-blue-800 focus:border-yellow-400 ' +
+                    'focus:bg-blue-950')
+              }
+            />
           </div>
 
           <div className="min-w-0">
@@ -849,10 +928,11 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                   if (config.finalJeopardy) {
                     setConfig({ ...config, finalJeopardy: undefined });
                   } else {
+                    const defaultCategory = availableCategories[0] || '';
                     setConfig({
                       ...config,
                       finalJeopardy: {
-                        category: '',
+                        category: defaultCategory,
                         question: '',
                         answer: '',
                         hint: '',
@@ -885,12 +965,11 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
               >
                 <div>
                   <label className="text-xs font-bold text-gray-300 block mb-1">
-                    Tie-Breaker Category Name{' '}
+                    Tie-Breaker Category{' '}
                     <span className="text-amber-400">*</span>
                   </label>
-                  <input
+                  <select
                     ref={tieBreakerCategoryRef}
-                    type="text"
                     value={config.finalJeopardy.category}
                     onChange={(e) =>
                       setConfig({
@@ -906,7 +985,28 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                       'rounded-lg text-white font-bold text-xs sm:text-sm ' +
                       'focus:border-yellow-400 focus:outline-none'
                     }
-                  />
+                  >
+                    {!config.finalJeopardy.category && (
+                      <option value="" disabled>
+                        {availableCategories.length > 0
+                          ? 'Select a main game category'
+                          : 'No categories available'}
+                      </option>
+                    )}
+                    {config.finalJeopardy.category &&
+                      !availableCategories.includes(
+                        config.finalJeopardy.category
+                      ) && (
+                        <option value={config.finalJeopardy.category}>
+                          {config.finalJeopardy.category}
+                        </option>
+                      )}
+                    {availableCategories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
