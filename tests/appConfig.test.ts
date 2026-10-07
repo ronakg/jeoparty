@@ -26,6 +26,29 @@ test('App Config: package.json specifies JeoPARTY! branding', () => {
   );
 });
 
+test('App Config: packaging specifies unambiguous artifact names', () => {
+  const pkgPath = path.join(rootDir, 'package.json');
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+  const build = pkg.build;
+
+  assert.deepEqual(build?.mac?.target, [
+    { target: 'dmg', arch: ['arm64'] },
+    { target: 'zip', arch: ['x64'] },
+  ]);
+  assert.equal(
+    build?.dmg?.artifactName,
+    'JeoParty-${version}-macOS-AppleSilicon.${ext}'
+  );
+  assert.equal(
+    build?.zip?.artifactName,
+    'JeoParty-${version}-macOS-Intel.${ext}'
+  );
+  assert.equal(
+    build?.nsis?.artifactName,
+    'JeoParty-${version}-Windows-x64.${ext}'
+  );
+});
+
 test('App Config: main.ts configures JeoPARTY! app name and dock', () => {
   const mainTsPath = path.join(rootDir, 'electron/main.ts');
   const mainTs = fs.readFileSync(mainTsPath, 'utf-8');
@@ -181,9 +204,7 @@ test('App Config: preload.ts exposes process.platform on electronAPI', () => {
   );
 });
 
-test(
-  'App Config: index.css defines drag regions and platform clearance',
-  () => {
+test('App Config: index.css defines drag regions and clearances', () => {
   const cssPath = path.join(rootDir, 'src/index.css');
   const css = fs.readFileSync(cssPath, 'utf-8');
 

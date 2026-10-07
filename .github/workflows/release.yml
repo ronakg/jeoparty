@@ -87,6 +87,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Prepare release notes
+        run: |
+          NOTES=$(git tag -l --format='%(contents)' "${{ github.ref_name }}")
+          if [ -n "$NOTES" ]; then
+            printf "%s\n\n" "$NOTES" > release_notes.md
+          fi
+          {
+            echo "### Installation"
+            echo ""
+            echo "| Platform | Architecture | File |"
+            echo "|---|---|---|"
+            echo '| macOS | Apple Silicon | `*-macOS-AppleSilicon.dmg` |'
+            echo '| macOS | Intel | `*-macOS-Intel.zip` |'
+            echo '| Windows | 64-bit | `*-Windows-x64.exe` |'
+          } >> release_notes.md
+
       - name: Download all installer artifacts
         uses: actions/download-artifact@v8
         with:
@@ -95,6 +116,7 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          body_path: release_notes.md
           files: |
             dist-artifacts/**/*.dmg
             dist-artifacts/**/*.zip

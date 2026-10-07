@@ -83,7 +83,6 @@
         {
           "target": "zip",
           "arch": [
-            "arm64",
             "x64"
           ]
         }
@@ -92,7 +91,11 @@
     },
     "dmg": {
       "title": "JeoParty ${version}",
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+      "artifactName": "JeoParty-${version}-macOS-AppleSilicon.${ext}"
+    },
+    "zip": {
+      "artifactName": "JeoParty-${version}-macOS-Intel.${ext}"
     },
     "win": {
       "icon": "build/icon.ico",
@@ -106,6 +109,7 @@
       ]
     },
     "nsis": {
+      "artifactName": "JeoParty-${version}-Windows-x64.${ext}",
       "oneClick": true,
       "perMachine": false,
       "allowToChangeInstallationDirectory": false,
