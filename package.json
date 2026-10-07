@@ -87,15 +87,13 @@
           ]
         }
       ],
+      "artifactName": "JeoParty-${version}-macOS-Intel.${ext}",
       "identity": null
     },
     "dmg": {
       "title": "JeoParty ${version}",
       "icon": "build/icon.icns",
       "artifactName": "JeoParty-${version}-macOS-AppleSilicon.${ext}"
-    },
-    "zip": {
-      "artifactName": "JeoParty-${version}-macOS-Intel.${ext}"
     },
     "win": {
       "icon": "build/icon.ico",

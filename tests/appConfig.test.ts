@@ -40,13 +40,14 @@ test('App Config: packaging specifies unambiguous artifact names', () => {
     'JeoParty-${version}-macOS-AppleSilicon.${ext}'
   );
   assert.equal(
-    build?.zip?.artifactName,
+    build?.mac?.artifactName,
     'JeoParty-${version}-macOS-Intel.${ext}'
   );
   assert.equal(
     build?.nsis?.artifactName,
     'JeoParty-${version}-Windows-x64.${ext}'
   );
+  assert.equal(build?.zip, undefined);
 });
 
 test('App Config: main.ts configures JeoPARTY! app name and dock', () => {
