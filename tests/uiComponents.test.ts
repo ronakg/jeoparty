@@ -1881,8 +1881,16 @@ test('PlayerDisplay UI: Layout preserves viewport-height proportions', () => {
     'TabularScore must scale with fluid clamp vh typography'
   );
   assert.ok(
-    html.includes('text-[clamp(1.1rem,2.4vh,3rem)]'),
-    'Team name must scale with fluid clamp vh typography'
+    html.includes('text-[clamp(1.75rem,4.2vh,4.8rem)]'),
+    'Team name must scale with enlarged clamp typography'
+  );
+  assert.ok(
+    !html.includes('>Team 1<'),
+    'Score footer must not render Team 1 label'
+  );
+  assert.ok(
+    !html.includes('>Team 2<'),
+    'Score footer must not render Team 2 label'
   );
 
   const boardState = gameReducer(initialGameState, {

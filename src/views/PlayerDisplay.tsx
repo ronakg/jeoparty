@@ -666,17 +666,17 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         badge = (
           <span
             className={
-              'px-[clamp(0.5rem,0.8vw,1.25rem)] ' +
-              'py-[clamp(0.15rem,0.3vh,0.45rem)] rounded-full ' +
+              'px-[clamp(0.6rem,0.9vw,1.4rem)] ' +
+              'py-[clamp(0.2rem,0.4vh,0.55rem)] rounded-full ' +
               'bg-emerald-500/20 text-emerald-300 ' +
-              'text-[clamp(0.65rem,1.2vh,1.25rem)] font-bold uppercase ' +
-              'tracking-wider flex items-center gap-1 font-display'
+              'text-[clamp(0.75rem,1.5vh,1.35rem)] font-bold uppercase ' +
+              'tracking-wider flex items-center gap-1.5 font-display'
             }
           >
             <CheckCircle2
               className={
-                'w-[clamp(0.75rem,1.3vh,1.25rem)] ' +
-                'h-[clamp(0.75rem,1.3vh,1.25rem)]'
+                'w-[clamp(0.85rem,1.5vh,1.35rem)] ' +
+                'h-[clamp(0.85rem,1.5vh,1.35rem)]'
               }
             />
             {isOriginTurn ? <span>Turn</span> : <span>Rebound</span>}
@@ -686,17 +686,17 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         badge = (
           <span
             className={
-              'px-[clamp(0.5rem,0.8vw,1.25rem)] ' +
-              'py-[clamp(0.15rem,0.3vh,0.45rem)] rounded-full ' +
+              'px-[clamp(0.6rem,0.9vw,1.4rem)] ' +
+              'py-[clamp(0.2rem,0.4vh,0.55rem)] rounded-full ' +
               'bg-rose-500/20 text-rose-300 ' +
-              'text-[clamp(0.65rem,1.2vh,1.25rem)] font-bold uppercase ' +
-              'tracking-wider flex items-center gap-1 font-display'
+              'text-[clamp(0.75rem,1.5vh,1.35rem)] font-bold uppercase ' +
+              'tracking-wider flex items-center gap-1.5 font-display'
             }
           >
             <XCircle
               className={
-                'w-[clamp(0.75rem,1.3vh,1.25rem)] ' +
-                'h-[clamp(0.75rem,1.3vh,1.25rem)]'
+                'w-[clamp(0.85rem,1.5vh,1.35rem)] ' +
+                'h-[clamp(0.85rem,1.5vh,1.35rem)]'
               }
             />
             <span>Missed</span>
@@ -709,10 +709,10 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         badge = (
           <span
             className={
-              'px-[clamp(0.5rem,0.8vw,1.25rem)] ' +
-              'py-[clamp(0.15rem,0.3vh,0.45rem)] rounded-full ' +
+              'px-[clamp(0.6rem,0.9vw,1.4rem)] ' +
+              'py-[clamp(0.2rem,0.4vh,0.55rem)] rounded-full ' +
               'bg-amber-400 text-slate-950 ' +
-              'text-[clamp(0.65rem,1.2vh,1.25rem)] font-black uppercase ' +
+              'text-[clamp(0.75rem,1.5vh,1.35rem)] font-black uppercase ' +
               'tracking-wider font-display'
             }
           >
@@ -723,10 +723,10 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         badge = (
           <span
             className={
-              'px-[clamp(0.5rem,0.8vw,1.25rem)] ' +
-              'py-[clamp(0.15rem,0.3vh,0.45rem)] rounded-full ' +
+              'px-[clamp(0.6rem,0.9vw,1.4rem)] ' +
+              'py-[clamp(0.2rem,0.4vh,0.55rem)] rounded-full ' +
               'bg-amber-400 text-slate-950 ' +
-              'text-[clamp(0.65rem,1.2vh,1.25rem)] font-black uppercase ' +
+              'text-[clamp(0.75rem,1.5vh,1.35rem)] font-black uppercase ' +
               'tracking-wider font-display'
             }
           >
@@ -747,10 +747,10 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
     const badge = isTurn ? (
       <span
         className={
-          'px-[clamp(0.5rem,0.8vw,1.25rem)] ' +
-          'py-[clamp(0.15rem,0.3vh,0.45rem)] rounded-full ' +
+          'px-[clamp(0.6rem,0.9vw,1.4rem)] ' +
+          'py-[clamp(0.2rem,0.4vh,0.55rem)] rounded-full ' +
           'bg-amber-400 text-slate-950 ' +
-          'text-[clamp(0.65rem,1.2vh,1.25rem)] font-black uppercase ' +
+          'text-[clamp(0.75rem,1.5vh,1.35rem)] font-black uppercase ' +
           'tracking-wider font-display'
         }
       >
@@ -1627,28 +1627,23 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                     t1.borderClass
                   }
                 >
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span
-                        className={
-                          'text-[clamp(0.65rem,1.2vh,1.25rem)] uppercase ' +
-                          'font-bold tracking-widest text-slate-400 ' +
-                          'font-display'
-                        }
-                      >
-                        Team 1
-                      </span>
-                      {t1.badge}
-                    </div>
+                  <div
+                    className={
+                      'flex items-center gap-2 sm:gap-2.5 md:gap-3 ' +
+                      'min-w-0 pr-2'
+                    }
+                  >
                     <span
                       className={
-                        'text-[clamp(1.1rem,2.4vh,3rem)] font-black ' +
+                        'text-[clamp(1.75rem,4.2vh,4.8rem)] font-black ' +
                         'uppercase tracking-wider text-white font-display ' +
-                        'truncate max-w-[55vw]'
+                        'leading-none truncate max-w-[26vw] md:max-w-[30vw]'
                       }
+                      title={config.team1Name}
                     >
                       {config.team1Name}
                     </span>
+                    {t1.badge && <div className="shrink-0">{t1.badge}</div>}
                   </div>
                   <TabularScore
                     score={t1DisplayScore}
@@ -1674,28 +1669,23 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                     t2.borderClass
                   }
                 >
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span
-                        className={
-                          'text-[clamp(0.65rem,1.2vh,1.25rem)] uppercase ' +
-                          'font-bold tracking-widest text-slate-400 ' +
-                          'font-display'
-                        }
-                      >
-                        Team 2
-                      </span>
-                      {t2.badge}
-                    </div>
+                  <div
+                    className={
+                      'flex items-center gap-2 sm:gap-2.5 md:gap-3 ' +
+                      'min-w-0 pr-2'
+                    }
+                  >
                     <span
                       className={
-                        'text-[clamp(1.1rem,2.4vh,3rem)] font-black ' +
+                        'text-[clamp(1.75rem,4.2vh,4.8rem)] font-black ' +
                         'uppercase tracking-wider text-white font-display ' +
-                        'truncate max-w-[55vw]'
+                        'leading-none truncate max-w-[26vw] md:max-w-[30vw]'
                       }
+                      title={config.team2Name}
                     >
                       {config.team2Name}
                     </span>
+                    {t2.badge && <div className="shrink-0">{t2.badge}</div>}
                   </div>
                   <TabularScore
                     score={t2DisplayScore}
