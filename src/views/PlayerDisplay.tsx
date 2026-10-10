@@ -1413,7 +1413,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 >
                   <h3
                     className={
-                      'text-[clamp(0.75rem,1.6vh,1.75rem)] ' +
+                      'text-[clamp(1.15rem,2.4vh,2.5rem)] ' +
                       'font-black uppercase tracking-wide text-white ' +
                       'line-clamp-2 md:line-clamp-3 font-display ' +
                       'leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]'

@@ -1899,4 +1899,8 @@ test('PlayerDisplay UI: Layout preserves viewport-height proportions', () => {
     boardHtml.includes('text-[clamp(1.75rem,4.5vh,5.25rem)]'),
     'Board clue points must use enlarged clamp typography'
   );
+  assert.ok(
+    boardHtml.includes('text-[clamp(1.15rem,2.4vh,2.5rem)]'),
+    'Board category headers must scale with enlarged clamp typography'
+  );
 });
