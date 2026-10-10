@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useState, useRef } from 'react';
 import { GameState } from '../types/game';
 import { MediaRenderer } from '../components/common/MediaRenderer';
 import {
@@ -144,6 +144,106 @@ const TabularScore: React.FC<TabularScoreProps> = ({
         </span>
       ))}
     </span>
+  );
+};
+
+export interface CategoryHeaderCardProps {
+  name: string;
+}
+
+export const CategoryHeaderCard: React.FC<CategoryHeaderCardProps> = ({
+  name,
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLHeadingElement>(null);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const text = textRef.current;
+    if (!container || !text) return;
+
+    const fitText = () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w <= 0 || h <= 0) return;
+
+      // Available inner bounds preserving breathing room
+      const maxW = w - 12;
+      const maxH = h - 10;
+
+      // Upper bound scales with card width and height (up to 40px for 4K)
+      const maxFontSize = Math.min(
+        Math.max(w * 0.14, 11),
+        h * 0.36,
+        40
+      );
+      const minFontSize = 10;
+
+      // Test upper bound first
+      text.style.fontSize = `${maxFontSize.toFixed(1)}px`;
+      if (text.scrollHeight <= maxH && text.scrollWidth <= maxW) {
+        return;
+      }
+
+      // Binary search optimal font size that avoids congestion
+      let low = minFontSize;
+      let high = maxFontSize;
+      let best = minFontSize;
+
+      for (let i = 0; i < 6; i++) {
+        const mid = (low + high) / 2;
+        text.style.fontSize = `${mid.toFixed(1)}px`;
+        if (text.scrollHeight <= maxH && text.scrollWidth <= maxW) {
+          best = mid;
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+
+      text.style.fontSize = `${best.toFixed(1)}px`;
+    };
+
+    fitText();
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(fitText);
+      ro.observe(container);
+    }
+    window.addEventListener('resize', fitText);
+
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener('resize', fitText);
+    };
+  }, [name]);
+
+  return (
+    <div
+      ref={containerRef}
+      className={
+        'h-[clamp(4rem,8.5vh,7.5rem)] rounded-xl p-1.5 sm:p-2 md:p-3 flex ' +
+        'items-center justify-center text-center shadow-md ' +
+        'relative overflow-hidden bg-gradient-to-b ' +
+        'from-[#082470] to-[#051644] border border-blue-400/35 ' +
+        'border-b-2 border-b-blue-400/90 ' +
+        'shadow-[inset_0_1px_1px_rgba(255,255,255,0.18)]'
+      }
+    >
+      <h3
+        ref={textRef}
+        className={
+          'text-[clamp(1.15rem,2.4vh,2.5rem)] ' +
+          'font-black uppercase tracking-wide text-white ' +
+          'line-clamp-2 md:line-clamp-3 font-display ' +
+          'leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] ' +
+          'w-full break-words'
+        }
+      >
+        {name}
+      </h3>
+    </div>
   );
 };
 
@@ -1400,28 +1500,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
               }}
             >
               {currentRound?.categories.map((category) => (
-                <div
-                  key={category.id}
-                  className={
-                    'h-[clamp(4rem,8.5vh,7.5rem)] rounded-xl p-2 md:p-3 flex ' +
-                    'items-center justify-center text-center shadow-md ' +
-                    'relative overflow-hidden bg-gradient-to-b ' +
-                    'from-[#082470] to-[#051644] border border-blue-400/35 ' +
-                    'border-b-2 border-b-blue-400/90 ' +
-                    'shadow-[inset_0_1px_1px_rgba(255,255,255,0.18)]'
-                  }
-                >
-                  <h3
-                    className={
-                      'text-[clamp(1.15rem,2.4vh,2.5rem)] ' +
-                      'font-black uppercase tracking-wide text-white ' +
-                      'line-clamp-2 md:line-clamp-3 font-display ' +
-                      'leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]'
-                    }
-                  >
-                    {category.name}
-                  </h3>
-                </div>
+                <CategoryHeaderCard key={category.id} name={category.name} />
               ))}
             </div>
 

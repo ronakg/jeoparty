@@ -4,6 +4,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   PlayerDisplay,
+  CategoryHeaderCard,
   QuestionTimerBadge,
   SCORE_SPIN_DURATION_MS,
   calculateAnimatedScore,
@@ -14,6 +15,7 @@ import { MediaRenderer } from '../src/components/common/MediaRenderer';
 import { MobileConnectModal } from '../src/components/common/MobileConnectModal';
 import { CompletedClueModal } from '../src/components/common/CompletedClueModal';
 import { defaultGame } from '../src/data/defaultGame';
+import { maxSampleGame } from '../src/data/maxSampleGame';
 import { initialGameState, gameReducer } from '../src/utils/gameReducer';
 import { createGameFromPreferences } from '../src/types/game';
 
@@ -1904,3 +1906,33 @@ test('PlayerDisplay UI: Layout preserves viewport-height proportions', () => {
     'Board category headers must scale with enlarged clamp typography'
   );
 });
+
+test(
+  'PlayerDisplay UI: CategoryHeaderCard renders auto-fitting title layout',
+  () => {
+    const cardHtml = renderToStaticMarkup(
+      React.createElement(CategoryHeaderCard, {
+        name: 'POP CULTURE & CINEMA',
+      })
+    );
+    assert.ok(cardHtml.includes('POP CULTURE &amp; CINEMA'));
+    assert.ok(cardHtml.includes('w-full break-words'));
+    assert.ok(cardHtml.includes('h-[clamp(4rem,8.5vh,7.5rem)]'));
+
+    const maxBoardState = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: maxSampleGame,
+    });
+    const maxHtml = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state: maxBoardState,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+
+    assert.ok(maxHtml.includes('POP CULTURE &amp; CINEMA'));
+    assert.ok(maxHtml.includes('SCIENCE &amp; DISCOVERY'));
+    assert.ok(maxHtml.includes('FOOD &amp; CUISINE'));
+  }
+);
