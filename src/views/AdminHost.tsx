@@ -2134,7 +2134,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                       }
                     >
                       <Zap className="w-3.5 h-3.5" />
-                      <span>Rebound (${activeClueReboundPoints})</span>
+                      <span>Rebound</span>
                     </button>
                     <button
                       onClick={() => dispatch({ type: 'CLOSE_CLUE' })}
@@ -2308,7 +2308,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                         }
                       >
                         <Zap className="w-3.5 h-3.5" />
-                        <span>Rebound (${activeClueReboundPoints})</span>
+                        <span>Rebound</span>
                       </button>
                     ) : null}
 

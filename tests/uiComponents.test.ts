@@ -769,7 +769,7 @@ test(
   assert.ok(html.includes('Budapest'));
   assert.ok(html.includes('+$100'));
   assert.ok(html.includes('Wrong'));
-  assert.ok(html.includes('Rebound ($50)'));
+  assert.ok(html.includes('<span>Rebound</span>'));
   assert.ok(html.includes('<span>Answer</span>'));
   assert.ok(html.includes('<span>Hint</span>'));
   assert.ok(!html.includes('<span>Reveal</span>'));
@@ -846,7 +846,7 @@ test(
     assert.ok(html.includes('+$50'));
     assert.ok(html.includes('Wrong'));
     assert.ok(html.includes('Pass'));
-    assert.ok(!html.includes('Rebound ($50)'));
+    assert.ok(!html.includes('<span>Rebound</span>'));
     assert.ok(html.includes('Rebound 50%'));
   }
 );
@@ -883,7 +883,9 @@ test(
   );
 
   assert.ok(html.includes('Champions incorrect'));
-  assert.ok(html.includes('Rebound ($50)'));
+  assert.ok(html.includes('Rebound: $50'));
+  assert.ok(html.includes('<span>Rebound</span>'));
+  assert.ok(!html.includes('Rebound ($50)'));
   assert.ok(html.includes('Skip'));
 });
 
