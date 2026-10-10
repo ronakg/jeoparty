@@ -769,6 +769,7 @@ test(
   assert.ok(html.includes('Budapest'));
   assert.ok(html.includes('+$100'));
   assert.ok(html.includes('Wrong'));
+  assert.ok(html.includes('Rebound ($50)'));
   assert.ok(html.includes('Reset'));
   assert.ok(html.includes('Hint (-$100)'));
   assert.ok(html.includes('Answering:'));
@@ -776,6 +777,42 @@ test(
   assert.ok(html.includes('Team 2'));
   assert.ok(html.includes('bg-blue-600 text-white'));
 });
+
+test(
+  'AdminHost UI: Clue judging modal displays Pass button during rebound',
+  () => {
+    let state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: defaultGame,
+    });
+    state = gameReducer(state, {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 0,
+        clueIndex: 0,
+        firstAnsweringTeam: 1,
+      },
+    });
+    state = gameReducer(state, { type: 'ADVANCE_REBOUND' });
+
+    const html = renderToStaticMarkup(
+      React.createElement(AdminHost, {
+        state,
+        dispatch: () => {},
+        openDisplayWindow: () => {},
+        onOpenBuilder: () => {},
+        onGameCreated: () => {},
+      })
+    );
+
+    assert.ok(html.includes('+$50'));
+    assert.ok(html.includes('Wrong'));
+    assert.ok(html.includes('Pass'));
+    assert.ok(!html.includes('Rebound ($50)'));
+    assert.ok(html.includes('Rebound 50%'));
+  }
+);
 
 test(
   'AdminHost UI: First incorrect answer offers rebound option with skip',

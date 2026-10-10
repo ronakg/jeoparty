@@ -215,6 +215,55 @@ test('Jeopardy Rules: Incorrect Answer gives other team 50% rebound opportunity 
   assert.equal(state.controllingTeam, 2);
 });
 
+test(
+  'Jeopardy Rules: Direct rebound on pass allows opposing team answer without' +
+    ' marking first team wrong',
+  () => {
+    let state = gameReducer(createLoadedState(), {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 0,
+        clueIndex: 2,
+        firstAnsweringTeam: 1,
+      }, // $300 clue
+    });
+
+    assert.equal(state.activeClue?.currentAvailablePoints, 300);
+    assert.deepEqual(state.activeClue?.incorrectTeams, []);
+    assert.equal(state.activeClue?.reboundAvailable, true);
+    assert.equal(state.activeClue?.reboundOpportunity, false);
+
+    // First team passes. Host directly triggers rebound to Team 2.
+    state = gameReducer(state, { type: 'ADVANCE_REBOUND' });
+
+    // Team 1 is NOT marked incorrect!
+    assert.deepEqual(state.activeClue?.incorrectTeams, []);
+    assert.equal(state.activeClue?.reboundOpportunity, true);
+    assert.equal(state.activeClue?.currentAnsweringTeam, 2);
+    assert.equal(state.activeClue?.firstAnsweringTeam, 1);
+    assert.equal(state.activeClue?.currentAvailablePoints, 150);
+
+    // Opposing team answers correctly on rebound
+    state = gameReducer(state, {
+      type: 'ANSWER_CORRECT',
+      payload: { team: 2 },
+    });
+
+    assert.equal(state.team1Score, 0);
+    assert.equal(state.team2Score, 150);
+    assert.deepEqual(state.config?.rounds[0].categories[0].clues[2].result, {
+      winner: 2,
+      type: 'rebound',
+      pointsAwarded: 150,
+    });
+
+    // Close clue, regular turn alternates to Team 2
+    state = gameReducer(state, { type: 'CLOSE_CLUE' });
+    assert.equal(state.controllingTeam, 2);
+  }
+);
+
 test('Admin Rebound Decision: Host can decide NOT to offer rebound and close clue with 0 pts', () => {
   let state = gameReducer(createLoadedState(), {
     type: 'SELECT_CLUE',

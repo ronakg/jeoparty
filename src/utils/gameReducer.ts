@@ -352,8 +352,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       ) {
         return state;
       }
-      const otherTeam: 1 | 2 =
-        state.activeClue.firstAnsweringTeam === 1 ? 2 : 1;
+      const initialTeam =
+        state.activeClue.currentAnsweringTeam ||
+        state.activeClue.firstAnsweringTeam ||
+        1;
+      const otherTeam: 1 | 2 = initialTeam === 1 ? 2 : 1;
       const reboundPercent = state.config?.reboundPercentage ?? 50;
       const reboundPoints = Math.round(
         state.activeClue.currentAvailablePoints * (reboundPercent / 100)
@@ -363,6 +366,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         activeClue: {
           ...state.activeClue,
+          firstAnsweringTeam: initialTeam,
           reboundOpportunity: true,
           reboundAvailable: false,
           currentAnsweringTeam: otherTeam,

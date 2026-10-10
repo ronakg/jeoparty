@@ -564,6 +564,43 @@ test(
   }
 });
 
+test(
+  'Simulation: Rebound Flow - first team passes without wrong answer and ' +
+    'opposing team answers rebound for 50%',
+  async () => {
+    const sim = await GameSimulation.start();
+    try {
+      await sim.loadGame(defaultGame);
+
+      await sim.selectClue(0, 0, 1, 1);
+      let state = await sim.getState();
+      assert.deepEqual(state.activeClue?.incorrectTeams, []);
+
+      // Host advances to rebound directly upon first team pass
+      await sim.advanceRebound();
+      state = await sim.getState();
+
+      assert.deepEqual(state.activeClue?.incorrectTeams, []);
+      assert.equal(state.activeClue?.reboundOpportunity, true);
+      assert.equal(state.activeClue?.currentAnsweringTeam, 2);
+      assert.equal(state.activeClue?.currentAvailablePoints, 100);
+
+      // Opposing team answers rebound correctly
+      await sim.answerCorrect(2);
+      state = await sim.getState();
+
+      assert.equal(state.team1Score, 0);
+      assert.equal(state.team2Score, 100);
+      assert.equal(state.activeClue?.awardResult?.type, 'rebound');
+
+      state = await sim.closeClue();
+      assert.equal(state.controllingTeam, 2);
+    } finally {
+      await sim.stop();
+    }
+  }
+);
+
 test('Simulation: Rebound Flow - double miss awards zero points', async () => {
   const sim = await GameSimulation.start();
   try {

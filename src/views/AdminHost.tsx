@@ -728,6 +728,15 @@ export const AdminHost: React.FC<AdminHostProps> = ({
         ?.clues[activeClue.clueIndex]
     : null;
 
+  const reboundPercent = config?.reboundPercentage ?? 50;
+  const activeClueReboundPoints = activeClue
+    ? Math.round(activeClue.currentAvailablePoints * (reboundPercent / 100))
+    : 0;
+  const hasReboundSlot = Boolean(
+    activeClue &&
+      (activeClue.reboundOpportunity || activeClue.reboundAvailable)
+  );
+
   // Open clue handler
   const handleSelectClue = (
     roundIndex: number,
@@ -2112,24 +2121,28 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                       incorrect
                     </span>
                     <span className="text-xs font-bold text-gray-500 ml-auto">
-                      Rebound: $
-                      {Math.round(activeClue.currentAvailablePoints / 2)}
+                      Rebound: ${activeClueReboundPoints}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => dispatch({ type: 'ADVANCE_REBOUND' })}
-                      className="flex-1 py-2.5 px-4 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase rounded-lg flex items-center justify-center gap-2 transition-all"
+                      className={
+                        'flex-1 py-2.5 px-4 bg-amber-600 hover:bg-amber-500 ' +
+                        'text-white font-bold text-xs uppercase rounded-lg ' +
+                        'flex items-center justify-center gap-2 transition-all'
+                      }
                     >
                       <Zap className="w-3.5 h-3.5" />
-                      <span>
-                        Rebound ($
-                        {Math.round(activeClue.currentAvailablePoints / 2)})
-                      </span>
+                      <span>Rebound (${activeClueReboundPoints})</span>
                     </button>
                     <button
                       onClick={() => dispatch({ type: 'CLOSE_CLUE' })}
-                      className="py-2.5 px-4 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-xs uppercase rounded-lg transition-all"
+                      className={
+                        'py-2.5 px-4 bg-gray-800 hover:bg-gray-700 ' +
+                        'text-gray-300 font-bold text-xs uppercase ' +
+                        'rounded-lg transition-all'
+                      }
                     >
                       Skip
                     </button>
@@ -2223,12 +2236,19 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                           text-amber-300 bg-amber-950/60 border
                           border-amber-500/40 uppercase"
                       >
-                        Rebound 50%
+                        Rebound {reboundPercent}%
                       </span>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div
+                    className={
+                      'grid grid-cols-2 gap-2 ' +
+                      (hasReboundSlot
+                        ? 'sm:grid-cols-5'
+                        : 'sm:grid-cols-4')
+                    }
+                  >
                     <button
                       onClick={() =>
                         dispatch({
@@ -2236,7 +2256,12 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                           payload: { team: activeClue.currentAnsweringTeam },
                         })
                       }
-                      className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                      className={
+                        'py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 ' +
+                        'text-white font-bold text-xs uppercase rounded-lg ' +
+                        'flex items-center justify-center gap-1.5 ' +
+                        'transition-all'
+                      }
                     >
                       <CheckCircle className="w-3.5 h-3.5" />
                       <span>+${activeClue.currentAvailablePoints}</span>
@@ -2249,7 +2274,11 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                           payload: { team: activeClue.currentAnsweringTeam },
                         })
                       }
-                      className="py-2.5 px-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                      className={
+                        'py-2.5 px-3 bg-red-600 hover:bg-red-500 text-white ' +
+                        'font-bold text-xs uppercase rounded-lg flex ' +
+                        'items-center justify-center gap-1.5 transition-all'
+                      }
                     >
                       <XCircle className="w-3.5 h-3.5" />
                       <span>Wrong</span>
@@ -2258,24 +2287,53 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     {activeClue.reboundOpportunity ? (
                       <button
                         onClick={() => dispatch({ type: 'PASS_REBOUND' })}
-                        className="py-2.5 px-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-xs uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                        className={
+                          'py-2.5 px-3 bg-gray-800 hover:bg-gray-700 ' +
+                          'text-gray-300 font-bold text-xs uppercase ' +
+                          'rounded-lg flex items-center justify-center ' +
+                          'gap-1.5 transition-all'
+                        }
                       >
                         <SkipForward className="w-3.5 h-3.5" />
                         <span>Pass</span>
                       </button>
-                    ) : (
+                    ) : activeClue.reboundAvailable ? (
                       <button
-                        onClick={() => dispatch({ type: 'REVEAL_ANSWER' })}
-                        className="py-2.5 px-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-xs uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                        onClick={() => dispatch({ type: 'ADVANCE_REBOUND' })}
+                        className={
+                          'py-2.5 px-3 bg-amber-600 hover:bg-amber-500 ' +
+                          'text-white font-bold text-xs uppercase ' +
+                          'rounded-lg flex items-center justify-center ' +
+                          'gap-1.5 transition-all'
+                        }
                       >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Reveal</span>
+                        <Zap className="w-3.5 h-3.5" />
+                        <span>Rebound (${activeClueReboundPoints})</span>
                       </button>
-                    )}
+                    ) : null}
+
+                    <button
+                      onClick={() => dispatch({ type: 'REVEAL_ANSWER' })}
+                      className={
+                        'py-2.5 px-3 bg-gray-800 hover:bg-gray-700 ' +
+                        'text-gray-300 font-bold text-xs uppercase ' +
+                        'rounded-lg flex items-center justify-center ' +
+                        'gap-1.5 transition-all'
+                      }
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Reveal</span>
+                    </button>
 
                     <button
                       onClick={() => dispatch({ type: 'CLOSE_CLUE' })}
-                      className="py-2.5 px-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-xs uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                      className={
+                        'py-2.5 px-3 bg-gray-800 hover:bg-gray-700 ' +
+                        'text-gray-300 font-bold text-xs uppercase ' +
+                        'rounded-lg flex items-center justify-center ' +
+                        'gap-1.5 transition-all ' +
+                        (hasReboundSlot ? 'col-span-2 sm:col-span-1' : '')
+                      }
                     >
                       <span>Finish</span>
                     </button>
