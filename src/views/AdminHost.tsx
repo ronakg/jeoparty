@@ -1886,8 +1886,10 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                   }}
                   className={
                     'flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 ' +
-                    'py-1.5 text-gray-500 hover:text-rose-400 text-xs ' +
-                    'font-bold transition-colors'
+                    'py-1.5 text-gray-300 hover:text-rose-400 ' +
+                    'border border-gray-700 hover:border-gray-600 ' +
+                    'bg-gray-800/60 hover:bg-gray-800 rounded-lg text-xs ' +
+                    'font-bold transition-all'
                   }
                   title="Reset question to unopened"
                 >
@@ -1899,8 +1901,10 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                   onClick={() => dispatch({ type: 'CLOSE_CLUE' })}
                   className={
                     'flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 ' +
-                    'py-1.5 text-gray-500 hover:text-white text-xs ' +
-                    'font-bold transition-colors'
+                    'py-1.5 text-gray-300 hover:text-white ' +
+                    'border border-gray-700 hover:border-gray-600 ' +
+                    'bg-gray-800/60 hover:bg-gray-800 rounded-lg text-xs ' +
+                    'font-bold transition-all'
                   }
                   title="Close question and end turn"
                 >
