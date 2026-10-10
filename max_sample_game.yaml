@@ -1,0 +1,291 @@
+title: Grand Championship (Max 7x8)
+team1: Titans
+team2: Vanguard
+pointProgression:
+  - 100
+  - 200
+  - 300
+  - 400
+  - 500
+  - 600
+  - 700
+  - 800
+hintPenalty: 100
+reboundPercentage: 50
+categories:
+  - name: SCIENCE & DISCOVERY
+    questions:
+      - title: Which subatomic particle carries a negative
+          electric charge?
+        answer: Electron
+        hint: Orbits the atomic nucleus.
+      - title: What human organ consumes roughly 20 percent of
+          total energy?
+        answer: Brain
+        hint: The central command hub of the nervous system.
+      - title: What fundamental force keeps planets in orbit
+          around the Sun?
+        answer: Gravity
+        hint: Formulated by Isaac Newton and later expanded by
+          Albert Einstein.
+      - title: What gas accounts for roughly 78 percent of
+          Earth's atmosphere?
+        answer: Nitrogen
+        hint: Chemical symbol N, atomic number 7.
+      - title: What process do plants use to transform sunlight
+          into chemical energy?
+        answer: Photosynthesis
+        hint: Takes place primarily within chloroplasts.
+      - title: Which scientist formulated the three laws of
+          motion in Principia?
+        answer: Sir Isaac Newton
+        hint: Published in 1687, foundational to classical
+          mechanics.
+      - title: What is the rarest naturally occurring element
+          in Earth's crust?
+        answer: Astatine
+        hint: A radioactive halogen with atomic number 85.
+      - title: What astronomical boundary marks the point of no
+          return for a black hole?
+        answer: Event Horizon
+        hint: Beyond this threshold, not even light can escape
+          gravitational pull.
+  - name: WORLD HISTORY
+    questions:
+      - title: Which ancient civilization constructed the Great
+          Pyramids of Giza?
+        answer: Ancient Egypt
+        hint: Flourished along the banks of the Nile River.
+      - title: In what year did the Apollo 11 mission land
+          humans on the Moon?
+        answer: "1969"
+        hint: Commander Neil Armstrong stepped onto lunar soil
+          in July.
+      - title: Which Roman general was assassinated on the Ides
+          of March in 44 BC?
+        answer: Julius Caesar
+        hint: His assassination catalyzed the collapse of the
+          Roman Republic.
+      - title: What barrier dividing an East and West European
+          city fell in 1989?
+        answer: Berlin Wall
+        hint: Symbolized the Cold War division of post-war
+          Germany.
+      - title: Which queen ruled England during the defeat of
+          the Spanish Armada in 1588?
+        answer: Queen Elizabeth I
+        hint: The daughter of Henry VIII and Anne Boleyn.
+      - title: What maritime republic dominated Mediterranean
+          trade from the Adriatic?
+        answer: Republic of Venice
+        hint: Governed by an elected Doge for more than a
+          millennium.
+      - title: In what year did English barons force King John
+          to grant Magna Carta?
+        answer: "1215"
+        hint: Signed at Runnymede near Windsor.
+      - title: Which empire founded Tenochtitlan on Lake
+          Texcoco in 1325?
+        answer: Aztec Empire
+        hint: Conquered by Hernan Cortes in 1521.
+  - name: GEOGRAPHY & TRAVEL
+    questions:
+      - title: What is the largest ocean on Earth by surface
+          area and volume?
+        answer: Pacific Ocean
+        hint: Covers more than 30 percent of the planetary
+          surface.
+      - title: What is the longest river on the South American
+          continent?
+        answer: Amazon River
+        hint: Carries more water than any other river system in
+          the world.
+      - title: What mountain range forms the traditional
+          boundary between Europe and Asia?
+        answer: Ural Mountains
+        hint: Extends from the Arctic Ocean to Kazakhstan
+          through Russia.
+      - title: What city serves as the planned federal capital
+          of Australia?
+        answer: Canberra
+        hint: Located in the Capital Territory between Sydney
+          and Melbourne.
+      - title: What narrow strait connects the Mediterranean
+          Sea to the Atlantic Ocean?
+        answer: Strait of Gibraltar
+        hint: Flanked historically by the Pillars of Hercules.
+      - title: Which island nation south of India was
+          historically known as Ceylon?
+        answer: Sri Lanka
+        hint: Gained independence from British rule in 1948.
+      - title: What vast landlocked nation in Central Asia is
+          ninth-largest by area?
+        answer: Kazakhstan
+        hint: Stretches from the Caspian Sea to the Altai
+          Mountains.
+      - title: What Norwegian archipelago in the Arctic Ocean
+          houses the Seed Vault?
+        answer: Svalbard
+        hint: Situated roughly midway between mainland Norway
+          and the North Pole.
+  - name: LITERATURE & ARTS
+    questions:
+      - title: Who wrote the Elizabethan tragic drama Romeo and
+          Juliet?
+        answer: William Shakespeare
+        hint: English celebrated poet known as the Bard of
+          Avon.
+      - title: Which Italian polymath painted the Mona Lisa and
+          The Last Supper?
+        answer: Leonardo da Vinci
+        hint: Florentine master of the High Renaissance.
+      - title: In Herman Melville novel, what sea creature is
+          pursued by Ahab?
+        answer: White Sperm Whale
+        hint: Gives its name to the title of the book.
+      - title: Which French novelist wrote the 19th-century
+          epic Les Miserables?
+        answer: Victor Hugo
+        hint: Also authored The Hunchback of Notre-Dame.
+      - title: What literary role is defined as the principal
+          adversary to the hero?
+        answer: Antagonist
+        hint: Provides the central conflict opposing the
+          protagonist.
+      - title: Who created The Starry Night while residing at
+          an asylum in Saint-Remy?
+        answer: Vincent van Gogh
+        hint: Post-Impressionist master known for swirling
+          brushstrokes.
+      - title: Which medieval epic poem recounts the deeds of
+          Spanish hero El Cid?
+        answer: Cantar de mio Cid
+        hint: Oldest preserved Spanish epic cantares de gesta.
+      - title: Which Roman poet guides Dante through Inferno in
+          the Divine Comedy?
+        answer: Virgil
+        hint: Author of the ancient Roman epic poem the Aeneid.
+  - name: POP CULTURE & CINEMA
+    questions:
+      - title: What 1977 galactic sci-fi film introduced Luke
+          Skywalker and Han Solo?
+        answer: "Star Wars: A New Hope"
+        hint: Directed and created by George Lucas.
+      - title: What British quartet recorded Abbey Road and
+          Sgt. Pepper albums?
+        answer: The Beatles
+        hint: Rock band formed in Liverpool featuring Lennon
+          and McCartney.
+      - title: Who directed blockbuster classics Jurassic Park,
+          Jaws, and E.T.?
+        answer: Steven Spielberg
+        hint: Co-founded DreamWorks Pictures and won multiple
+          Academy Awards.
+      - title: What fictional metal is bonded to the skeletal
+          claws of Wolverine?
+        answer: Adamantium
+        hint: Virtually indestructible comic alloy created in
+          Marvel lore.
+      - title: Which actress portrayed tribute Katniss Everdeen
+          in The Hunger Games?
+        answer: Jennifer Lawrence
+        hint: Also won an Academy Award for Silver Linings
+          Playbook.
+      - title: What 1994 neo-noir Tarantino film stars Travolta
+          and Samuel Jackson?
+        answer: Pulp Fiction
+        hint: Won the Palme d Or at the Cannes Film Festival.
+      - title: What 1993 stop-motion holiday musical features
+          Jack Skellington?
+        answer: The Nightmare Before Christmas
+        hint: Conceived and produced by Tim Burton, directed by
+          Henry Selick.
+      - title: Which British intelligence agent was created by
+          Ian Fleming in 1953?
+        answer: James Bond (007)
+        hint: Debuted in the espionage novel Casino Royale.
+  - name: SPORTS & GAMES
+    questions:
+      - title: In soccer (association football), how many
+          players per side start on pitch?
+        answer: "11"
+        hint: Ten outfield players and one goalkeeper.
+      - title: What sport awards scores named birdie, eagle,
+          and albatross?
+        answer: Golf
+        hint: Played with clubs over a course of 9 or 18 holes.
+      - title: How many total squares make up a standard
+          international chessboard?
+        answer: "64"
+        hint: Arranged in an eight-by-eight grid of contrasting
+          colors.
+      - title: Which national team has captured the most FIFA
+          Men World Cup titles?
+        answer: Brazil
+        hint: Five-time world champions celebrated for Jogo
+          Bonito.
+      - title: In lawn tennis, what term describes a tied score
+          of 40-40 in a game?
+        answer: Deuce
+        hint: Requires two consecutive vantage points to close
+          the game.
+      - title: Which city hosted the inaugural modern Olympic
+          Games in 1896?
+        answer: Athens, Greece
+        hint: Revived Pierre de Coubertin vision in the
+          Panathenaic Stadium.
+      - title: What is the highest achievable single-game score
+          in ten-pin bowling?
+        answer: "300"
+        hint: Achieved by rolling twelve strikes in succession.
+      - title: Which Spanish cyclist won five consecutive Tour
+          de France titles in 1990s?
+        answer: Miguel Indurain
+        hint: Dominated the Grand Tour from 1991 through 1995.
+  - name: FOOD & CUISINE
+    questions:
+      - title: What fruit serves as the creamy foundation of
+          traditional guacamole?
+        answer: Avocado
+        hint: Botanically a large berry containing a single
+          seed.
+      - title: What viscous sweetener is manufactured by bees
+          utilizing floral nectar?
+        answer: Honey
+        hint: Low moisture and high acidity allow it to remain
+          edible indefinitely.
+      - title: Which Genoese pasta sauce combines fresh basil,
+          pine nuts, garlic, and oil?
+        answer: Pesto
+        hint: Traditionally ground using a mortar and pestle.
+      - title: What Japanese fermented soybean paste flavours
+          traditional soup broth?
+        answer: Miso
+        hint: Produced by fermenting soybeans with salt and
+          koji fungus.
+      - title: What spice derived from Crocus sativus is the
+          most expensive by weight?
+        answer: Saffron
+        hint: Hand-harvested crimson stigmas yield distinct
+          aroma and golden hue.
+      - title: Which classic French mother sauce consists of
+          white roux and milk?
+        answer: Bechamel
+        hint: Forms the creamy base for Mornay and white pasta
+          sauces.
+      - title: What Apulian cheese features mozzarella exterior
+          filled with stracciatella?
+        answer: Burrata
+        hint: Heart filled with mozzarella shreds and fresh
+          cream.
+      - title: What premium Spanish cured ham comes from
+          acorn-fed Iberian black pigs?
+        answer: Jamon Iberico de Bellota
+        hint: Cured for up to four years in mountain cellars.
+questionTimerSeconds: 60
+tieBreaker:
+  category: ASTRONOMY & COSMOLOGY
+  title: First detected in 1967, what magnetized neutron
+    star emits regular pulses?
+  answer: Pulsar
+  hint: Discovered by astrophysicist Jocelyn Bell Burnell.

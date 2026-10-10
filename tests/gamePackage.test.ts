@@ -244,3 +244,82 @@ test('Game Package Simulation: plays match from package config', async () => {
     fs.rmSync(tmpExtract, { recursive: true, force: true });
   }
 });
+
+test(
+  'Game Package: unpacks and validates max sample package (7x8)',
+  async () => {
+  const packagePath = path.resolve(process.cwd(), 'max_sample_game.jeopardy');
+  assert.ok(fs.existsSync(packagePath), 'max package must exist');
+
+  const tmpExtract = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'jeoparty-max-fixture-test-')
+  );
+  try {
+    const result = await extractGameArchive(packagePath, tmpExtract);
+    assert.ok(fs.existsSync(result.yamlPath));
+
+    const yamlContent = fs.readFileSync(result.yamlPath, 'utf-8');
+    const config = parseGameConfigFromYaml(yamlContent);
+
+    assert.equal(config.title, 'Grand Championship (Max 7x8)');
+    assert.equal(config.team1Name, 'Titans');
+    assert.equal(config.team2Name, 'Vanguard');
+    assert.equal(config.rounds[0].categories.length, 7);
+
+    const expectedPoints = [100, 200, 300, 400, 500, 600, 700, 800];
+    let totalCluesCount = 0;
+
+    for (const category of config.rounds[0].categories) {
+      assert.equal(category.clues.length, 8);
+      const points = category.clues.map((c) => c.points);
+      assert.deepEqual(points, expectedPoints);
+
+      for (const clue of category.clues) {
+        totalCluesCount++;
+        assert.ok(clue.question.length > 0);
+        assert.ok(clue.answer.length > 0);
+        assert.equal(clue.media, undefined);
+      }
+    }
+
+    assert.equal(totalCluesCount, 56);
+    assert.ok(config.finalJeopardy);
+    assert.equal(config.finalJeopardy?.category, 'ASTRONOMY & COSMOLOGY');
+
+    // Simulate opening and answering max tier clue ($800)
+    let state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: config,
+    });
+    assert.equal(state.config?.rounds[0].categories.length, 7);
+
+    state = gameReducer(state, {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 6,
+        clueIndex: 7,
+        firstAnsweringTeam: 1,
+      },
+    });
+    assert.ok(state.activeClue);
+    assert.equal(state.activeClue.currentAvailablePoints, 800);
+
+    state = gameReducer(state, {
+      type: 'ANSWER_CORRECT',
+      payload: { team: 1 },
+    });
+    assert.equal(state.team1Score, 800);
+    assert.equal(state.controllingTeam, 1);
+
+    state = gameReducer(state, { type: 'CLOSE_CLUE' });
+    assert.equal(state.activeClue, null);
+    assert.equal(
+      state.config?.rounds[0].categories[6].clues[7].state,
+      'completed'
+    );
+  } finally {
+    fs.rmSync(tmpExtract, { recursive: true, force: true });
+  }
+});
+
