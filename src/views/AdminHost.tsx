@@ -2090,7 +2090,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                           ? 'None'
                           : activeClue.hintRevealed
                             ? 'Revealed'
-                            : 'Reveal'}
+                            : 'Hint'}
                       </span>
                     </button>
                   </div>
@@ -2320,9 +2320,10 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                         'rounded-lg flex items-center justify-center ' +
                         'gap-1.5 transition-all'
                       }
+                      title="Reveal answer to players"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span>Reveal</span>
+                      <span>Answer</span>
                     </button>
 
                     <button

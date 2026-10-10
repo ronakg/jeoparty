@@ -240,6 +240,10 @@ class GameSimulation {
     return this.dispatch({ type: 'REVEAL_HINT' });
   }
 
+  async revealAnswer(): Promise<GameState> {
+    return this.dispatch({ type: 'REVEAL_ANSWER' });
+  }
+
   async revealMedia(timerStartedAt?: number): Promise<GameState> {
     return this.dispatch({
       type: 'REVEAL_MEDIA',
@@ -649,6 +653,32 @@ test(
     await sim.stop();
   }
 });
+
+test(
+  'Simulation: Clue Actions - host reveals hint and answer',
+  async () => {
+    const sim = await GameSimulation.start();
+    try {
+      await sim.loadGame(defaultGame);
+      await sim.selectClue(0, 0, 0, 1);
+
+      let state = await sim.getState();
+      assert.equal(state.activeClue?.hintRevealed, false);
+      assert.equal(state.activeClue?.answerRevealed, false);
+
+      await sim.revealHint();
+      state = await sim.getState();
+      assert.equal(state.activeClue?.hintRevealed, true);
+      assert.equal(state.activeClue?.answerRevealed, false);
+
+      await sim.revealAnswer();
+      state = await sim.getState();
+      assert.equal(state.activeClue?.answerRevealed, true);
+    } finally {
+      await sim.stop();
+    }
+  }
+);
 
 // ---------------------------------------------------------------------------
 // SUITE 5: Hint Deductions & Floor Clamping
