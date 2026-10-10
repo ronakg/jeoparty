@@ -175,12 +175,22 @@ export const useQuestionTimer = (
     if (timerStartedAt === null || timerStartedAt === undefined) return;
     if (isClueResolved) return;
 
-    setNow(Date.now());
-    const interval = setInterval(() => {
-      setNow(Date.now());
-    }, 250);
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    return () => clearInterval(interval);
+    const tick = () => {
+      const current = Date.now();
+      setNow(current);
+      const elapsedMs = current - timerStartedAt;
+      const msIntoSec = elapsedMs >= 0 ? elapsedMs % 1000 : 0;
+      const msUntilNextSec = Math.max(25, 1002 - msIntoSec);
+      timeoutId = setTimeout(tick, msUntilNextSec);
+    };
+
+    tick();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [timerSeconds, timerStartedAt, isClueResolved]);
 
   if (!timerSeconds || timerSeconds <= 0) {
@@ -244,14 +254,14 @@ export const QuestionTimerBadge: React.FC<{
         'flex items-center gap-1.5 px-[clamp(0.6rem,1vw,1.5rem)] ' +
         'py-[clamp(0.2rem,0.4vh,0.5rem)] rounded-full border ' +
         'font-display font-bold text-[clamp(0.75rem,1.4vh,1.35rem)] ' +
-        'tracking-wider tabular-nums transition-colors duration-200 ' +
+        'tracking-wider tabular-nums ' +
         (isExpired
           ? 'bg-rose-950/60 border-rose-500/60 text-rose-300 ' +
             'shadow-[0_0_15px_rgba(244,63,94,0.4)]'
           : isUrgent
-            ? 'bg-amber-950/50 border-amber-500/60 text-amber-300 ' +
-              'animate-timer-blink shadow-[0_0_15px_rgba(245,158,11,0.35)]'
-            : 'bg-[#060e24]/80 border-sky-400/30 text-sky-300')
+            ? 'animate-timer-blink text-amber-200'
+            : 'bg-[#060e24]/80 border-sky-400/30 text-sky-300 ' +
+              'transition-colors duration-200')
       }
     >
       <Clock
@@ -261,7 +271,7 @@ export const QuestionTimerBadge: React.FC<{
           (isExpired
             ? 'text-rose-400'
             : isUrgent
-              ? 'text-amber-400'
+              ? 'text-amber-300'
               : 'text-sky-400')
         }
       />
