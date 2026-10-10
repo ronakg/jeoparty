@@ -1830,3 +1830,52 @@ test('PlayerDisplay UI: Media clue renders responsive split columns', () => {
     'Image must render in cinematic shadow frame'
   );
 });
+
+test('PlayerDisplay UI: Layout preserves viewport-height proportions', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(
+    html.includes('h-[8vh]'),
+    'Header must use proportional 8vh height'
+  );
+  assert.ok(
+    html.includes('h-[14vh]'),
+    'Footer must use proportional 14vh height'
+  );
+  assert.ok(
+    html.includes('p-[1.5vh] md:p-[2vh]'),
+    'Main container must use proportional vh padding'
+  );
+  assert.ok(
+    html.includes('text-[clamp(1rem,2vh,2.25rem)]'),
+    'Game title must scale with fluid clamp vh typography'
+  );
+  assert.ok(
+    html.includes('text-[clamp(1.75rem,4.5vh,6rem)]'),
+    'TabularScore must scale with fluid clamp vh typography'
+  );
+  assert.ok(
+    html.includes('text-[clamp(1.1rem,2.4vh,3rem)]'),
+    'Team name must scale with fluid clamp vh typography'
+  );
+});

@@ -116,7 +116,7 @@ const TabularScore: React.FC<TabularScoreProps> = ({
   const sizeClasses =
     size === 'large'
       ? 'text-5xl sm:text-7xl md:text-8xl'
-      : 'text-3xl md:text-4xl';
+      : 'text-[clamp(1.75rem,4.5vh,6rem)] leading-none';
 
   return (
     <span
@@ -215,14 +215,20 @@ export const QuestionTimerBadge: React.FC<{
     return (
       <div
         className={
-          'flex items-center gap-1.5 px-3 py-1 rounded-full border ' +
+          'flex items-center gap-1.5 px-[clamp(0.6rem,1vw,1.5rem)] ' +
+          'py-[clamp(0.2rem,0.4vh,0.5rem)] rounded-full border ' +
           'bg-[#060e24]/80 border-blue-500/25 text-blue-300/70 ' +
-          'font-display font-bold text-xs sm:text-sm tracking-wider ' +
-          'tabular-nums'
+          'font-display font-bold text-[clamp(0.75rem,1.4vh,1.35rem)] ' +
+          'tracking-wider tabular-nums'
         }
         title="Timer starts when media is shown"
       >
-        <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400/60" />
+        <Clock
+          className={
+            'w-[clamp(0.875rem,1.6vh,1.5rem)] ' +
+            'h-[clamp(0.875rem,1.6vh,1.5rem)] text-blue-400/60 shrink-0'
+          }
+        />
         <span>{formattedTime}</span>
       </div>
     );
@@ -235,9 +241,10 @@ export const QuestionTimerBadge: React.FC<{
     <div
       key={isUrgent ? remaining : 'timer'}
       className={
-        'flex items-center gap-1.5 px-3 py-1 rounded-full border ' +
-        'font-display font-bold text-xs sm:text-sm tracking-wider ' +
-        'tabular-nums transition-colors duration-200 ' +
+        'flex items-center gap-1.5 px-[clamp(0.6rem,1vw,1.5rem)] ' +
+        'py-[clamp(0.2rem,0.4vh,0.5rem)] rounded-full border ' +
+        'font-display font-bold text-[clamp(0.75rem,1.4vh,1.35rem)] ' +
+        'tracking-wider tabular-nums transition-colors duration-200 ' +
         (isExpired
           ? 'bg-rose-950/60 border-rose-500/60 text-rose-300 ' +
             'shadow-[0_0_15px_rgba(244,63,94,0.4)]'
@@ -249,7 +256,8 @@ export const QuestionTimerBadge: React.FC<{
     >
       <Clock
         className={
-          'w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ' +
+          'w-[clamp(0.875rem,1.6vh,1.5rem)] ' +
+          'h-[clamp(0.875rem,1.6vh,1.5rem)] shrink-0 ' +
           (isExpired
             ? 'text-rose-400'
             : isUrgent
@@ -548,12 +556,19 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         badge = (
           <span
             className={
-              'px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 ' +
-              'text-[10px] font-bold uppercase tracking-wider flex ' +
-              'items-center gap-1 font-display'
+              'px-[clamp(0.5rem,0.8vw,1.25rem)] ' +
+              'py-[clamp(0.15rem,0.3vh,0.45rem)] rounded-full ' +
+              'bg-emerald-500/20 text-emerald-300 ' +
+              'text-[clamp(0.65rem,1.2vh,1.25rem)] font-bold uppercase ' +
+              'tracking-wider flex items-center gap-1 font-display'
             }
           >
-            <CheckCircle2 className="w-3 h-3" />
+            <CheckCircle2
+              className={
+                'w-[clamp(0.75rem,1.3vh,1.25rem)] ' +
+                'h-[clamp(0.75rem,1.3vh,1.25rem)]'
+              }
+            />
             {isOriginTurn ? <span>Turn</span> : <span>Rebound</span>}
           </span>
         );
@@ -561,12 +576,19 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         badge = (
           <span
             className={
-              'px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 ' +
-              'text-[10px] font-bold uppercase tracking-wider flex ' +
-              'items-center gap-1 font-display'
+              'px-[clamp(0.5rem,0.8vw,1.25rem)] ' +
+              'py-[clamp(0.15rem,0.3vh,0.45rem)] rounded-full ' +
+              'bg-rose-500/20 text-rose-300 ' +
+              'text-[clamp(0.65rem,1.2vh,1.25rem)] font-bold uppercase ' +
+              'tracking-wider flex items-center gap-1 font-display'
             }
           >
-            <XCircle className="w-3 h-3" />
+            <XCircle
+              className={
+                'w-[clamp(0.75rem,1.3vh,1.25rem)] ' +
+                'h-[clamp(0.75rem,1.3vh,1.25rem)]'
+              }
+            />
             <span>Missed</span>
           </span>
         );
@@ -577,8 +599,11 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         badge = (
           <span
             className={
-              'px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 ' +
-              'text-[10px] font-black uppercase tracking-wider font-display'
+              'px-[clamp(0.5rem,0.8vw,1.25rem)] ' +
+              'py-[clamp(0.15rem,0.3vh,0.45rem)] rounded-full ' +
+              'bg-amber-400 text-slate-950 ' +
+              'text-[clamp(0.65rem,1.2vh,1.25rem)] font-black uppercase ' +
+              'tracking-wider font-display'
             }
           >
             Rebound
@@ -588,8 +613,11 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         badge = (
           <span
             className={
-              'px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 ' +
-              'text-[10px] font-black uppercase tracking-wider font-display'
+              'px-[clamp(0.5rem,0.8vw,1.25rem)] ' +
+              'py-[clamp(0.15rem,0.3vh,0.45rem)] rounded-full ' +
+              'bg-amber-400 text-slate-950 ' +
+              'text-[clamp(0.65rem,1.2vh,1.25rem)] font-black uppercase ' +
+              'tracking-wider font-display'
             }
           >
             Turn
@@ -609,8 +637,11 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
     const badge = isTurn ? (
       <span
         className={
-          'px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 ' +
-          'text-[10px] font-black uppercase tracking-wider font-display'
+          'px-[clamp(0.5rem,0.8vw,1.25rem)] ' +
+          'py-[clamp(0.15rem,0.3vh,0.45rem)] rounded-full ' +
+          'bg-amber-400 text-slate-950 ' +
+          'text-[clamp(0.65rem,1.2vh,1.25rem)] font-black uppercase ' +
+          'tracking-wider font-display'
         }
       >
         Turn
@@ -642,20 +673,24 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
           className={
             'relative z-10 w-full bg-[#060e24]/90 ' +
             'border-b border-blue-900/60 ' +
-            'px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between ' +
+            'h-[8vh] min-h-[3.25rem] max-h-[6.5rem] ' +
+            'px-4 sm:px-6 md:px-8 flex items-center justify-between ' +
             'shrink-0 shadow-md titlebar-drag titlebar-pad backdrop-blur-sm'
           }
         >
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
             <img
               src="./logo.svg"
               alt="JeoPARTY!"
-              className="w-7 h-7 sm:w-8 sm:h-8 object-contain shrink-0"
+              className={
+                'h-[clamp(1.75rem,3.8vh,4.25rem)] ' +
+                'w-[clamp(1.75rem,3.8vh,4.25rem)] object-contain shrink-0'
+              }
             />
             <h1
               className={
-                'text-base md:text-lg font-black uppercase tracking-[0.2em] ' +
-                'text-modern-gold font-display truncate'
+                'text-[clamp(1rem,2vh,2.25rem)] font-black uppercase ' +
+                'tracking-[0.2em] text-modern-gold font-display truncate'
               }
             >
               {config.title}
@@ -666,9 +701,12 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
             {isFinalJeopardy && (
               <div
                 className={
-                  'px-4 py-1 rounded-full bg-amber-500/15 border ' +
-                  'border-amber-400/30 text-amber-300 font-extrabold ' +
-                  'uppercase tracking-widest text-xs flex items-center gap-2'
+                  'px-[clamp(0.75rem,1.2vw,1.5rem)] ' +
+                  'py-[clamp(0.2rem,0.4vh,0.5rem)] rounded-full ' +
+                  'bg-amber-500/15 border border-amber-400/30 ' +
+                  'text-amber-300 font-extrabold uppercase ' +
+                  'tracking-widest text-[clamp(0.75rem,1.3vh,1.25rem)] ' +
+                  'flex items-center gap-2'
                 }
               >
                 <span>Tie-Breaker Question</span>
@@ -678,12 +716,18 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
               onClick={onToggleFullScreen}
               title="Toggle Fullscreen (F)"
               className={
-                'p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border ' +
+                'p-[clamp(0.4rem,0.8vh,0.85rem)] rounded-xl ' +
+                'bg-white/[0.04] hover:bg-white/[0.09] border ' +
                 'border-white/10 text-white/70 hover:text-white ' +
                 'transition-all shadow-sm'
               }
             >
-              <Maximize className="w-4 h-4" />
+              <Maximize
+                className={
+                  'w-[clamp(1rem,1.8vh,1.75rem)] ' +
+                  'h-[clamp(1rem,1.8vh,1.75rem)]'
+                }
+              />
             </button>
           </div>
         </header>
@@ -693,7 +737,9 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
       <main
         className={
           'relative z-10 flex-1 flex flex-col overflow-hidden min-h-0 ' +
-          (winnerState.isGameOver ? 'p-0' : 'p-3 md:p-5')
+          (winnerState.isGameOver
+            ? 'p-0'
+            : 'p-[1.5vh] md:p-[2vh] lg:p-[2.5vh]')
         }
       >
         {/* VIEW 0: GAME OVER WINNER SCREEN */}
@@ -977,10 +1023,10 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
           /* Active Clue View */
           <div
             className={
-              `flex-1 min-h-0 h-full flex flex-col justify-between p-6 ` +
-              `md:p-8 lg:p-10 rounded-2xl bg-gradient-to-b from-[#071c59] ` +
-              `to-[#041038] shadow-2xl relative overflow-hidden ` +
-              `transition-all duration-300 ` +
+              `flex-1 min-h-0 h-full flex flex-col justify-between ` +
+              `p-[2.5vh] md:p-[3vh] lg:p-[3.5vh] rounded-2xl ` +
+              `bg-gradient-to-b from-[#071c59] to-[#041038] shadow-2xl ` +
+              `relative overflow-hidden transition-all duration-300 ` +
               (isShaking
                 ? 'animate-shake !border-2 !border-rose-500 ' +
                   'shadow-[0_0_35px_rgba(244,63,94,0.45)] '
@@ -1015,15 +1061,19 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
             <div
               className={
                 'w-full flex items-center justify-between border-b ' +
-                'border-white/[0.08] pb-3 mb-2 relative z-10 shrink-0'
+                'border-white/[0.08] pb-[1.2vh] mb-[1vh] relative z-10 ' +
+                'shrink-0'
               }
             >
               <div
                 className={
-                  'inline-flex items-center px-4 py-1.5 rounded-xl ' +
+                  'inline-flex items-center ' +
+                  'px-[clamp(0.75rem,1.2vw,2rem)] ' +
+                  'py-[clamp(0.35rem,0.7vh,0.85rem)] rounded-xl ' +
                   'bg-blue-500/20 border border-blue-400/30 text-blue-100 ' +
-                  'text-xs sm:text-sm md:text-base font-extrabold uppercase ' +
-                  'tracking-[0.15em] font-display backdrop-blur shadow-sm'
+                  'text-[clamp(0.75rem,1.6vh,1.75rem)] font-extrabold ' +
+                  'uppercase tracking-[0.15em] font-display backdrop-blur ' +
+                  'shadow-sm'
                 }
               >
                 <span>
@@ -1041,8 +1091,10 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 {activeClue.reboundOpportunity && (
                   <span
                     className={
-                      'px-3.5 py-1 bg-rose-500/20 border border-rose-500/40 ' +
-                      'text-rose-300 font-bold text-xs uppercase ' +
+                      'px-[clamp(0.75rem,1vw,1.5rem)] ' +
+                      'py-[clamp(0.2rem,0.4vh,0.5rem)] bg-rose-500/20 ' +
+                      'border border-rose-500/40 text-rose-300 font-bold ' +
+                      'text-[clamp(0.75rem,1.4vh,1.35rem)] uppercase ' +
                       'tracking-wider rounded-full'
                     }
                   >
@@ -1051,7 +1103,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 )}
                 <span
                   className={
-                    'text-2xl sm:text-3xl md:text-4xl font-black ' +
+                    'text-[clamp(1.5rem,3.8vh,4.5rem)] font-black ' +
                     'tracking-tight text-modern-gold font-display ' +
                     'leading-none'
                   }
@@ -1102,7 +1154,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 >
                   <h2
                     className={
-                      'shrink-0 text-2xl sm:text-3xl md:text-4xl lg:text-5xl ' +
+                      'shrink-0 text-[clamp(1.5rem,3.8vh,4.5rem)] ' +
                       'font-display font-bold text-white tracking-normal ' +
                       'leading-snug drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)] ' +
                       'mb-4'
@@ -1197,7 +1249,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                       />
                       <span
                         className={
-                          'text-2xl md:text-3xl lg:text-4xl font-black ' +
+                          'text-[clamp(1.5rem,3.2vh,4rem)] font-black ' +
                           'uppercase tracking-wide text-white font-display ' +
                           'drop-shadow-[0_2px_12px_rgba(16,185,129,0.6)]'
                         }
@@ -1219,7 +1271,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
               >
                 <h2
                   className={
-                    'text-3xl md:text-5xl lg:text-6xl font-display ' +
+                    'text-[clamp(1.75rem,4.5vh,5.5rem)] font-display ' +
                     'font-bold text-white tracking-normal leading-snug ' +
                     'md:leading-tight drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]'
                   }
@@ -1313,7 +1365,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                     />
                     <span
                       className={
-                        'text-2xl md:text-3xl lg:text-4xl font-black ' +
+                        'text-[clamp(1.5rem,3.2vh,4rem)] font-black ' +
                         'uppercase tracking-wide text-white font-display ' +
                         'drop-shadow-[0_2px_12px_rgba(16,185,129,0.6)]'
                       }
@@ -1341,7 +1393,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 <div
                   key={category.id}
                   className={
-                    'h-16 md:h-20 lg:h-24 rounded-xl p-2 md:p-3 flex ' +
+                    'h-[clamp(4rem,8.5vh,7.5rem)] rounded-xl p-2 md:p-3 flex ' +
                     'items-center justify-center text-center shadow-md ' +
                     'relative overflow-hidden bg-gradient-to-b ' +
                     'from-[#082470] to-[#051644] border border-blue-400/35 ' +
@@ -1351,7 +1403,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                 >
                   <h3
                     className={
-                      'text-xs sm:text-sm md:text-base lg:text-lg ' +
+                      'text-[clamp(0.75rem,1.6vh,1.75rem)] ' +
                       'font-black uppercase tracking-wide text-white ' +
                       'line-clamp-2 md:line-clamp-3 font-display ' +
                       'leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]'
@@ -1413,8 +1465,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                               >
                                 <span
                                   className={
-                                    'text-lg sm:text-xl md:text-2xl ' +
-                                    'lg:text-3xl font-bold font-display ' +
+                                    'text-[clamp(1.1rem,2.4vh,3rem)] ' +
+                                    'font-bold font-display ' +
                                     'text-slate-600/40 line-through ' +
                                     'decoration-slate-600/50 truncate'
                                   }
@@ -1441,8 +1493,8 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                             >
                               <span
                                 className={
-                                  'text-xl sm:text-2xl md:text-3xl ' +
-                                  'lg:text-4xl font-black tracking-tight ' +
+                                  'text-[clamp(1.25rem,3vh,3.5rem)] ' +
+                                  'font-black tracking-tight ' +
                                   'text-modern-gold font-display truncate'
                                 }
                               >
@@ -1466,97 +1518,107 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
         <footer
           className={
             'relative z-10 w-full bg-[#060e24]/90 border-t ' +
-            'border-blue-900/60 px-4 md:px-6 py-2.5 sm:py-3 grid ' +
-            'grid-cols-2 gap-4 shrink-0 shadow-lg backdrop-blur-sm'
+            'border-blue-900/60 ' +
+            'h-[14vh] min-h-[5.5rem] max-h-[11rem] ' +
+            'px-4 md:px-6 lg:px-8 py-[1.2vh] flex items-center ' +
+            'shrink-0 shadow-lg backdrop-blur-sm'
           }
         >
-          {/* Team 1 Score Card */}
-          {(() => {
-            const t1 = getTeamCardProps(1);
-            return (
-              <div
-                className={
-                  'relative px-5 py-3 md:py-3.5 rounded-xl transition-all ' +
-                  'duration-300 flex items-center justify-between ' +
-                  'overflow-hidden ' +
-                  t1.borderClass
-                }
-              >
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2 mb-0.5">
+          <div className="w-full h-full grid grid-cols-2 gap-[1.5vw]">
+            {/* Team 1 Score Card */}
+            {(() => {
+              const t1 = getTeamCardProps(1);
+              return (
+                <div
+                  className={
+                    'relative h-full w-full px-[clamp(1rem,1.8vw,2.5rem)] ' +
+                    'py-[clamp(0.5rem,1.2vh,1.5rem)] rounded-xl ' +
+                    'transition-all duration-300 flex items-center ' +
+                    'justify-between overflow-hidden ' +
+                    t1.borderClass
+                  }
+                >
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span
+                        className={
+                          'text-[clamp(0.65rem,1.2vh,1.25rem)] uppercase ' +
+                          'font-bold tracking-widest text-slate-400 ' +
+                          'font-display'
+                        }
+                      >
+                        Team 1
+                      </span>
+                      {t1.badge}
+                    </div>
                     <span
                       className={
-                        'text-[10px] uppercase font-bold tracking-widest ' +
-                        'text-slate-400 font-display'
+                        'text-[clamp(1.1rem,2.4vh,3rem)] font-black ' +
+                        'uppercase tracking-wider text-white font-display ' +
+                        'truncate max-w-[55vw]'
                       }
                     >
-                      Team 1
+                      {config.team1Name}
                     </span>
-                    {t1.badge}
                   </div>
-                  <span
-                    className={
-                      'text-base md:text-xl font-black uppercase ' +
-                      'tracking-wider text-white font-display truncate ' +
-                      'max-w-[180px] md:max-w-xs'
+                  <TabularScore
+                    score={t1DisplayScore}
+                    isAnimating={
+                      t1Animating &&
+                      (!activeClue || activeClue.correctTeam === 1)
                     }
-                  >
-                    {config.team1Name}
-                  </span>
+                  />
                 </div>
-                <TabularScore
-                  score={t1DisplayScore}
-                  isAnimating={
-                    t1Animating && (!activeClue || activeClue.correctTeam === 1)
-                  }
-                />
-              </div>
-            );
-          })()}
+              );
+            })()}
 
-          {/* Team 2 Score Card */}
-          {(() => {
-            const t2 = getTeamCardProps(2);
-            return (
-              <div
-                className={
-                  'relative px-5 py-3 md:py-3.5 rounded-xl transition-all ' +
-                  'duration-300 flex items-center justify-between ' +
-                  'overflow-hidden ' +
-                  t2.borderClass
-                }
-              >
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2 mb-0.5">
+            {/* Team 2 Score Card */}
+            {(() => {
+              const t2 = getTeamCardProps(2);
+              return (
+                <div
+                  className={
+                    'relative h-full w-full px-[clamp(1rem,1.8vw,2.5rem)] ' +
+                    'py-[clamp(0.5rem,1.2vh,1.5rem)] rounded-xl ' +
+                    'transition-all duration-300 flex items-center ' +
+                    'justify-between overflow-hidden ' +
+                    t2.borderClass
+                  }
+                >
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span
+                        className={
+                          'text-[clamp(0.65rem,1.2vh,1.25rem)] uppercase ' +
+                          'font-bold tracking-widest text-slate-400 ' +
+                          'font-display'
+                        }
+                      >
+                        Team 2
+                      </span>
+                      {t2.badge}
+                    </div>
                     <span
                       className={
-                        'text-[10px] uppercase font-bold tracking-widest ' +
-                        'text-slate-400 font-display'
+                        'text-[clamp(1.1rem,2.4vh,3rem)] font-black ' +
+                        'uppercase tracking-wider text-white font-display ' +
+                        'truncate max-w-[55vw]'
                       }
                     >
-                      Team 2
+                      {config.team2Name}
                     </span>
-                    {t2.badge}
                   </div>
-                  <span
-                    className={
-                      'text-base md:text-xl font-black uppercase ' +
-                      'tracking-wider text-white font-display truncate ' +
-                      'max-w-[180px] md:max-w-xs'
+                  <TabularScore
+                    score={t2DisplayScore}
+                    isAnimating={
+                      t2Animating &&
+                      (!activeClue || activeClue.correctTeam === 2)
                     }
-                  >
-                    {config.team2Name}
-                  </span>
+                  />
                 </div>
-                <TabularScore
-                  score={t2DisplayScore}
-                  isAnimating={
-                    t2Animating && (!activeClue || activeClue.correctTeam === 2)
-                  }
-                />
-              </div>
-            );
-          })()}
+              );
+            })()}
+          </div>
         </footer>
       )}
     </div>
