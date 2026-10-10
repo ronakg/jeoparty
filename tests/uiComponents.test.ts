@@ -1878,4 +1878,21 @@ test('PlayerDisplay UI: Layout preserves viewport-height proportions', () => {
     html.includes('text-[clamp(1.1rem,2.4vh,3rem)]'),
     'Team name must scale with fluid clamp vh typography'
   );
+
+  const boardState = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  const boardHtml = renderToStaticMarkup(
+    React.createElement(PlayerDisplay, {
+      state: boardState,
+      toMediaUrl: (p: string) => p,
+      onToggleFullScreen: () => {},
+    })
+  );
+
+  assert.ok(
+    boardHtml.includes('text-[clamp(1.75rem,4.5vh,5.25rem)]'),
+    'Board clue points must use enlarged clamp typography'
+  );
 });

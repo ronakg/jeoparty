@@ -1465,7 +1465,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                               >
                                 <span
                                   className={
-                                    'text-[clamp(1.1rem,2.4vh,3rem)] ' +
+                                    'text-[clamp(1.4rem,3.4vh,3.8rem)] ' +
                                     'font-bold font-display ' +
                                     'text-slate-600/40 line-through ' +
                                     'decoration-slate-600/50 truncate'
@@ -1493,7 +1493,7 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                             >
                               <span
                                 className={
-                                  'text-[clamp(1.25rem,3vh,3.5rem)] ' +
+                                  'text-[clamp(1.75rem,4.5vh,5.25rem)] ' +
                                   'font-black tracking-tight ' +
                                   'text-modern-gold font-display truncate'
                                 }

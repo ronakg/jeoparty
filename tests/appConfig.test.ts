@@ -309,6 +309,11 @@ test('App Theme: index.css defines enriched gold gradient for points', () => {
     !css.includes('#FFF8D6'),
     'text-modern-gold must not retain bleached ivory start'
   );
+  const goldBlock = css.match(/\.text-modern-gold\s*\{[^}]+\}/)?.[0] || '';
+  assert.ok(
+    !goldBlock.includes('drop-shadow'),
+    'text-modern-gold must not have blurry drop-shadow glow'
+  );
 });
 
 test('App Typography: source files contain zero fixed-width font-mono', () => {
