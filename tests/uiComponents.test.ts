@@ -130,7 +130,11 @@ test(
     })
   );
   assert.ok(activeHtml.includes('00:11'));
-  assert.ok(activeHtml.includes('text-modern-gold'));
+  assert.ok(activeHtml.includes('text-sky-300'));
+  assert.ok(
+    !activeHtml.includes('text-modern-gold'),
+    'Timer must not use gold reserved for points'
+  );
   assert.ok(activeHtml.includes('font-display font-bold'));
   assert.ok(!activeHtml.includes('font-mono'));
   assert.ok(!activeHtml.includes('animate-timer-blink'));

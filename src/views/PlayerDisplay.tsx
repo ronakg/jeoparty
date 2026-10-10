@@ -251,7 +251,7 @@ export const QuestionTimerBadge: React.FC<{
           : isUrgent
             ? 'bg-amber-950/50 border-amber-500/60 text-amber-300 ' +
               'animate-timer-blink shadow-[0_0_15px_rgba(245,158,11,0.35)]'
-            : 'bg-[#060e24]/80 border-blue-400/30 text-modern-gold')
+            : 'bg-[#060e24]/80 border-sky-400/30 text-sky-300')
       }
     >
       <Clock
@@ -262,7 +262,7 @@ export const QuestionTimerBadge: React.FC<{
             ? 'text-rose-400'
             : isUrgent
               ? 'text-amber-400'
-              : 'text-modern-gold')
+              : 'text-sky-400')
         }
       />
       <span>{formattedTime}</span>
