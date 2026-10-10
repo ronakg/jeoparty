@@ -285,6 +285,32 @@ test('App Typography: index.css sets optical sizing and cleans CSS', () => {
   );
 });
 
+test('App Theme: index.css defines enriched gold gradient for points', () => {
+  const cssPath = path.join(rootDir, 'src/index.css');
+  const css = fs.readFileSync(cssPath, 'utf-8');
+
+  assert.ok(
+    css.includes('.text-modern-gold'),
+    'index.css must define .text-modern-gold'
+  );
+  assert.ok(
+    css.includes('#FCD34D 0%'),
+    'text-modern-gold must use warm amber gold start'
+  );
+  assert.ok(
+    css.includes('#F5A623 50%'),
+    'text-modern-gold must use saturated gold midpoint'
+  );
+  assert.ok(
+    css.includes('#C27D0B 100%'),
+    'text-modern-gold must use burnished bronze gold end'
+  );
+  assert.ok(
+    !css.includes('#FFF8D6'),
+    'text-modern-gold must not retain bleached ivory start'
+  );
+});
+
 test('App Typography: source files contain zero fixed-width font-mono', () => {
   const srcDir = path.join(rootDir, 'src');
   const getSourceFiles = (dir: string): string[] => {

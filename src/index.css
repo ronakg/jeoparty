@@ -47,13 +47,13 @@
 .text-modern-gold {
   background: linear-gradient(
     180deg,
-    #FFF8D6 0%,
-    #F6C744 50%,
-    #E8A224 100%
+    #FCD34D 0%,
+    #F5A623 50%,
+    #C27D0B 100%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 8px rgba(245, 194, 66, 0.35));
+  filter: drop-shadow(0 2px 8px rgba(245, 166, 35, 0.4));
 }
 
 .text-gold-subtle {
