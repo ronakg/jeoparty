@@ -770,8 +770,12 @@ test(
   assert.ok(html.includes('+$100'));
   assert.ok(html.includes('Wrong'));
   assert.ok(html.includes('<span>Rebound</span>'));
+  assert.ok(html.includes('bg-violet-600'));
   assert.ok(html.includes('<span>Answer</span>'));
+  assert.ok(html.includes('bg-indigo-600'));
   assert.ok(html.includes('<span>Hint</span>'));
+  assert.ok(html.includes('bg-amber-600'));
+  assert.ok(html.includes('bg-slate-700'));
   assert.ok(!html.includes('<span>Reveal</span>'));
   assert.ok(html.includes('Reset'));
   assert.ok(html.includes('Hint (-$100)'));
@@ -846,7 +850,9 @@ test(
     assert.ok(html.includes('+$50'));
     assert.ok(html.includes('Wrong'));
     assert.ok(html.includes('Pass'));
+    assert.ok(html.includes('border-gray-700'));
     assert.ok(!html.includes('<span>Rebound</span>'));
+    assert.ok(html.includes('text-violet-300 bg-violet-950/60'));
     assert.ok(html.includes('Rebound 50%'));
   }
 );
@@ -885,6 +891,8 @@ test(
   assert.ok(html.includes('Champions incorrect'));
   assert.ok(html.includes('Rebound: $50'));
   assert.ok(html.includes('<span>Rebound</span>'));
+  assert.ok(html.includes('bg-violet-600'));
+  assert.ok(html.includes('border-gray-700'));
   assert.ok(!html.includes('Rebound ($50)'));
   assert.ok(html.includes('Skip'));
 });

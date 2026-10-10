@@ -1828,11 +1828,11 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                   {activeClue.reboundOpportunity && (
                     <span
                       className={
-                        'px-2 py-0.5 bg-amber-600/80 text-white text-xs ' +
+                        'px-2 py-0.5 bg-violet-600/80 text-white text-xs ' +
                         'font-bold uppercase rounded'
                       }
                     >
-                      Rebound 50%
+                      Rebound {reboundPercent}%
                     </span>
                   )}
                   {Boolean(
@@ -1997,7 +1997,11 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     {!activeClue.mediaRevealed ? (
                       <button
                         onClick={() => dispatch({ type: 'REVEAL_MEDIA' })}
-                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all"
+                        className={
+                          'px-3 py-1.5 bg-sky-600 hover:bg-sky-500 ' +
+                          'text-white rounded-lg text-xs font-bold flex ' +
+                          'items-center gap-1.5 transition-all'
+                        }
                       >
                         <Play className="w-3.5 h-3.5 fill-white" />
                         <span>
@@ -2128,9 +2132,10 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     <button
                       onClick={() => dispatch({ type: 'ADVANCE_REBOUND' })}
                       className={
-                        'flex-1 py-2.5 px-4 bg-amber-600 hover:bg-amber-500 ' +
-                        'text-white font-bold text-xs uppercase rounded-lg ' +
-                        'flex items-center justify-center gap-2 transition-all'
+                        'flex-1 py-2.5 px-4 bg-violet-600 ' +
+                        'hover:bg-violet-500 text-white font-bold text-xs ' +
+                        'uppercase rounded-lg flex items-center ' +
+                        'justify-center gap-2 transition-all'
                       }
                     >
                       <Zap className="w-3.5 h-3.5" />
@@ -2141,7 +2146,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                       className={
                         'py-2.5 px-4 bg-gray-800 hover:bg-gray-700 ' +
                         'text-gray-300 font-bold text-xs uppercase ' +
-                        'rounded-lg transition-all'
+                        'rounded-lg border border-gray-700 transition-all'
                       }
                     >
                       Skip
@@ -2233,8 +2238,8 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     {activeClue.reboundOpportunity && (
                       <span
                         className="px-2 py-0.5 rounded text-[10px] font-bold
-                          text-amber-300 bg-amber-950/60 border
-                          border-amber-500/40 uppercase"
+                          text-violet-300 bg-violet-950/60 border
+                          border-violet-500/40 uppercase"
                       >
                         Rebound {reboundPercent}%
                       </span>
@@ -2291,7 +2296,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                           'py-2.5 px-3 bg-gray-800 hover:bg-gray-700 ' +
                           'text-gray-300 font-bold text-xs uppercase ' +
                           'rounded-lg flex items-center justify-center ' +
-                          'gap-1.5 transition-all'
+                          'gap-1.5 border border-gray-700 transition-all'
                         }
                       >
                         <SkipForward className="w-3.5 h-3.5" />
@@ -2301,7 +2306,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                       <button
                         onClick={() => dispatch({ type: 'ADVANCE_REBOUND' })}
                         className={
-                          'py-2.5 px-3 bg-amber-600 hover:bg-amber-500 ' +
+                          'py-2.5 px-3 bg-violet-600 hover:bg-violet-500 ' +
                           'text-white font-bold text-xs uppercase ' +
                           'rounded-lg flex items-center justify-center ' +
                           'gap-1.5 transition-all'
@@ -2315,8 +2320,8 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     <button
                       onClick={() => dispatch({ type: 'REVEAL_ANSWER' })}
                       className={
-                        'py-2.5 px-3 bg-gray-800 hover:bg-gray-700 ' +
-                        'text-gray-300 font-bold text-xs uppercase ' +
+                        'py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 ' +
+                        'text-white font-bold text-xs uppercase ' +
                         'rounded-lg flex items-center justify-center ' +
                         'gap-1.5 transition-all'
                       }
@@ -2329,10 +2334,10 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     <button
                       onClick={() => dispatch({ type: 'CLOSE_CLUE' })}
                       className={
-                        'py-2.5 px-3 bg-gray-800 hover:bg-gray-700 ' +
-                        'text-gray-300 font-bold text-xs uppercase ' +
+                        'py-2.5 px-3 bg-slate-700 hover:bg-slate-600 ' +
+                        'text-slate-100 font-bold text-xs uppercase ' +
                         'rounded-lg flex items-center justify-center ' +
-                        'gap-1.5 transition-all ' +
+                        'gap-1.5 border border-slate-600 transition-all ' +
                         (hasReboundSlot ? 'col-span-2 sm:col-span-1' : '')
                       }
                     >
