@@ -774,8 +774,8 @@ test(
   assert.ok(html.includes('<span>Answer</span>'));
   assert.ok(html.includes('bg-indigo-600'));
   assert.ok(html.includes('<span>Hint</span>'));
-  assert.ok(html.includes('bg-amber-600'));
-  assert.ok(html.includes('bg-slate-700'));
+  assert.ok(!html.includes('<span>Finish</span>'));
+  assert.ok(html.includes('<span>Close</span>'));
   assert.ok(!html.includes('<span>Reveal</span>'));
   assert.ok(html.includes('Reset'));
   assert.ok(html.includes('Hint (-$100)'));

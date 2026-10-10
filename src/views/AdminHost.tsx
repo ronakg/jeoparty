@@ -1902,6 +1902,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     'py-1.5 text-gray-500 hover:text-white text-xs ' +
                     'font-bold transition-colors'
                   }
+                  title="Close question and end turn"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Close</span>
@@ -2250,8 +2251,8 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     className={
                       'grid grid-cols-2 gap-2 ' +
                       (hasReboundSlot
-                        ? 'sm:grid-cols-5'
-                        : 'sm:grid-cols-4')
+                        ? 'sm:grid-cols-4'
+                        : 'sm:grid-cols-3')
                     }
                   >
                     <button
@@ -2323,25 +2324,13 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                         'py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 ' +
                         'text-white font-bold text-xs uppercase ' +
                         'rounded-lg flex items-center justify-center ' +
-                        'gap-1.5 transition-all'
+                        'gap-1.5 transition-all ' +
+                        (!hasReboundSlot ? 'col-span-2 sm:col-span-1' : '')
                       }
                       title="Reveal answer to players"
                     >
                       <Eye className="w-3.5 h-3.5" />
                       <span>Answer</span>
-                    </button>
-
-                    <button
-                      onClick={() => dispatch({ type: 'CLOSE_CLUE' })}
-                      className={
-                        'py-2.5 px-3 bg-slate-700 hover:bg-slate-600 ' +
-                        'text-slate-100 font-bold text-xs uppercase ' +
-                        'rounded-lg flex items-center justify-center ' +
-                        'gap-1.5 border border-slate-600 transition-all ' +
-                        (hasReboundSlot ? 'col-span-2 sm:col-span-1' : '')
-                      }
-                    >
-                      <span>Finish</span>
                     </button>
                   </div>
                 </>
