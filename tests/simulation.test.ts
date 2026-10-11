@@ -445,6 +445,49 @@ test('Simulation: Persistence - exported YAML strips runtime state', () => {
   assert.ok(!yamlOutput.includes('team1Score'));
 });
 
+test('Simulation: Persistence - YAML roundtrip preserves audioOnly', () => {
+  const originalGame = createGameFromPreferences({
+    title: 'YouTube Audio Game',
+    numCategories: 1,
+    numQuestionsPerCategory: 2,
+  });
+
+  originalGame.rounds[0].categories[0].clues[0].media = {
+    type: 'youtube',
+    urlOrPath: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    audioOnly: true,
+  };
+  originalGame.rounds[0].categories[0].clues[1].media = {
+    type: 'youtube',
+    urlOrPath: 'https://www.youtube.com/watch?v=fJ9rUzIMcZQ',
+    audioOnly: false,
+  };
+  originalGame.finalJeopardy = {
+    category: 'Music',
+    question: 'Final Track',
+    answer: 'Rick Astley',
+    media: {
+      type: 'youtube',
+      urlOrPath: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      audioOnly: true,
+    },
+  };
+
+  const yamlOutput = serializeGameConfigToYaml(originalGame);
+  assert.ok(yamlOutput.includes('audioOnly: true'));
+
+  const reloadedGame = parseGameConfigFromYaml(yamlOutput);
+  const clue1 = reloadedGame.rounds[0].categories[0].clues[0];
+  const clue2 = reloadedGame.rounds[0].categories[0].clues[1];
+
+  assert.equal(clue1.media?.type, 'youtube');
+  assert.equal(clue1.media?.audioOnly, true);
+  assert.equal(clue2.media?.type, 'youtube');
+  assert.equal(clue2.media?.audioOnly, undefined);
+  assert.equal(reloadedGame.finalJeopardy?.media?.type, 'youtube');
+  assert.equal(reloadedGame.finalJeopardy?.media?.audioOnly, true);
+});
+
 // ---------------------------------------------------------------------------
 // SUITE 3: Core Gameplay - Direct Wins, Alternation & Zero Miss Penalties
 // ---------------------------------------------------------------------------

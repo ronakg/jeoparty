@@ -1052,6 +1052,62 @@ test('MediaRenderer UI: YouTube masks title when showControls is false', () => {
 });
 
 test(
+  'MediaRenderer UI: YouTube audioOnly renders audio clue card with stream',
+  () => {
+    const audioOnlyHtml = renderToStaticMarkup(
+      React.createElement(MediaRenderer, {
+        media: {
+          type: 'youtube',
+          urlOrPath: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          audioOnly: true,
+        },
+        resolvedUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        isPlaying: true,
+        showControls: false,
+      })
+    );
+
+    assert.ok(
+      audioOnlyHtml.includes('AUDIO CLUE'),
+      'Must display AUDIO CLUE label'
+    );
+    assert.ok(
+      audioOnlyHtml.includes('youtube-audio-stream'),
+      'Must embed hidden offscreen youtube-audio-stream'
+    );
+    assert.ok(
+      !audioOnlyHtml.includes('youtube-title-mask'),
+      'Must not render video title mask for audio only'
+    );
+    assert.ok(
+      !audioOnlyHtml.includes('YouTube Clue Video'),
+      'Must not render visible video frame title'
+    );
+  }
+);
+
+test(
+  'MediaRenderer UI: YouTube audioOnly reflects paused state and controls',
+  () => {
+    const pausedHtml = renderToStaticMarkup(
+      React.createElement(MediaRenderer, {
+        media: {
+          type: 'youtube',
+          urlOrPath: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          audioOnly: true,
+        },
+        resolvedUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        isPlaying: false,
+        showControls: true,
+      })
+    );
+
+    assert.ok(pausedHtml.includes('opacity-40'));
+    assert.ok(pausedHtml.includes('Open in Browser'));
+  }
+);
+
+test(
   'PlayerDisplay UI: Active media vanishes on ANSWER_CORRECT for all types',
   () => {
   const mediaCases: Array<{

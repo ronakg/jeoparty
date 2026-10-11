@@ -8,6 +8,7 @@ export interface CleanQuestionConfig {
   media?: {
     type: 'image' | 'audio' | 'video' | 'youtube';
     url: string;
+    audioOnly?: boolean;
   };
 }
 
@@ -24,6 +25,7 @@ export interface CleanTieBreakerConfig {
   media?: {
     type: 'image' | 'audio' | 'video' | 'youtube';
     url: string;
+    audioOnly?: boolean;
   };
 }
 
@@ -70,6 +72,7 @@ export function serializeGameConfigToYaml(config: GameConfig): string {
           cleanQ.media = {
             type: clue.media.type,
             url: mediaUrl,
+            ...(clue.media.audioOnly ? { audioOnly: true } : {}),
           };
         }
         return cleanQ;
@@ -116,6 +119,7 @@ export function serializeGameConfigToYaml(config: GameConfig): string {
       cleanFJ.media = {
         type: config.finalJeopardy.media.type,
         url: fjMediaUrl,
+        ...(config.finalJeopardy.media.audioOnly ? { audioOnly: true } : {}),
       };
     }
     cleanFile.tieBreaker = cleanFJ;
@@ -211,6 +215,9 @@ export function parseGameConfigFromYaml(yamlText: string): GameConfig {
           clue.media = {
             type: rawQ.media.type,
             urlOrPath: rawQ.media.url || rawQ.media.urlOrPath || '',
+            ...(rawQ.media.audioOnly !== undefined
+              ? { audioOnly: Boolean(rawQ.media.audioOnly) }
+              : {}),
           };
         }
 
@@ -238,6 +245,9 @@ export function parseGameConfigFromYaml(yamlText: string): GameConfig {
           ? {
               type: rawFJ.media.type,
               urlOrPath: rawFJ.media.url || rawFJ.media.urlOrPath || '',
+              ...(rawFJ.media.audioOnly !== undefined
+                ? { audioOnly: Boolean(rawFJ.media.audioOnly) }
+                : {}),
             }
           : undefined,
     };

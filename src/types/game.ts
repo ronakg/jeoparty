@@ -3,6 +3,7 @@ export type MediaType = 'none' | 'image' | 'audio' | 'video' | 'youtube';
 export interface MediaClue {
   type: MediaType;
   urlOrPath: string; // File system path, data URI, or YouTube URL
+  audioOnly?: boolean;
 }
 
 export type ClueState = 'unopened' | 'active' | 'completed';
