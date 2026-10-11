@@ -603,6 +603,115 @@ test(
   }
 );
 
+test(
+  'GameBuilder UI: Renders Audio only checkbox for YouTube clues',
+  () => {
+    const configWithYt = {
+      ...defaultGame,
+      rounds: [
+        {
+          ...defaultGame.rounds[0],
+          categories: [
+            {
+              ...defaultGame.rounds[0].categories[0],
+              clues: [
+                {
+                  ...defaultGame.rounds[0].categories[0].clues[0],
+                  media: {
+                    type: 'youtube' as const,
+                    urlOrPath: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                    audioOnly: true,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const html = renderToStaticMarkup(
+      React.createElement(GameBuilder, {
+        currentConfig: configWithYt,
+        initialClueIdx: 0,
+        onSaveSuccess: () => {},
+        onSaveAndPlay: () => {},
+        onCloseGame: () => {},
+        saveGameFile: async () => true,
+        selectMediaFile: async () => null,
+      })
+    );
+
+    assert.ok(html.includes('Audio only'));
+    assert.ok(html.includes('Test Link'));
+  }
+);
+
+test(
+  'AdminHost UI: Clue modal displays YouTube audio-only badge & pause control',
+  () => {
+    const configWithYtAudio = {
+      ...defaultGame,
+      rounds: [
+        {
+          ...defaultGame.rounds[0],
+          categories: [
+            {
+              ...defaultGame.rounds[0].categories[0],
+              clues: [
+                {
+                  ...defaultGame.rounds[0].categories[0].clues[0],
+                  media: {
+                    type: 'youtube' as const,
+                    urlOrPath: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                    audioOnly: true,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    let state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: configWithYtAudio,
+    });
+    state = gameReducer(state, {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 0,
+        clueIndex: 0,
+        firstAnsweringTeam: 1,
+      },
+    });
+    state = gameReducer(state, {
+      type: 'REVEAL_MEDIA',
+    });
+
+    const html = renderToStaticMarkup(
+      React.createElement(AdminHost, {
+        state,
+        dispatch: () => {},
+        openDisplayWindow: () => {},
+        onOpenBuilder: () => {},
+        onGameCreated: () => {},
+      })
+    );
+
+    assert.ok(
+      html.includes('YouTube (Audio Only)'),
+      'Must render YouTube (Audio Only) badge in clue modal'
+    );
+    assert.ok(
+      html.includes('title="Pause"'),
+      'Must render Pause button for active YouTube audio-only clue'
+    );
+  }
+);
+
 test('CreateGameModal UI: Renders countdown timer presets and input', () => {
   const html = renderToStaticMarkup(
     React.createElement(CreateGameModal, {

@@ -26,6 +26,7 @@ export interface GameBuilderProps {
   initialConfig?: GameConfig | null;
   lastSavedYaml?: string | null;
   initialTab?: 'board' | 'tiebreaker';
+  initialClueIdx?: number | null;
   onSaveSuccess?: (savedYaml: string) => void;
   onSaveAndPlay: (config: GameConfig) => void;
   onCloseGame?: () => void;
@@ -42,6 +43,7 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
   initialConfig,
   lastSavedYaml,
   initialTab,
+  initialClueIdx,
   onSaveSuccess,
   onSaveAndPlay,
   onCloseGame,
@@ -64,7 +66,9 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
   );
   const [selectedRoundIdx, setSelectedRoundIdx] = useState(0);
   const [selectedCatIdx, setSelectedCatIdx] = useState(0);
-  const [selectedClueIdx, setSelectedClueIdx] = useState<number | null>(null);
+  const [selectedClueIdx, setSelectedClueIdx] = useState<number | null>(
+    initialClueIdx ?? null
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   // Synchronize when parent passes a new lastSavedYaml
@@ -1219,6 +1223,9 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                                           media: {
                                             type: 'youtube',
                                             urlOrPath: e.target.value,
+                                            audioOnly:
+                                              config.finalJeopardy?.media
+                                                ?.audioOnly,
                                           },
                                         },
                                       })
@@ -1232,6 +1239,45 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                                       'focus:outline-none'
                                     }
                                   />
+                                  <label
+                                    className={
+                                      'flex items-center gap-1.5 px-2.5 ' +
+                                      'py-1.5 sm:py-2 bg-blue-950/70 ' +
+                                      'border border-blue-800/80 ' +
+                                      'rounded-lg text-xs font-semibold ' +
+                                      'text-gray-200 cursor-pointer ' +
+                                      'select-none shrink-0 ' +
+                                      'hover:bg-blue-900/60 ' +
+                                      'transition-colors'
+                                    }
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean(
+                                        config.finalJeopardy.media.audioOnly
+                                      )}
+                                      onChange={(e) =>
+                                        setConfig({
+                                          ...config,
+                                          finalJeopardy: {
+                                            ...config.finalJeopardy!,
+                                            media: {
+                                              type: 'youtube',
+                                              urlOrPath:
+                                                config.finalJeopardy?.media
+                                                  ?.urlOrPath || '',
+                                              audioOnly: e.target.checked,
+                                            },
+                                          },
+                                        })
+                                      }
+                                      className={
+                                        'w-3.5 h-3.5 rounded ' +
+                                        'accent-yellow-400 cursor-pointer'
+                                      }
+                                    />
+                                    <span>Audio only</span>
+                                  </label>
                                   {Boolean(ytUrl) && (
                                     <a
                                       href={ytUrl}
@@ -1519,6 +1565,8 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                                     media: {
                                       type: 'youtube',
                                       urlOrPath: e.target.value,
+                                      audioOnly:
+                                        activeClue.media?.audioOnly,
                                     },
                                   })
                                 }
@@ -1531,6 +1579,40 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                                   'focus:outline-none'
                                 }
                               />
+                              <label
+                                className={
+                                  'flex items-center gap-1.5 px-2.5 ' +
+                                  'py-1.5 sm:py-2 bg-blue-950/70 ' +
+                                  'border border-blue-800/80 ' +
+                                  'rounded-lg text-xs font-semibold ' +
+                                  'text-gray-200 cursor-pointer ' +
+                                  'select-none shrink-0 ' +
+                                  'hover:bg-blue-900/60 ' +
+                                  'transition-colors'
+                                }
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(
+                                    activeClue.media.audioOnly
+                                  )}
+                                  onChange={(e) =>
+                                    handleUpdateActiveClue({
+                                      media: {
+                                        type: 'youtube',
+                                        urlOrPath:
+                                          activeClue.media?.urlOrPath || '',
+                                        audioOnly: e.target.checked,
+                                      },
+                                    })
+                                  }
+                                  className={
+                                    'w-3.5 h-3.5 rounded ' +
+                                    'accent-yellow-400 cursor-pointer'
+                                  }
+                                />
+                                <span>Audio only</span>
+                              </label>
                               {activeClue.media.urlOrPath.trim() && (
                                 <a
                                   href={activeClue.media.urlOrPath.trim()}

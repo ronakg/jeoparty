@@ -1963,7 +1963,10 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <span className="text-xs font-bold text-gray-400 uppercase">
-                      {activeClueData.media.type}
+                      {activeClueData.media.type === 'youtube' &&
+                      activeClueData.media.audioOnly
+                        ? 'YouTube (Audio Only)'
+                        : activeClueData.media.type}
                     </span>
                     <span className="text-[11px] text-gray-500 truncate block">
                       {activeClueData.media.urlOrPath}
@@ -2027,7 +2030,9 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                         </button>
 
                         {(activeClueData.media.type === 'audio' ||
-                          activeClueData.media.type === 'video') && (
+                          activeClueData.media.type === 'video' ||
+                          (activeClueData.media.type === 'youtube' &&
+                            activeClueData.media.audioOnly)) && (
                           <button
                             onClick={() =>
                               dispatch({
