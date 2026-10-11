@@ -48,8 +48,9 @@ test('Game Package: unpacks and parses minimal fixture', async () => {
     const audioBytes = fs.readFileSync(audioDisk);
     assert.equal(audioBytes.subarray(0, 4).toString(), 'RIFF');
 
-    // YouTube clue
+    // YouTube video clue
     assert.equal(cat1Clues[2].media?.type, 'youtube');
+    assert.equal(cat1Clues[2].media?.audioOnly, undefined);
     assert.ok(cat1Clues[2].media?.urlOrPath.includes('youtube.com'));
 
     // AVI clue
@@ -82,9 +83,10 @@ test('Game Package: unpacks and parses minimal fixture', async () => {
     const webmBytes = fs.readFileSync(webmDisk);
     assert.equal(webmBytes[0], 0x1a);
 
-    // Non-media clue 1
-    assert.equal(cat2Clues[2].media, undefined);
-    assert.equal(cat2Clues[2].answer, 'HTTPS');
+    // YouTube audio-only clue
+    assert.equal(cat2Clues[2].media?.type, 'youtube');
+    assert.equal(cat2Clues[2].media?.audioOnly, true);
+    assert.ok(cat2Clues[2].media?.urlOrPath.includes('youtube.com'));
 
     // MOV clue
     assert.equal(cat3Clues[0].media?.type, 'video');

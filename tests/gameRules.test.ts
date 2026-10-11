@@ -783,9 +783,10 @@ test('Game Config: minimal_test_game.yaml parses 3x3 board layout', () => {
   assert.equal(cat1Clues[1].media?.type, 'audio');
   assert.equal(cat1Clues[1].media?.urlOrPath, 'media/test_audio.wav');
   assert.equal(cat1Clues[2].media?.type, 'youtube');
+  assert.equal(cat1Clues[2].media?.audioOnly, undefined);
   assert.ok(cat1Clues[2].media?.urlOrPath.includes('youtube.com'));
 
-  // Check AVI & WebM (avi, webm, text)
+  // Check AVI & WebM (avi, webm, youtube-audio)
   assert.equal(cat2Clues[0].media?.type, 'video');
   assert.equal(
     cat2Clues[0].media?.urlOrPath,
@@ -796,8 +797,9 @@ test('Game Config: minimal_test_game.yaml parses 3x3 board layout', () => {
     cat2Clues[1].media?.urlOrPath,
     'media/file_example_WEBM_640_1_4MB.webm'
   );
-  assert.equal(cat2Clues[2].media, undefined);
-  assert.equal(cat2Clues[2].answer, 'HTTPS');
+  assert.equal(cat2Clues[2].media?.type, 'youtube');
+  assert.equal(cat2Clues[2].media?.audioOnly, true);
+  assert.ok(cat2Clues[2].media?.urlOrPath.includes('youtube.com'));
 
   // Check MOV & MP4 (mov, mp4, text)
   assert.equal(cat3Clues[0].media?.type, 'video');
@@ -819,10 +821,10 @@ test('Game Config: minimal_test_game.yaml parses 3x3 board layout', () => {
   assert.ok(cat1Clues[2].hint, 'YouTube clue must have hint');
   assert.ok(cat2Clues[0].hint, 'AVI clue must have hint');
   assert.ok(cat2Clues[1].hint, 'WebM clue must have hint');
-  assert.ok(cat2Clues[2].hint, 'Non-media 1 clue must have hint');
+  assert.ok(cat2Clues[2].hint, 'YouTube audio-only clue must have hint');
   assert.ok(cat3Clues[0].hint, 'MOV clue must have hint');
   assert.ok(cat3Clues[1].hint, 'MP4 clue must have hint');
-  assert.ok(cat3Clues[2].hint, 'Non-media 2 clue must have hint');
+  assert.ok(cat3Clues[2].hint, 'Non-media clue must have hint');
 
   // Check timer and tie breaker
   assert.equal(config.questionTimerSeconds, 15);
