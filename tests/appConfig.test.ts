@@ -294,16 +294,16 @@ test('App Theme: index.css defines enriched gold gradient for points', () => {
     'index.css must define .text-modern-gold'
   );
   assert.ok(
-    css.includes('#FCD34D 0%'),
-    'text-modern-gold must use warm amber gold start'
+    css.includes('#FDE68A 0%'),
+    'text-modern-gold must use luminous amber gold start'
   );
   assert.ok(
     css.includes('#F5A623 50%'),
     'text-modern-gold must use saturated gold midpoint'
   );
   assert.ok(
-    css.includes('#C27D0B 100%'),
-    'text-modern-gold must use burnished bronze gold end'
+    css.includes('#D97706 100%'),
+    'text-modern-gold must use warm amber-gold end'
   );
   assert.ok(
     !css.includes('#FFF8D6'),

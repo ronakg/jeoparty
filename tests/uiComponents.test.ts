@@ -2454,3 +2454,146 @@ test('GameBuilder UI: Clue cards render media indicator icons', () => {
   assert.ok(html.includes('data-testid="media-icon-video"'));
   assert.ok(html.includes('data-testid="media-icon-youtube"'));
 });
+
+test(
+  'MediaIndicator: High-contrast color themes applied per media type',
+  () => {
+    const imgHtml = renderToStaticMarkup(
+      React.createElement(MediaIndicator, {
+        media: { type: 'image', urlOrPath: 'sample.png' },
+      })
+    );
+    assert.ok(imgHtml.includes('bg-sky-950/80'));
+    assert.ok(imgHtml.includes('text-sky-300'));
+    assert.ok(imgHtml.includes('border-sky-500/60'));
+
+    const audHtml = renderToStaticMarkup(
+      React.createElement(MediaIndicator, {
+        media: { type: 'audio', urlOrPath: 'sample.mp3' },
+      })
+    );
+    assert.ok(audHtml.includes('bg-purple-950/80'));
+    assert.ok(audHtml.includes('text-purple-300'));
+    assert.ok(audHtml.includes('border-purple-500/60'));
+
+    const vidHtml = renderToStaticMarkup(
+      React.createElement(MediaIndicator, {
+        media: { type: 'video', urlOrPath: 'sample.mp4' },
+      })
+    );
+    assert.ok(vidHtml.includes('bg-teal-950/80'));
+    assert.ok(vidHtml.includes('text-teal-300'));
+    assert.ok(vidHtml.includes('border-teal-500/60'));
+
+    const ytHtml = renderToStaticMarkup(
+      React.createElement(MediaIndicator, {
+        media: {
+          type: 'youtube',
+          urlOrPath: 'https://youtube.com/watch?v=123',
+        },
+      })
+    );
+    assert.ok(ytHtml.includes('bg-red-950/80'));
+    assert.ok(ytHtml.includes('text-red-400'));
+    assert.ok(ytHtml.includes('border-red-600/60'));
+
+    const ytaHtml = renderToStaticMarkup(
+      React.createElement(MediaIndicator, {
+        media: {
+          type: 'youtube',
+          urlOrPath: 'https://youtube.com/watch?v=123',
+          audioOnly: true,
+        },
+      })
+    );
+    assert.ok(ytaHtml.includes('bg-purple-950/80'));
+    assert.ok(ytaHtml.includes('text-purple-300'));
+    assert.ok(ytaHtml.includes('border-purple-500/60'));
+    assert.ok(ytaHtml.includes('text-red-400'));
+  }
+);
+
+test(
+  'AdminHost UI: Active clue question modal displays media indicator icon',
+  () => {
+    const testGame: GameConfig = {
+      ...defaultGame,
+      rounds: [
+        {
+          id: 'r1',
+          name: 'Jeopardy',
+          categories: [
+            {
+              id: 'c1',
+              name: 'Media Gallery',
+              clues: [
+                {
+                  id: 'clue-yta',
+                  points: 500,
+                  question: 'YTA Question',
+                  answer: 'YTA Answer',
+                  state: 'active',
+                  media: {
+                    type: 'youtube',
+                    urlOrPath: 'https://youtube.com/watch?v=456',
+                    audioOnly: true,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    let state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: testGame,
+    });
+    state = {
+      ...state,
+      activeClue: {
+        roundIndex: 0,
+        categoryIndex: 0,
+        clueIndex: 0,
+        selectedTeam: 1,
+        answeringTeam: 1,
+        buzzWinnerTeam: 1,
+        reboundAvailable: false,
+        reboundOpportunity: false,
+        reboundPassedByFirstTeam: false,
+        hintRevealed: false,
+        answerRevealed: false,
+        isReboundMiss: false,
+        currentAvailablePoints: 500,
+      },
+    };
+
+    const html = renderToStaticMarkup(
+      React.createElement(AdminHost, {
+        state,
+        dispatch: () => {},
+        openDisplayWindow: () => {},
+        onOpenBuilder: () => {},
+        onGameCreated: () => {},
+      })
+    );
+
+    assert.ok(html.includes('$500'));
+    assert.ok(html.includes('data-testid="media-indicator"'));
+    assert.ok(html.includes('data-testid="media-icon-youtube"'));
+    assert.ok(html.includes('data-testid="media-icon-audio"'));
+    assert.ok(html.includes('title="YouTube (Audio Only)"'));
+
+    // Question modal renders exactly one indicator, beside Play button
+    // Total indicators in HTML: 1 on underlying board tile + 1 in modal
+    const indicatorCount = (
+      html.match(/data-testid="media-indicator"/g) || []
+    ).length;
+    assert.strictEqual(indicatorCount, 2);
+
+    // Header point value does not contain an inline media indicator
+    assert.ok(!html.includes('$500</span><span class="inline-flex'));
+    assert.ok(html.includes('<span>Play</span>'));
+  }
+);

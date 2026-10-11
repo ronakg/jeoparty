@@ -47,9 +47,9 @@
 .text-modern-gold {
   background: linear-gradient(
     180deg,
-    #FCD34D 0%,
+    #FDE68A 0%,
     #F5A623 50%,
-    #C27D0B 100%
+    #D97706 100%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

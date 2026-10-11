@@ -1672,12 +1672,30 @@ test(
     assert.ok(hostHtml.includes('data-testid="media-icon-audio"'));
     assert.ok(hostHtml.includes('data-testid="media-icon-image"'));
 
-    // Play clue 0 (YouTube audio) to completion
+    // Select clue 0 (YouTube audio) so it opens in active question modal
     await sim.selectClue(0, 0, 0, 1);
-    await sim.answerCorrect(1);
     state = await sim.getState();
 
-    // Re-render host console: completed clue displays outcome pill
+    // Verify active clue modal in AdminHost renders media indicator
+    const activeHostHtml = renderToStaticMarkup(
+      React.createElement(AdminHost, {
+        state,
+        dispatch: () => {},
+        openDisplayWindow: () => {},
+        onOpenBuilder: () => {},
+        onGameCreated: () => {},
+      })
+    );
+    assert.ok(activeHostHtml.includes('title="YouTube (Audio Only)"'));
+    assert.ok(activeHostHtml.includes('data-testid="media-icon-youtube"'));
+    assert.ok(activeHostHtml.includes('data-testid="media-icon-audio"'));
+
+    // Complete clue with correct answer from team 1
+    await sim.answerCorrect(1);
+    await sim.closeClue();
+    state = await sim.getState();
+
+    // Re-render host console: completed clue displays outcome pill on board
     hostHtml = renderToStaticMarkup(
       React.createElement(AdminHost, {
         state,

@@ -1238,9 +1238,14 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                   >
                     Tie-Breaker Question
                   </span>
-                  <h2 className="text-xl sm:text-2xl font-bold text-white mt-1">
-                    Category: {config.finalJeopardy?.category}
-                  </h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <h2 className="text-xl sm:text-2xl font-bold text-white">
+                      Category: {config.finalJeopardy?.category}
+                    </h2>
+                    {config.finalJeopardy?.media && (
+                      <MediaIndicator media={config.finalJeopardy.media} />
+                    )}
+                  </div>
                 </div>
                 {team1Score === team2Score &&
                   !config.finalJeopardy?.answersRevealed && (
@@ -1992,6 +1997,8 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     )}
+
+                    <MediaIndicator media={activeClueData.media} />
 
                     {!activeClue.mediaRevealed ? (
                       <button

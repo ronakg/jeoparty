@@ -11,7 +11,7 @@ export interface MediaIndicatorProps {
 export const YoutubeIcon: React.FC<{
   className?: string;
   'data-testid'?: string;
-}> = ({ className = 'w-3 h-3', 'data-testid': testId }) => (
+}> = ({ className = 'w-3.5 h-3.5', 'data-testid': testId }) => (
   <svg
     viewBox="0 0 24 24"
     fill="currentColor"
@@ -35,26 +35,30 @@ export const YoutubeIcon: React.FC<{
 export const MediaIndicator: React.FC<MediaIndicatorProps> = ({
   media,
   className = '',
-  iconClassName = 'w-3 h-3',
+  iconClassName = 'w-3.5 h-3.5',
 }) => {
   if (!media || media.type === 'none') {
     return null;
   }
 
-  const basePillClasses =
-    'inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-950 ' +
-    'text-blue-300 border border-blue-800 shrink-0';
+  const baseClasses =
+    'inline-flex items-center gap-1 px-1.5 py-0.5 rounded shadow-sm ' +
+    'shrink-0';
 
   if (media.type === 'image') {
+    const pillClasses =
+      `${baseClasses} bg-sky-950/80 text-sky-300 ` +
+      'border border-sky-500/60';
     return (
       <span
-        className={`${basePillClasses} ${className}`.trim()}
+        className={`${pillClasses} ${className}`.trim()}
         title="Image Clue"
         aria-label="Image clue"
         data-testid="media-indicator"
       >
         <ImageIcon
           className={iconClassName}
+          strokeWidth={2.25}
           data-testid="media-icon-image"
           aria-hidden="true"
         />
@@ -63,15 +67,19 @@ export const MediaIndicator: React.FC<MediaIndicatorProps> = ({
   }
 
   if (media.type === 'audio') {
+    const pillClasses =
+      `${baseClasses} bg-purple-950/80 text-purple-300 ` +
+      'border border-purple-500/60';
     return (
       <span
-        className={`${basePillClasses} ${className}`.trim()}
+        className={`${pillClasses} ${className}`.trim()}
         title="Audio Clue"
         aria-label="Audio clue"
         data-testid="media-indicator"
       >
         <Volume2
           className={iconClassName}
+          strokeWidth={2.25}
           data-testid="media-icon-audio"
           aria-hidden="true"
         />
@@ -80,15 +88,19 @@ export const MediaIndicator: React.FC<MediaIndicatorProps> = ({
   }
 
   if (media.type === 'video') {
+    const pillClasses =
+      `${baseClasses} bg-teal-950/80 text-teal-300 ` +
+      'border border-teal-500/60';
     return (
       <span
-        className={`${basePillClasses} ${className}`.trim()}
+        className={`${pillClasses} ${className}`.trim()}
         title="Video Clue"
         aria-label="Video clue"
         data-testid="media-indicator"
       >
         <Video
           className={iconClassName}
+          strokeWidth={2.25}
           data-testid="media-icon-video"
           aria-hidden="true"
         />
@@ -98,19 +110,23 @@ export const MediaIndicator: React.FC<MediaIndicatorProps> = ({
 
   if (media.type === 'youtube') {
     if (media.audioOnly) {
+      const pillClasses =
+        `${baseClasses} bg-purple-950/80 text-purple-300 ` +
+        'border border-purple-500/60';
       return (
         <span
-          className={`${basePillClasses} ${className}`.trim()}
+          className={`${pillClasses} ${className}`.trim()}
           title="YouTube (Audio Only)"
           aria-label="YouTube audio-only clue"
           data-testid="media-indicator"
         >
           <YoutubeIcon
-            className={iconClassName}
+            className={`${iconClassName} text-red-400`}
             data-testid="media-icon-youtube"
           />
           <Volume2
-            className={iconClassName}
+            className={`${iconClassName} text-purple-300`}
+            strokeWidth={2.25}
             data-testid="media-icon-audio"
             aria-hidden="true"
           />
@@ -118,15 +134,18 @@ export const MediaIndicator: React.FC<MediaIndicatorProps> = ({
       );
     }
 
+    const pillClasses =
+      `${baseClasses} bg-red-950/80 text-red-400 ` +
+      'border border-red-600/60';
     return (
       <span
-        className={`${basePillClasses} ${className}`.trim()}
+        className={`${pillClasses} ${className}`.trim()}
         title="YouTube Clue"
         aria-label="YouTube clue"
         data-testid="media-indicator"
       >
         <YoutubeIcon
-          className={iconClassName}
+          className={`${iconClassName} text-red-400`}
           data-testid="media-icon-youtube"
         />
       </span>
