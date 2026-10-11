@@ -1244,7 +1244,12 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
                   }
                 >
                   <MediaRenderer
-                    key={toMediaUrl(activeClueData.media.urlOrPath)}
+                    key={
+                      `${activeClue.roundIndex}-${activeClue.categoryIndex}-` +
+                      `${activeClue.clueIndex}-` +
+                      `${toMediaUrl(activeClueData.media.urlOrPath)}-` +
+                      `${Boolean(activeClueData.media.audioOnly)}`
+                    }
                     media={activeClueData.media}
                     resolvedUrl={toMediaUrl(activeClueData.media.urlOrPath)}
                     isPlaying={activeClue.mediaPlaying}

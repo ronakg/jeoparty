@@ -134,12 +134,22 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
   // Save changes to active clue
   const handleUpdateActiveClue = (updated: Partial<Clue>) => {
     if (selectedClueIdx === null || !activeCategory) return;
-    const newRounds = [...config.rounds];
-    const clues = [
-      ...newRounds[selectedRoundIdx].categories[selectedCatIdx].clues,
-    ];
-    clues[selectedClueIdx] = { ...clues[selectedClueIdx], ...updated };
-    newRounds[selectedRoundIdx].categories[selectedCatIdx].clues = clues;
+    const newRounds = config.rounds.map((round, rIdx) => {
+      if (rIdx !== selectedRoundIdx) return round;
+      return {
+        ...round,
+        categories: round.categories.map((cat, cIdx) => {
+          if (cIdx !== selectedCatIdx) return cat;
+          return {
+            ...cat,
+            clues: cat.clues.map((clue, clIdx) => {
+              if (clIdx !== selectedClueIdx) return clue;
+              return { ...clue, ...updated };
+            }),
+          };
+        }),
+      };
+    });
     setConfig({ ...config, rounds: newRounds });
   };
 
@@ -1128,6 +1138,14 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                                 type: mType,
                                 urlOrPath:
                                   config.finalJeopardy?.media?.urlOrPath || '',
+                                ...(mType === 'youtube' &&
+                                config.finalJeopardy?.media?.audioOnly !==
+                                  undefined
+                                  ? {
+                                      audioOnly:
+                                        config.finalJeopardy.media.audioOnly,
+                                    }
+                                  : {}),
                               },
                             },
                           })
@@ -1480,6 +1498,10 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                           media: {
                             type: mType,
                             urlOrPath: activeClue.media?.urlOrPath || '',
+                            ...(mType === 'youtube' &&
+                            activeClue.media?.audioOnly !== undefined
+                              ? { audioOnly: activeClue.media.audioOnly }
+                              : {}),
                           },
                         })
                       }

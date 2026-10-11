@@ -212,12 +212,16 @@ export function parseGameConfigFromYaml(yamlText: string): GameConfig {
         };
 
         if (rawQ.media && rawQ.media.type && rawQ.media.type !== 'none') {
+          const rawAudio =
+            rawQ.media.audioOnly ??
+            rawQ.media.audio_only ??
+            rawQ.media['audio-only'];
+          const isAudioOnly =
+            rawAudio === true || rawAudio === 'true' || rawAudio === 1;
           clue.media = {
             type: rawQ.media.type,
             urlOrPath: rawQ.media.url || rawQ.media.urlOrPath || '',
-            ...(rawQ.media.audioOnly !== undefined
-              ? { audioOnly: Boolean(rawQ.media.audioOnly) }
-              : {}),
+            ...(isAudioOnly ? { audioOnly: true } : {}),
           };
         }
 
@@ -235,6 +239,13 @@ export function parseGameConfigFromYaml(yamlText: string): GameConfig {
   const rawFJ = data.tieBreaker ?? data.finalJeopardy;
   let finalJeopardy: FinalJeopardy | undefined = undefined;
   if (rawFJ) {
+    const rawFJAudio =
+      rawFJ.media?.audioOnly ??
+      rawFJ.media?.audio_only ??
+      rawFJ.media?.['audio-only'];
+    const isFJAudioOnly =
+      rawFJAudio === true || rawFJAudio === 'true' || rawFJAudio === 1;
+
     finalJeopardy = {
       category: String(rawFJ.category ?? ''),
       question: String(rawFJ.title ?? rawFJ.question ?? ''),
@@ -245,9 +256,7 @@ export function parseGameConfigFromYaml(yamlText: string): GameConfig {
           ? {
               type: rawFJ.media.type,
               urlOrPath: rawFJ.media.url || rawFJ.media.urlOrPath || '',
-              ...(rawFJ.media.audioOnly !== undefined
-                ? { audioOnly: Boolean(rawFJ.media.audioOnly) }
-                : {}),
+              ...(isFJAudioOnly ? { audioOnly: true } : {}),
             }
           : undefined,
     };

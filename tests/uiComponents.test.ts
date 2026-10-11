@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { parseGameConfigFromYaml } from '../src/utils/gameYaml';
 import {
   PlayerDisplay,
   CategoryHeaderCard,
@@ -1213,6 +1216,85 @@ test(
 
     assert.ok(pausedHtml.includes('opacity-40'));
     assert.ok(pausedHtml.includes('Open in Browser'));
+  }
+);
+
+test(
+  'PlayerDisplay UI: YouTube audioOnly clue renders audio card on player' +
+    ' display',
+  () => {
+    const yamlPath = path.resolve(process.cwd(), 'minimal_test_game.yaml');
+    const config = parseGameConfigFromYaml(fs.readFileSync(yamlPath, 'utf-8'));
+    let state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: config,
+    });
+    // Category 1, clue 2 is the YouTube audio-only clue ($300)
+    state = gameReducer(state, {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 1,
+        clueIndex: 2,
+        firstAnsweringTeam: 1,
+      },
+    });
+    state = gameReducer(state, { type: 'REVEAL_MEDIA' });
+
+    const html = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+
+    assert.ok(html.includes('AUDIO CLUE'), 'Must render AUDIO CLUE card');
+    assert.ok(
+      !html.includes('YouTube Clue Video'),
+      'Must not render YouTube Clue Video'
+    );
+  }
+);
+
+test(
+  'PlayerDisplay UI: Standard YouTube clue renders video frame on player' +
+    ' display',
+  () => {
+    const yamlPath = path.resolve(process.cwd(), 'minimal_test_game.yaml');
+    const config = parseGameConfigFromYaml(fs.readFileSync(yamlPath, 'utf-8'));
+    let state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: config,
+    });
+    // Category 0, clue 2 is the standard YouTube video clue ($300)
+    state = gameReducer(state, {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 0,
+        clueIndex: 2,
+        firstAnsweringTeam: 1,
+      },
+    });
+    state = gameReducer(state, { type: 'REVEAL_MEDIA' });
+
+    const html = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+
+    assert.ok(
+      html.includes('YouTube Clue Video'),
+      'Must render YouTube Clue Video'
+    );
+    assert.ok(
+      !html.includes('AUDIO CLUE'),
+      'Must not render AUDIO CLUE card'
+    );
   }
 );
 

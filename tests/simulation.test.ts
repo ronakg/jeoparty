@@ -488,6 +488,52 @@ test('Simulation: Persistence - YAML roundtrip preserves audioOnly', () => {
   assert.equal(reloadedGame.finalJeopardy?.media?.audioOnly, true);
 });
 
+test(
+  'Simulation: Persistence - YAML parses audio_only and audio-only aliases',
+  () => {
+    const yamlContent = `
+title: Alias Test
+categories:
+  - name: Aliases
+    questions:
+      - title: Snake case clue
+        answer: One
+        media:
+          type: youtube
+          url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          audio_only: true
+      - title: Kebab case clue
+        answer: Two
+        media:
+          type: youtube
+          url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          audio-only: true
+      - title: String truthy clue
+        answer: Three
+        media:
+          type: youtube
+          url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          audioOnly: "true"
+tieBreaker:
+  category: Aliases
+  title: Final clue
+  answer: Final
+  media:
+    type: youtube
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    audio_only: true
+`;
+    const parsed = parseGameConfigFromYaml(yamlContent);
+    const q1 = parsed.rounds[0].categories[0].clues[0];
+    const q2 = parsed.rounds[0].categories[0].clues[1];
+    const q3 = parsed.rounds[0].categories[0].clues[2];
+    assert.equal(q1.media?.audioOnly, true);
+    assert.equal(q2.media?.audioOnly, true);
+    assert.equal(q3.media?.audioOnly, true);
+    assert.equal(parsed.finalJeopardy?.media?.audioOnly, true);
+  }
+);
+
 // ---------------------------------------------------------------------------
 // SUITE 3: Core Gameplay - Direct Wins, Alternation & Zero Miss Penalties
 // ---------------------------------------------------------------------------
