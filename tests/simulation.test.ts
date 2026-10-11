@@ -24,6 +24,7 @@ import {
   SCORE_SPIN_DURATION_MS,
   calculateAnimatedScore,
 } from '../src/views/PlayerDisplay';
+import { AdminHost } from '../src/views/AdminHost';
 
 /**
  * Creates an in-memory Duplex stream pair simulating a client-server socket.
@@ -1605,3 +1606,94 @@ test(
   }
 );
 
+test(
+  'Simulation: Clue Media Indicators - render on host board & clear on done',
+  async () => {
+  const sim = await GameSimulation.start();
+  try {
+    const mediaGame: GameConfig = {
+      ...defaultGame,
+      rounds: [
+        {
+          id: 'r1',
+          name: 'Jeopardy',
+          categories: [
+            {
+              id: 'c1',
+              name: 'Media Gallery',
+              clues: [
+                {
+                  id: 'clue-yt-audio',
+                  points: 100,
+                  question: 'YT Audio Q',
+                  answer: 'YT Audio A',
+                  state: 'unopened',
+                  media: {
+                    type: 'youtube',
+                    urlOrPath: 'https://youtube.com/watch?v=123',
+                    audioOnly: true,
+                  },
+                },
+                {
+                  id: 'clue-image',
+                  points: 200,
+                  question: 'Image Q',
+                  answer: 'Image A',
+                  state: 'unopened',
+                  media: {
+                    type: 'image',
+                    urlOrPath: 'sample.png',
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    await sim.loadGame(mediaGame);
+    let state = await sim.getState();
+
+    // Render AdminHost to verify media indicator chips are present
+    let hostHtml = renderToStaticMarkup(
+      React.createElement(AdminHost, {
+        state,
+        dispatch: () => {},
+        openDisplayWindow: () => {},
+        onOpenBuilder: () => {},
+        onGameCreated: () => {},
+      })
+    );
+
+    // Verify YouTube audio-only clue renders dual icons
+    assert.ok(hostHtml.includes('title="YouTube (Audio Only)"'));
+    assert.ok(hostHtml.includes('data-testid="media-icon-youtube"'));
+    assert.ok(hostHtml.includes('data-testid="media-icon-audio"'));
+    assert.ok(hostHtml.includes('data-testid="media-icon-image"'));
+
+    // Play clue 0 (YouTube audio) to completion
+    await sim.selectClue(0, 0, 0, 1);
+    await sim.answerCorrect(1);
+    state = await sim.getState();
+
+    // Re-render host console: completed clue displays outcome pill
+    hostHtml = renderToStaticMarkup(
+      React.createElement(AdminHost, {
+        state,
+        dispatch: () => {},
+        openDisplayWindow: () => {},
+        onOpenBuilder: () => {},
+        onGameCreated: () => {},
+      })
+    );
+
+    // Clue 0 is now completed, so YouTube (Audio Only) chip is gone
+    assert.ok(!hostHtml.includes('title="YouTube (Audio Only)"'));
+    assert.ok(hostHtml.includes('T1'));
+    // Clue 1 remains unopened and keeps its image indicator
+    assert.ok(hostHtml.includes('title="Image Clue"'));
+  } finally {
+    await sim.stop();
+  }
+});

@@ -39,6 +39,7 @@ import { getWinnerState, formatTimerMmSs } from '../utils/gameRules';
 import { tracer } from '../utils/tracer';
 import { MobileConnectModal } from '../components/common/MobileConnectModal';
 import { CompletedClueModal } from '../components/common/CompletedClueModal';
+import { MediaIndicator } from '../components/common/MediaIndicator';
 
 interface CreateGameModalProps {
   isOpen: boolean;
@@ -733,8 +734,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
     ? Math.round(activeClue.currentAvailablePoints * (reboundPercent / 100))
     : 0;
   const hasReboundSlot = Boolean(
-    activeClue &&
-      (activeClue.reboundOpportunity || activeClue.reboundAvailable)
+    activeClue && (activeClue.reboundOpportunity || activeClue.reboundAvailable)
   );
 
   // Open clue handler
@@ -1749,18 +1749,9 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                               >
                                 Done
                               </span>
-                            ) : clue.media && clue.media.type !== 'none' ? (
-                              <span
-                                className={
-                                  'text-[10px] uppercase font-bold px-1.5 ' +
-                                  'py-0.5 rounded bg-blue-950 text-blue-300 ' +
-                                  'border border-blue-800 whitespace-nowrap ' +
-                                  'shrink-0'
-                                }
-                              >
-                                {clue.media.type}
-                              </span>
-                            ) : null}
+                            ) : (
+                              <MediaIndicator media={clue.media} />
+                            )}
                           </div>
                         </div>
 
@@ -2259,9 +2250,7 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                   <div
                     className={
                       'grid grid-cols-2 gap-2 ' +
-                      (hasReboundSlot
-                        ? 'sm:grid-cols-4'
-                        : 'sm:grid-cols-3')
+                      (hasReboundSlot ? 'sm:grid-cols-4' : 'sm:grid-cols-3')
                     }
                   >
                     <button

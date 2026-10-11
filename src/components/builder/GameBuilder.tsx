@@ -20,6 +20,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { parseYouTubeUrl, formatSecondsToTime } from '../../utils/youtube';
+import { MediaIndicator } from '../common/MediaIndicator';
 
 export interface GameBuilderProps {
   currentConfig?: GameConfig | null;
@@ -480,9 +481,7 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
             <input
               type="text"
               value={config.title}
-              onChange={(e) =>
-                setConfig({ ...config, title: e.target.value })
-              }
+              onChange={(e) => setConfig({ ...config, title: e.target.value })}
               placeholder="Game Title"
               className={
                 'w-full min-w-0 px-2 sm:px-3 py-1 sm:py-1.5 bg-black/60 ' +
@@ -877,15 +876,7 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                                   ${clue.points}
                                 </span>
                                 {hasMedia && (
-                                  <span
-                                    className={
-                                      'text-[9px] uppercase px-1.5 py-0.5 ' +
-                                      'rounded bg-blue-900/80 text-blue-200 ' +
-                                      'border border-blue-700/50'
-                                    }
-                                  >
-                                    {clue.media?.type}
-                                  </span>
+                                  <MediaIndicator media={clue.media} />
                                 )}
                               </div>
                               <span
@@ -1587,8 +1578,7 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                                     media: {
                                       type: 'youtube',
                                       urlOrPath: e.target.value,
-                                      audioOnly:
-                                        activeClue.media?.audioOnly,
+                                      audioOnly: activeClue.media?.audioOnly,
                                     },
                                   })
                                 }
@@ -1615,9 +1605,7 @@ export const GameBuilder: React.FC<GameBuilderProps> = ({
                               >
                                 <input
                                   type="checkbox"
-                                  checked={Boolean(
-                                    activeClue.media.audioOnly
-                                  )}
+                                  checked={Boolean(activeClue.media.audioOnly)}
                                   onChange={(e) =>
                                     handleUpdateActiveClue({
                                       media: {

@@ -15,6 +15,7 @@ import {
 import { AdminHost, CreateGameModal } from '../src/views/AdminHost';
 import { GameBuilder } from '../src/components/builder/GameBuilder';
 import { MediaRenderer } from '../src/components/common/MediaRenderer';
+import { MediaIndicator } from '../src/components/common/MediaIndicator';
 import { MobileConnectModal } from '../src/components/common/MobileConnectModal';
 import { CompletedClueModal } from '../src/components/common/CompletedClueModal';
 import { defaultGame } from '../src/data/defaultGame';
@@ -2191,3 +2192,265 @@ test(
     assert.ok(maxHtml.includes('FOOD &amp; CUISINE'));
   }
 );
+
+test('MediaIndicator: Renders image icon for image clues', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(MediaIndicator, {
+      media: { type: 'image', urlOrPath: 'sample.png' },
+    })
+  );
+  assert.ok(html.includes('data-testid="media-indicator"'));
+  assert.ok(html.includes('data-testid="media-icon-image"'));
+  assert.ok(html.includes('title="Image Clue"'));
+  assert.ok(html.includes('aria-label="Image clue"'));
+});
+
+test('MediaIndicator: Renders volume icon for audio clues', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(MediaIndicator, {
+      media: { type: 'audio', urlOrPath: 'sample.mp3' },
+    })
+  );
+  assert.ok(html.includes('data-testid="media-indicator"'));
+  assert.ok(html.includes('data-testid="media-icon-audio"'));
+  assert.ok(html.includes('title="Audio Clue"'));
+  assert.ok(html.includes('aria-label="Audio clue"'));
+});
+
+test('MediaIndicator: Renders video icon for video clues', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(MediaIndicator, {
+      media: { type: 'video', urlOrPath: 'sample.mp4' },
+    })
+  );
+  assert.ok(html.includes('data-testid="media-indicator"'));
+  assert.ok(html.includes('data-testid="media-icon-video"'));
+  assert.ok(html.includes('title="Video Clue"'));
+  assert.ok(html.includes('aria-label="Video clue"'));
+});
+
+test(
+  'MediaIndicator: Renders single YouTube icon for video YouTube clues',
+  () => {
+  const html = renderToStaticMarkup(
+    React.createElement(MediaIndicator, {
+      media: {
+        type: 'youtube',
+        urlOrPath: 'https://youtube.com/watch?v=abc',
+        audioOnly: false,
+      },
+    })
+  );
+  assert.ok(html.includes('data-testid="media-indicator"'));
+  assert.ok(html.includes('data-testid="media-icon-youtube"'));
+  assert.ok(!html.includes('data-testid="media-icon-audio"'));
+  assert.ok(html.includes('title="YouTube Clue"'));
+});
+
+test('MediaIndicator: Renders dual icons for YouTube audio-only clues', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(MediaIndicator, {
+      media: {
+        type: 'youtube',
+        urlOrPath: 'https://youtube.com/watch?v=abc',
+        audioOnly: true,
+      },
+    })
+  );
+  assert.ok(html.includes('data-testid="media-indicator"'));
+  assert.ok(html.includes('data-testid="media-icon-youtube"'));
+  assert.ok(html.includes('data-testid="media-icon-audio"'));
+  assert.ok(html.includes('title="YouTube (Audio Only)"'));
+  assert.ok(html.includes('aria-label="YouTube audio-only clue"'));
+});
+
+test('MediaIndicator: Returns null for missing or none media', () => {
+  assert.equal(
+    renderToStaticMarkup(React.createElement(MediaIndicator, { media: null })),
+    ''
+  );
+  assert.equal(
+    renderToStaticMarkup(
+      React.createElement(MediaIndicator, {
+        media: { type: 'none', urlOrPath: '' },
+      })
+    ),
+    ''
+  );
+});
+
+test(
+  'AdminHost UI: Clue grid renders media indicator icons instead of text',
+  () => {
+  const testGame: GameConfig = {
+    ...defaultGame,
+    rounds: [
+      {
+        id: 'r1',
+        name: 'Jeopardy',
+        categories: [
+          {
+            id: 'c1',
+            name: 'Media Gallery',
+            clues: [
+              {
+                id: 'clue-img',
+                points: 100,
+                question: 'Image Q',
+                answer: 'Image A',
+                state: 'unopened',
+                media: { type: 'image', urlOrPath: 'sample.png' },
+              },
+              {
+                id: 'clue-aud',
+                points: 200,
+                question: 'Audio Q',
+                answer: 'Audio A',
+                state: 'unopened',
+                media: { type: 'audio', urlOrPath: 'sample.mp3' },
+              },
+              {
+                id: 'clue-vid',
+                points: 300,
+                question: 'Video Q',
+                answer: 'Video A',
+                state: 'unopened',
+                media: { type: 'video', urlOrPath: 'sample.mp4' },
+              },
+              {
+                id: 'clue-yt',
+                points: 400,
+                question: 'YT Q',
+                answer: 'YT A',
+                state: 'unopened',
+                media: {
+                  type: 'youtube',
+                  urlOrPath: 'https://youtube.com/watch?v=123',
+                },
+              },
+              {
+                id: 'clue-yta',
+                points: 500,
+                question: 'YTA Q',
+                answer: 'YTA A',
+                state: 'unopened',
+                media: {
+                  type: 'youtube',
+                  urlOrPath: 'https://youtube.com/watch?v=456',
+                  audioOnly: true,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: testGame,
+  });
+  const html = renderToStaticMarkup(
+    React.createElement(AdminHost, {
+      state,
+      dispatch: () => {},
+      openDisplayWindow: () => {},
+      onOpenBuilder: () => {},
+      onGameCreated: () => {},
+    })
+  );
+
+  assert.ok(html.includes('data-testid="media-indicator"'));
+  assert.ok(html.includes('data-testid="media-icon-image"'));
+  assert.ok(html.includes('data-testid="media-icon-audio"'));
+  assert.ok(html.includes('data-testid="media-icon-video"'));
+  assert.ok(html.includes('data-testid="media-icon-youtube"'));
+  assert.ok(html.includes('title="YouTube (Audio Only)"'));
+  assert.ok(html.includes('title="Image Clue"'));
+  assert.ok(html.includes('title="Audio Clue"'));
+  assert.ok(html.includes('title="Video Clue"'));
+  assert.ok(html.includes('title="YouTube Clue"'));
+});
+
+test('GameBuilder UI: Clue cards render media indicator icons', () => {
+  const testGame: GameConfig = {
+    ...defaultGame,
+    rounds: [
+      {
+        id: 'r1',
+        name: 'Jeopardy',
+        categories: [
+          {
+            id: 'c1',
+            name: 'Media Gallery',
+            clues: [
+              {
+                id: 'clue-img',
+                points: 100,
+                question: 'Image Q',
+                answer: 'Image A',
+                state: 'unopened',
+                media: { type: 'image', urlOrPath: 'sample.png' },
+              },
+              {
+                id: 'clue-aud',
+                points: 200,
+                question: 'Audio Q',
+                answer: 'Audio A',
+                state: 'unopened',
+                media: { type: 'audio', urlOrPath: 'sample.mp3' },
+              },
+              {
+                id: 'clue-vid',
+                points: 300,
+                question: 'Video Q',
+                answer: 'Video A',
+                state: 'unopened',
+                media: { type: 'video', urlOrPath: 'sample.mp4' },
+              },
+              {
+                id: 'clue-yt',
+                points: 400,
+                question: 'YT Q',
+                answer: 'YT A',
+                state: 'unopened',
+                media: {
+                  type: 'youtube',
+                  urlOrPath: 'https://youtube.com/watch?v=123',
+                },
+              },
+              {
+                id: 'clue-yta',
+                points: 500,
+                question: 'YTA Q',
+                answer: 'YTA A',
+                state: 'unopened',
+                media: {
+                  type: 'youtube',
+                  urlOrPath: 'https://youtube.com/watch?v=456',
+                  audioOnly: true,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  const html = renderToStaticMarkup(
+    React.createElement(GameBuilder, {
+      currentConfig: testGame,
+      onSaveSuccess: () => {},
+      onSaveAndPlay: () => {},
+      onCloseGame: () => {},
+      saveGameFile: async () => true,
+    })
+  );
+  assert.ok(html.includes('data-testid="media-indicator"'));
+  assert.ok(html.includes('data-testid="media-icon-image"'));
+  assert.ok(html.includes('data-testid="media-icon-audio"'));
+  assert.ok(html.includes('data-testid="media-icon-video"'));
+  assert.ok(html.includes('data-testid="media-icon-youtube"'));
+});
