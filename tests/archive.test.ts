@@ -9,12 +9,12 @@ import {
   cleanupActiveTempDirs,
 } from '../electron/archive';
 
-test('Archive Engine: creates and extracts .jeopardy archive', async () => {
+test('Archive Engine: creates and extracts .jeoparty archive', async () => {
   const tmpDir = fs.mkdtempSync(
     path.join(os.tmpdir(), 'jeoparty-archive-test-')
   );
   try {
-    const archivePath = path.join(tmpDir, 'sample_match.jeopardy');
+    const archivePath = path.join(tmpDir, 'sample_match.jeoparty');
     const yamlContent = 'title: Sample Game\nteam1: Alpha\nteam2: Omega';
 
     // Create dummy media files on disk
@@ -68,8 +68,34 @@ test('Archive Engine: creates and extracts .jeopardy archive', async () => {
   }
 });
 
+test(
+  'Archive Engine: extracts legacy .jeopardy archive for backward' +
+    ' compatibility',
+  async () => {
+    const tmpDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'jeoparty-legacy-test-')
+    );
+    try {
+      const archivePath = path.join(tmpDir, 'legacy_game.jeopardy');
+      const yamlContent = 'title: Legacy Game\nteam1: Red\nteam2: Blue';
+
+      await createGameArchive(archivePath, yamlContent);
+      assert.ok(fs.existsSync(archivePath));
+
+      const extractDir = path.join(tmpDir, 'extracted_legacy');
+      const result = await extractGameArchive(archivePath, extractDir);
+
+      assert.equal(result.extractedDir, extractDir);
+      assert.ok(fs.existsSync(result.yamlPath));
+      assert.equal(fs.readFileSync(result.yamlPath, 'utf-8'), yamlContent);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  }
+);
+
 test('Archive Engine: rejects non-existent archive path', async () => {
-  const missingPath = path.join(os.tmpdir(), 'non-existent-game.jeopardy');
+  const missingPath = path.join(os.tmpdir(), 'non-existent-game.jeoparty');
   await assert.rejects(
     async () => {
       await extractGameArchive(missingPath);
@@ -86,7 +112,7 @@ test('Archive Engine: rejects archive without a YAML file', async () => {
     path.join(os.tmpdir(), 'jeoparty-archive-corrupt-')
   );
   try {
-    const archivePath = path.join(tmpDir, 'empty.jeopardy');
+    const archivePath = path.join(tmpDir, 'empty.jeoparty');
     // Create archive containing only an unrelated text file
     const dummyFile = path.join(tmpDir, 'notes.txt');
     fs.writeFileSync(dummyFile, 'hello', 'utf-8');
@@ -108,7 +134,7 @@ test('Archive Engine: rejects archive without a YAML file', async () => {
 test('Archive Engine: cleanupActiveTempDirs cleans temp folders', async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jeoparty-cleanup-'));
   try {
-    const archivePath = path.join(tmpDir, 'clean_test.jeopardy');
+    const archivePath = path.join(tmpDir, 'clean_test.jeoparty');
     await createGameArchive(archivePath, 'title: Temp');
 
     const result = await extractGameArchive(archivePath);

@@ -730,8 +730,13 @@ ipcMain.handle('open-game-file', async (event) => {
   const win = BrowserWindow.fromWebContents(event.sender) || adminWindow;
   if (!win) return null;
   const result = await dialog.showOpenDialog(win, {
-    title: 'Open Jeopardy Game Package',
-    filters: [{ name: 'Jeopardy Game Package', extensions: ['jeopardy'] }],
+    title: 'Open JeoPARTY! Game Package',
+    filters: [
+      {
+        name: 'JeoPARTY! Game Package',
+        extensions: ['jeoparty', 'jeopardy'],
+      },
+    ],
     properties: ['openFile'],
   });
 
@@ -760,13 +765,18 @@ ipcMain.handle('save-game-file', async (event, config: GameConfig) => {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '_')
         .replace(/^_+|_+$/g, '')
-    : 'jeopardy';
-  const defaultPath = `${safeTitle || 'jeopardy'}.jeopardy`;
+    : 'jeoparty';
+  const defaultPath = `${safeTitle || 'jeoparty'}.jeoparty`;
 
   const result = await dialog.showSaveDialog(win, {
-    title: 'Save Jeopardy Game Package',
+    title: 'Save JeoPARTY! Game Package',
     defaultPath,
-    filters: [{ name: 'Jeopardy Game Package', extensions: ['jeopardy'] }],
+    filters: [
+      {
+        name: 'JeoPARTY! Game Package',
+        extensions: ['jeoparty'],
+      },
+    ],
   });
 
   if (result.canceled || !result.filePath) {
@@ -774,8 +784,8 @@ ipcMain.handle('save-game-file', async (event, config: GameConfig) => {
   }
 
   let filePath = result.filePath;
-  if (!filePath.endsWith('.jeopardy')) {
-    filePath += '.jeopardy';
+  if (!filePath.endsWith('.jeoparty') && !filePath.endsWith('.jeopardy')) {
+    filePath += '.jeoparty';
   }
 
   try {

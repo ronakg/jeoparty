@@ -427,9 +427,10 @@ export function useGameState() {
         const [fileHandle] = await (window as any).showOpenFilePicker({
           types: [
             {
-              description: 'Jeopardy Game Package (*.jeopardy, *.yaml)',
+              description:
+                'JeoPARTY! Game Package (*.jeoparty, *.jeopardy, *.yaml)',
               accept: {
-                'application/x-zip-compressed': ['.jeopardy'],
+                'application/x-zip-compressed': ['.jeoparty', '.jeopardy'],
                 'text/yaml': ['.yaml', '.yml'],
               },
             },
@@ -452,7 +453,7 @@ export function useGameState() {
     return new Promise((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = '.jeopardy,.yaml,.yml';
+      input.accept = '.jeoparty,.jeopardy,.yaml,.yml';
       input.onchange = (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (!file) return resolve(null);
@@ -492,9 +493,9 @@ export function useGameState() {
             suggestedName: fileName,
             types: [
               {
-                description: 'Jeopardy Game Package (*.jeopardy)',
+                description: 'JeoPARTY! Game Package (*.jeoparty)',
                 accept: {
-                  'application/x-zip-compressed': ['.jeopardy'],
+                  'application/x-zip-compressed': ['.jeoparty'],
                   'application/yaml': ['.yaml', '.yml'],
                   'text/yaml': ['.yaml', '.yml'],
                 },

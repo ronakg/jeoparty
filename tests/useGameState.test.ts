@@ -48,27 +48,27 @@ test('toMediaUrlBrowser: relative path gets leading slash', () => {
 test('sanitizeGameFileName: normal title', () => {
   assert.equal(
     sanitizeGameFileName('Science Bowl 2026'),
-    'science_bowl_2026.jeopardy'
+    'science_bowl_2026.jeoparty'
   );
 });
 
 test('sanitizeGameFileName: symbols stripped', () => {
   assert.equal(
     sanitizeGameFileName('  Spaces & Symbols!!! '),
-    'spaces_symbols.jeopardy'
+    'spaces_symbols.jeoparty'
   );
 });
 
 test('sanitizeGameFileName: empty string falls back', () => {
-  assert.equal(sanitizeGameFileName(''), 'jeopardy.jeopardy');
+  assert.equal(sanitizeGameFileName(''), 'jeoparty.jeoparty');
 });
 
 test('sanitizeGameFileName: undefined falls back', () => {
-  assert.equal(sanitizeGameFileName(undefined), 'jeopardy.jeopardy');
+  assert.equal(sanitizeGameFileName(undefined), 'jeoparty.jeoparty');
 });
 
 test('sanitizeGameFileName: all-symbol title falls back', () => {
-  assert.equal(sanitizeGameFileName('!!!'), 'jeopardy.jeopardy');
+  assert.equal(sanitizeGameFileName('!!!'), 'jeoparty.jeoparty');
 });
 
 // -------------------------------------------------------

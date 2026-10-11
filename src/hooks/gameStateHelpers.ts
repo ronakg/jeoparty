@@ -19,7 +19,7 @@ export function toMediaUrlBrowser(filePath: string): string {
 
 /**
  * Derives a filesystem-safe package filename from a game
- * title. Falls back to 'jeopardy' when title is empty
+ * title. Falls back to 'jeoparty' when title is empty
  * or contains only non-alphanumeric characters.
  */
 export function sanitizeGameFileName(title?: string): string {
@@ -29,8 +29,8 @@ export function sanitizeGameFileName(title?: string): string {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '_')
         .replace(/^_+|_+$/g, '')
-    : 'jeopardy';
-  return `${safeTitle || 'jeopardy'}.jeopardy`;
+    : 'jeoparty';
+  return `${safeTitle || 'jeoparty'}.jeoparty`;
 }
 
 /**

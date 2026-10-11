@@ -15,7 +15,7 @@ export interface ExtractedArchiveResult {
 const activeTempDirs = new Set<string>();
 
 /**
- * Creates a .jeopardy ZIP archive containing game.yaml and media assets.
+ * Creates a .jeoparty ZIP archive containing game.yaml and media assets.
  */
 export async function createGameArchive(
   outputPath: string,
@@ -51,7 +51,8 @@ export async function createGameArchive(
 }
 
 /**
- * Extracts a .jeopardy ZIP archive to a temporary directory.
+ * Extracts a .jeoparty or legacy .jeopardy ZIP archive to a temporary
+ * directory.
  */
 export async function extractGameArchive(
   archivePath: string,
@@ -110,7 +111,7 @@ export async function extractGameArchive(
       };
     }
     throw new Error(
-      `Invalid .jeopardy archive: missing game.yaml in ${archivePath}`
+      `Invalid game archive: missing game.yaml in ${archivePath}`
     );
   }
 
