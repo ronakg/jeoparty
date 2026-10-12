@@ -150,21 +150,17 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
       safePlay(el, media.type === 'audio' ? 'Audio' : 'Video');
     } else {
       shouldPlayRef.current = false;
-      safePause(
-        el,
-        media.type === 'audio' ? 'Audio' : 'Video',
-        'prop-change'
-      );
+      safePause(el, media.type === 'audio' ? 'Audio' : 'Video', 'prop-change');
     }
   }, [isPlaying, media.type, resolvedUrl]);
 
   // Clean up playback when component unmounts
   useEffect(() => {
+    const audioEl = audioRef.current;
+    const videoEl = videoRef.current;
+    const iframeEl = youtubeIframeRef.current;
     return () => {
       shouldPlayRef.current = false;
-      const audioEl = audioRef.current;
-      const videoEl = videoRef.current;
-      const iframeEl = youtubeIframeRef.current;
       if (audioEl) {
         safePause(audioEl, 'Audio', 'unmount');
       }
@@ -227,9 +223,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
               <Volume2 className="w-8 h-8" />
             </div>
             <span
-              className={
-                'text-xl font-bold tracking-wider text-yellow-300'
-              }
+              className={'text-xl font-bold tracking-wider text-yellow-300'}
             >
               AUDIO CLUE
             </span>

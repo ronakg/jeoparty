@@ -919,6 +919,25 @@ test('YouTube Utils: parseYouTubeUrl extracts videoId and generates embed URL wi
   assert.ok(res6.embedUrl.includes('&rel=0'));
 });
 
+test('YouTube Utils: parseYouTubeUrl handles /live/ URLs', () => {
+  const res1 = parseYouTubeUrl(
+    'https://www.youtube.com/live/Psxktpxkc6o?feature=share'
+  );
+  assert.equal(res1.videoId, 'Psxktpxkc6o');
+  assert.ok(
+    res1.embedUrl.includes('https://www.youtube-nocookie.com/embed/Psxktpxkc6o')
+  );
+
+  const res2 = parseYouTubeUrl('https://youtube.com/live/Psxktpxkc6o?t=15s');
+  assert.equal(res2.videoId, 'Psxktpxkc6o');
+  assert.equal(res2.startTimestampSeconds, 15);
+  assert.ok(res2.embedUrl.includes('&start=15'));
+
+  // Test regex fallback without protocol
+  const res3 = parseYouTubeUrl('youtube.com/live/Psxktpxkc6o');
+  assert.equal(res3.videoId, 'Psxktpxkc6o');
+});
+
 test('Load Game File: Successfully loads custom game JSON with custom categories and questions', () => {
   const customConfig = {
     title: "dipika's game",
@@ -1678,9 +1697,7 @@ test('Question Timer: deferred when clue has media until REVEAL_MEDIA', () => {
   assert.equal(state.activeClue?.timerStartedAt, 200000);
 });
 
-test(
-  'Question Timer: timerStartedAt is null when timer is unconfigured',
-  () => {
+test('Question Timer: timerStartedAt is null when unconfigured', () => {
   const game = createGameFromPreferences({
     title: 'No Timer Test',
     team1Name: 'A',
@@ -1715,4 +1732,147 @@ test('Time Format: formatTimerMmSs zero-pads minutes and seconds', () => {
   assert.equal(formatTimerMmSs(75), '01:15');
   assert.equal(formatTimerMmSs(3600), '60:00');
   assert.equal(formatTimerMmSs(-10), '00:00');
+});
+
+test('Final Jeopardy: duplicate FJ_JUDGE is ignored', () => {
+  const game = createGameFromPreferences({
+    includeFinalJeopardy: true,
+  });
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: game,
+  });
+  state = gameReducer(state, {
+    type: 'OVERRIDE_SCORES',
+    payload: { team1Score: 1000, team2Score: 1000 },
+  });
+  state = gameReducer(state, {
+    type: 'FJ_SET_WAGERS',
+    payload: { team1Wager: 500, team2Wager: 300 },
+  });
+  state = gameReducer(state, {
+    type: 'FJ_JUDGE',
+    payload: { team1Correct: true, team2Correct: true },
+  });
+  assert.equal(state.team1Score, 1500);
+  assert.equal(state.team2Score, 1300);
+
+  // Second judging attempt should be a no-op
+  state = gameReducer(state, {
+    type: 'FJ_JUDGE',
+    payload: { team1Correct: true, team2Correct: true },
+  });
+  assert.equal(state.team1Score, 1500);
+  assert.equal(state.team2Score, 1300);
+});
+
+test('Final Jeopardy: FJ_RESET restores scores after clamped loss', () => {
+  const game = createGameFromPreferences({
+    includeFinalJeopardy: true,
+  });
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: game,
+  });
+  // Team 1 has only 100 points, but wagers 500
+  state = gameReducer(state, {
+    type: 'OVERRIDE_SCORES',
+    payload: { team1Score: 100, team2Score: 1000 },
+  });
+  state = gameReducer(state, {
+    type: 'FJ_SET_WAGERS',
+    payload: { team1Wager: 500, team2Wager: 400 },
+  });
+  state = gameReducer(state, {
+    type: 'FJ_JUDGE',
+    payload: { team1Correct: false, team2Correct: true },
+  });
+  assert.equal(state.team1Score, 0); // clamped at 0
+  assert.equal(state.team2Score, 1400);
+
+  // Reverting FJ should restore Team 1 to 100, not 500
+  state = gameReducer(state, { type: 'FJ_RESET' });
+  assert.equal(state.team1Score, 100);
+  assert.equal(state.team2Score, 1000);
+});
+
+test('Clue Selection: SELECT_CLUE is ignored while clue is active', () => {
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: defaultGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  assert.ok(state.activeClue !== null);
+  assert.equal(state.activeClue?.clueIndex, 0);
+
+  // Attempting to select another clue while first is open should no-op
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 1,
+      firstAnsweringTeam: 2,
+    },
+  });
+  assert.equal(state.activeClue?.clueIndex, 0);
+  assert.equal(state.activeClue?.firstAnsweringTeam, 1);
+});
+
+test('Rebound Flow: direct answer applies custom rebound percentage', () => {
+  const customGame = createGameFromPreferences({
+    cluePointValues: [200],
+    reboundPercentage: 75,
+  });
+  let state = gameReducer(initialGameState, {
+    type: 'LOAD_GAME',
+    payload: customGame,
+  });
+  state = gameReducer(state, {
+    type: 'SELECT_CLUE',
+    payload: {
+      roundIndex: 0,
+      categoryIndex: 0,
+      clueIndex: 0,
+      firstAnsweringTeam: 1,
+    },
+  });
+  // Team 1 gets it wrong
+  state = gameReducer(state, {
+    type: 'ANSWER_WRONG',
+    payload: { team: 1 },
+  });
+  // Direct answer by Team 2 during pending rebound (without ADVANCE_REBOUND)
+  state = gameReducer(state, {
+    type: 'ANSWER_CORRECT',
+    payload: { team: 2 },
+  });
+  // 75% of 200 = 150 points
+  assert.equal(state.team2Score, 150);
+});
+
+test('YAML Parser: preserves zero values for hint & rebound rates', () => {
+  const yamlContent = `
+title: Zero Config Game
+team1: Alpha
+team2: Beta
+hintPenalty: 0
+reboundPercentage: 0
+categories:
+  - name: Test
+    questions:
+      - title: Q1
+        answer: A1
+`;
+  const parsed = parseGameConfigFromYaml(yamlContent);
+  assert.equal(parsed.defaultHintDeduction, 0);
+  assert.equal(parsed.reboundPercentage, 0);
 });

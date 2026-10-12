@@ -532,14 +532,14 @@ export const AdminHost: React.FC<AdminHostProps> = ({
 
   useEffect(() => {
     if (config?.finalJeopardy) {
-      if (config.finalJeopardy.team1Wager !== undefined) {
-        setT1Wager(config.finalJeopardy.team1Wager);
-      }
-      if (config.finalJeopardy.team2Wager !== undefined) {
-        setT2Wager(config.finalJeopardy.team2Wager);
-      }
+      setT1Wager(config.finalJeopardy.team1Wager ?? 0);
+      setT2Wager(config.finalJeopardy.team2Wager ?? 0);
     }
-  }, [config?.finalJeopardy?.team1Wager, config?.finalJeopardy?.team2Wager]);
+  }, [
+    config?.finalJeopardy?.team1Wager,
+    config?.finalJeopardy?.team2Wager,
+    config?.finalJeopardy,
+  ]);
 
   useEffect(() => {
     if (isFinalJeopardy && !prevIsFinalJeopardyRef.current) {
@@ -1547,10 +1547,15 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                       },
                     });
                   }}
+                  disabled={Boolean(config.finalJeopardy?.answersRevealed)}
                   className={
-                    'px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 ' +
-                    'text-white font-black uppercase tracking-wider ' +
-                    'rounded-lg text-xs shadow-lg'
+                    'px-6 py-2.5 rounded-lg text-xs font-black uppercase ' +
+                    'tracking-wider shadow-lg transition-all ' +
+                    (config.finalJeopardy?.answersRevealed
+                      ? 'bg-emerald-950/40 text-emerald-400/50 ' +
+                        'border border-emerald-900/40 cursor-not-allowed'
+                      : 'bg-emerald-600 hover:bg-emerald-500 text-white ' +
+                        'cursor-pointer')
                   }
                 >
                   Finalize

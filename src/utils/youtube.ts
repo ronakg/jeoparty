@@ -126,6 +126,9 @@ export function parseYouTubeUrl(
         videoId =
           url.pathname.split('/shorts/')[1]?.split('/')[0]?.split('?')[0] ||
           null;
+      } else if (url.pathname.startsWith('/live/')) {
+        videoId =
+          url.pathname.split('/live/')[1]?.split('/')[0]?.split('?')[0] || null;
       } else if (url.pathname.startsWith('/v/')) {
         videoId =
           url.pathname.split('/v/')[1]?.split('/')[0]?.split('?')[0] || null;
@@ -139,9 +142,11 @@ export function parseYouTubeUrl(
 
   // Fallback regex for video ID
   if (!videoId) {
-    const match = trimmed.match(
-      /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/|watch\?.+&v=))([\w-]{11})/
+    const ytRegex = new RegExp(
+      '(?:youtu\\.be\\/|youtube\\.com\\/(?:embed\\/|v\\/|watch\\?v=|' +
+        'shorts\\/|live\\/|watch\\?.+&v=))([\\w-]{11})'
     );
+    const match = trimmed.match(ytRegex);
     if (match) {
       videoId = match[1];
     }

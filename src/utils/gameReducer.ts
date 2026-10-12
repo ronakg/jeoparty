@@ -77,7 +77,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'SELECT_CLUE': {
-      if (!state.config) return state;
+      if (!state.config || state.activeClue !== null) return state;
       const { roundIndex, categoryIndex, clueIndex, firstAnsweringTeam } =
         action.payload;
       const actualFirstAnsweringTeam =
@@ -247,8 +247,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         state.activeClue.incorrectTeams[0] !== team;
 
       const isRebound = state.activeClue.reboundOpportunity || isPendingRebound;
+      const reboundRate = (state.config.reboundPercentage ?? 50) / 100;
       const points = isPendingRebound
-        ? Math.round(state.activeClue.currentAvailablePoints / 2)
+        ? Math.round(state.activeClue.currentAvailablePoints * reboundRate)
         : state.activeClue.currentAvailablePoints;
 
       const awardResult = {
@@ -509,6 +510,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
                 wagersLocked: false,
                 questionRevealed: false,
                 answersRevealed: false,
+                netScoreDelta: undefined,
               }
             : undefined,
         },
@@ -647,9 +649,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'FJ_JUDGE': {
       if (!state.config || !state.config.finalJeopardy) return state;
       const { finalJeopardy } = state.config;
+      if (finalJeopardy.answersRevealed) return state;
+
       const { team1Correct, team2Correct } = action.payload;
-      const w1 = finalJeopardy.team1Wager ?? 0;
-      const w2 = finalJeopardy.team2Wager ?? 0;
+      const w1 = Math.max(0, finalJeopardy.team1Wager ?? 0);
+      const w2 = Math.max(0, finalJeopardy.team2Wager ?? 0);
 
       const newT1 = team1Correct
         ? state.team1Score + w1
@@ -657,6 +661,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const newT2 = team2Correct
         ? state.team2Score + w2
         : Math.max(0, state.team2Score - w2);
+
+      const delta1 = newT1 - state.team1Score;
+      const delta2 = newT2 - state.team2Score;
 
       return {
         ...state,
@@ -669,6 +676,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             team1Correct,
             team2Correct,
             answersRevealed: true,
+            netScoreDelta: { team1: delta1, team2: delta2 },
           },
         },
       };
@@ -680,10 +688,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       let newT1 = state.team1Score;
       let newT2 = state.team2Score;
 
-      // Revert wagers scored if answers had been judged and revealed
-      if (fj.answersRevealed) {
-        const w1 = fj.team1Wager ?? 0;
-        const w2 = fj.team2Wager ?? 0;
+      // Revert exact score deltas recorded during judging
+      if (fj.answersRevealed && fj.netScoreDelta) {
+        newT1 = Math.max(0, state.team1Score - fj.netScoreDelta.team1);
+        newT2 = Math.max(0, state.team2Score - fj.netScoreDelta.team2);
+      } else if (fj.answersRevealed) {
+        const w1 = Math.max(0, fj.team1Wager ?? 0);
+        const w2 = Math.max(0, fj.team2Wager ?? 0);
         newT1 = fj.team1Correct ? Math.max(0, newT1 - w1) : newT1 + w1;
         newT2 = fj.team2Correct ? Math.max(0, newT2 - w2) : newT2 + w2;
       }
@@ -703,6 +714,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             wagersLocked: false,
             questionRevealed: false,
             answersRevealed: false,
+            netScoreDelta: undefined,
           },
         },
       };

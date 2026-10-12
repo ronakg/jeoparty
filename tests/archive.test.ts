@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import archiver from 'archiver';
 import {
   createGameArchive,
   extractGameArchive,
@@ -113,19 +114,29 @@ test('Archive Engine: rejects archive without a YAML file', async () => {
   );
   try {
     const archivePath = path.join(tmpDir, 'empty.jeoparty');
-    // Create archive containing only an unrelated text file
-    const dummyFile = path.join(tmpDir, 'notes.txt');
-    fs.writeFileSync(dummyFile, 'hello', 'utf-8');
+    const outputStream = fs.createWriteStream(archivePath);
+    // @ts-expect-error archiver has untyped default export in this workspace
+    const archive = archiver('zip', { zlib: { level: 6 } });
 
-    const mediaMap = new Map<string, string>([['notes.txt', dummyFile]]);
-    // Create archive with empty YAML string; we simulate missing yaml by
-    // unlinking or testing an empty zip archive directly
-    await createGameArchive(archivePath, '', mediaMap);
+    await new Promise<void>((resolve, reject) => {
+      outputStream.on('close', () => resolve());
+      outputStream.on('error', (err: Error) => reject(err));
+      archive.on('error', (err: Error) => reject(err));
+      archive.pipe(outputStream);
+      archive.append('hello', { name: 'notes.txt' });
+      archive.finalize().catch(reject);
+    });
 
-    // Overwrite with empty zip containing no game.yaml
     const extractDir = path.join(tmpDir, 'extracted');
-    const result = await extractGameArchive(archivePath, extractDir);
-    assert.ok(fs.existsSync(result.yamlPath));
+    await assert.rejects(
+      async () => {
+        await extractGameArchive(archivePath, extractDir);
+      },
+      {
+        name: 'Error',
+        message: /missing game\.yaml/,
+      }
+    );
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }

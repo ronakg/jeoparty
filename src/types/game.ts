@@ -50,6 +50,7 @@ export interface FinalJeopardy {
   wagersLocked?: boolean;
   questionRevealed?: boolean;
   answersRevealed?: boolean;
+  netScoreDelta?: { team1: number; team2: number };
 }
 
 export interface DefaultGamePreferences {

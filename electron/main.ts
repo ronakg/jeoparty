@@ -46,6 +46,8 @@ let activeGameDirectory: string | null = null;
 
 let currentState: GameState = { ...initialGameState };
 
+const MAX_TRACE_LOG_SIZE = 5 * 1024 * 1024; // 5 MB
+
 function appendTraceLog(line: string) {
   try {
     const logDir = path.join(app.getPath('userData'), 'logs');
@@ -53,6 +55,20 @@ function appendTraceLog(line: string) {
       fs.mkdirSync(logDir, { recursive: true });
     }
     const logFile = path.join(logDir, 'jeoparty-trace.log');
+    if (fs.existsSync(logFile)) {
+      const stat = fs.statSync(logFile);
+      if (stat.size > MAX_TRACE_LOG_SIZE) {
+        const oldFile = path.join(logDir, 'jeoparty-trace.old.log');
+        try {
+          if (fs.existsSync(oldFile)) {
+            fs.unlinkSync(oldFile);
+          }
+          fs.renameSync(logFile, oldFile);
+        } catch {
+          fs.truncateSync(logFile, 0);
+        }
+      }
+    }
     fs.appendFileSync(logFile, line + '\n', 'utf8');
   } catch {
     // Ignore logging failures to avoid impacting app execution
@@ -502,6 +518,71 @@ function serveStaticFile(
   });
 }
 
+function streamLocalMedia(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  filePath: string
+): void {
+  try {
+    const stat = fs.statSync(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    const rangeHeader = req.headers.range;
+
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    if (rangeHeader) {
+      const parts = rangeHeader.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
+
+      if (
+        isNaN(start) ||
+        start >= stat.size ||
+        end >= stat.size ||
+        start > end
+      ) {
+        res.statusCode = 416;
+        res.setHeader('Content-Range', `bytes */${stat.size}`);
+        res.end();
+        return;
+      }
+
+      const chunkSize = end - start + 1;
+      res.statusCode = 206;
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${stat.size}`);
+      res.setHeader('Content-Length', String(chunkSize));
+      res.setHeader('Content-Type', contentType);
+
+      const stream = fs.createReadStream(filePath, { start, end });
+      stream.pipe(res);
+      stream.on('error', () => {
+        if (!res.headersSent) {
+          res.statusCode = 500;
+          res.end();
+        }
+      });
+    } else {
+      res.statusCode = 200;
+      res.setHeader('Content-Length', String(stat.size));
+      res.setHeader('Content-Type', contentType);
+
+      const stream = fs.createReadStream(filePath);
+      stream.pipe(res);
+      stream.on('error', () => {
+        if (!res.headersSent) {
+          res.statusCode = 500;
+          res.end();
+        }
+      });
+    }
+  } catch {
+    res.statusCode = 500;
+    res.end('Server error');
+  }
+}
+
 function startHttpServer(preferredPort = 5173): Promise<number> {
   return new Promise((resolve) => {
     const distDir = findDistDir();
@@ -594,6 +675,41 @@ function startHttpServer(preferredPort = 5173): Promise<number> {
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ error: String(err) }));
           }
+          return;
+        }
+
+        if (
+          pathname.startsWith('/media/') ||
+          pathname.startsWith('/resources/')
+        ) {
+          let decodedPath = pathname;
+          try {
+            decodedPath = decodeURIComponent(pathname);
+          } catch {
+            // Keep unencoded
+          }
+          const cleanPath = decodedPath.replace(/^\/+/, '');
+          const candidates = [
+            activeGameDirectory && path.join(activeGameDirectory, cleanPath),
+            path.join(app.getAppPath(), cleanPath),
+            path.join(process.cwd(), cleanPath),
+            path.join(app.getAppPath(), 'resources', cleanPath),
+            path.join(process.cwd(), 'resources', cleanPath),
+            path.join(distDir, cleanPath),
+          ].filter(Boolean) as string[];
+
+          const matched = candidates.find(
+            (candidate) =>
+              fs.existsSync(candidate) && !fs.statSync(candidate).isDirectory()
+          );
+
+          if (matched) {
+            streamLocalMedia(req, res, matched);
+            return;
+          }
+
+          res.statusCode = 404;
+          res.end('Media file not found');
           return;
         }
 
@@ -746,7 +862,15 @@ ipcMain.handle('open-game-file', async (event) => {
 
   try {
     const archiveResult = await extractGameArchive(result.filePaths[0]);
+    const prevDir = activeGameDirectory;
     activeGameDirectory = archiveResult.extractedDir;
+    if (prevDir && prevDir !== activeGameDirectory && fs.existsSync(prevDir)) {
+      try {
+        fs.rmSync(prevDir, { recursive: true, force: true });
+      } catch {
+        // Ignore cleanup failure
+      }
+    }
     const content = fs.readFileSync(archiveResult.yamlPath, 'utf-8');
     const parsed = parseGameConfigFromYaml(content);
     return parsed;
@@ -790,6 +914,7 @@ ipcMain.handle('save-game-file', async (event, config: GameConfig) => {
 
   try {
     const mediaFiles = new Map<string, string>();
+    const diskPathToArchive = new Map<string, string>();
     const clonedConfig: GameConfig = JSON.parse(JSON.stringify(config));
 
     let mediaCounter = 1;
@@ -816,11 +941,23 @@ ipcMain.handle('save-game-file', async (event, config: GameConfig) => {
       }
 
       if (fs.existsSync(sourceDiskPath)) {
-        const ext = path.extname(sourceDiskPath) || '';
-        const base = path.basename(sourceDiskPath, ext);
-        const cleanBase = base.replace(/[^a-zA-Z0-9_-]+/g, '_');
-        const safeBase = `${cleanBase}_${mediaCounter++}${ext}`;
-        const archiveRelPath = `media/${safeBase}`;
+        if (diskPathToArchive.has(sourceDiskPath)) {
+          media.urlOrPath = diskPathToArchive.get(sourceDiskPath)!;
+          return;
+        }
+
+        const cleanRel = rawUrl.replace(/^\/+/, '');
+        let archiveRelPath: string;
+        if (cleanRel.startsWith('media/') && !mediaFiles.has(cleanRel)) {
+          archiveRelPath = cleanRel;
+        } else {
+          const ext = path.extname(sourceDiskPath) || '';
+          const base = path.basename(sourceDiskPath, ext);
+          const cleanBase = base.replace(/[^a-zA-Z0-9_-]+/g, '_');
+          archiveRelPath = `media/${cleanBase}_${mediaCounter++}${ext}`;
+        }
+
+        diskPathToArchive.set(sourceDiskPath, archiveRelPath);
         mediaFiles.set(archiveRelPath, sourceDiskPath);
         media.urlOrPath = archiveRelPath;
       }
@@ -849,8 +986,20 @@ ipcMain.handle('save-game-file', async (event, config: GameConfig) => {
     const serializedYaml = serializeGameConfigToYaml(clonedConfig);
     await createGameArchive(filePath, serializedYaml, mediaFiles);
 
+    const previousDir = activeGameDirectory;
     const reloaded = await extractGameArchive(filePath);
     activeGameDirectory = reloaded.extractedDir;
+    if (
+      previousDir &&
+      previousDir !== activeGameDirectory &&
+      fs.existsSync(previousDir)
+    ) {
+      try {
+        fs.rmSync(previousDir, { recursive: true, force: true });
+      } catch {
+        // Ignore cleanup failure
+      }
+    }
 
     return true;
   } catch (err) {

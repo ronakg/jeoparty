@@ -1396,6 +1396,9 @@ test(
     assert.ok(html.includes('text-modern-gold'));
     assert.ok(!html.includes('animate-timer-blink'));
 
+    // Close first clue before selecting second clue
+    await sim.closeClue();
+
     // 20s elapsed -> 10s remaining (threshold: urgent blinking)
     const urgentTime = Date.now() - 20000;
     await sim.selectClue(0, 0, 1, 1, urgentTime);
@@ -1414,6 +1417,9 @@ test(
     assert.ok(html.includes('00:10'));
     assert.ok(html.includes('animate-timer-blink'));
     assert.ok(html.includes('text-amber-300'));
+
+    // Close second clue before selecting third clue
+    await sim.closeClue();
 
     // 30s elapsed -> 0s remaining (expired state)
     const expiredTime = Date.now() - 30000;

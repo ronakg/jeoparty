@@ -33,6 +33,7 @@ export function useGameState() {
   const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
   const stateRef = useRef(state);
   const displayWindowRef = useRef<Window | null>(null);
+  const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
     stateRef.current = state;
@@ -67,6 +68,7 @@ export function useGameState() {
     } else {
       // Browser BroadcastChannel sync for active tabs during live session
       const channel = new BroadcastChannel('jeopardy_broadcast_channel');
+      broadcastChannelRef.current = channel;
       let lastDisplayHeartbeat = 0;
 
       channel.onmessage = (event) => {
@@ -79,8 +81,11 @@ export function useGameState() {
             undefined,
             delta
           );
-          setState((prev) => mergeIncomingState(prev, event.data.state));
-          stateRef.current = event.data.state;
+          setState((prev) => {
+            const merged = mergeIncomingState(prev, event.data.state);
+            stateRef.current = merged;
+            return merged;
+          });
         } else if (event.data.type === 'REQUEST_STATE') {
           tracer.record(
             'SYNC_CHANNEL',
@@ -148,6 +153,7 @@ export function useGameState() {
       return () => {
         clearInterval(watchdog);
         channel.close();
+        broadcastChannelRef.current = null;
       };
     }
   }, [isElectron]);
@@ -313,9 +319,16 @@ export function useGameState() {
             'SYNC_CHANNEL',
             `Broadcasting STATE_SYNC via channel: ${actionWithId.type}`
           );
-          const channel = new BroadcastChannel('jeopardy_broadcast_channel');
-          channel.postMessage({ type: 'STATE_SYNC', state: nextState });
-          channel.close();
+          if (broadcastChannelRef.current) {
+            broadcastChannelRef.current.postMessage({
+              type: 'STATE_SYNC',
+              state: nextState,
+            });
+          } else {
+            const channel = new BroadcastChannel('jeopardy_broadcast_channel');
+            channel.postMessage({ type: 'STATE_SYNC', state: nextState });
+            channel.close();
+          }
         } catch (e) {
           console.error('Failed to sync in browser mode:', e);
         }
@@ -424,7 +437,12 @@ export function useGameState() {
     // Modern browser File System Access API
     if (typeof window !== 'undefined' && 'showOpenFilePicker' in window) {
       try {
-        const [fileHandle] = await (window as any).showOpenFilePicker({
+        type OpenPicker = (
+          options?: unknown
+        ) => Promise<Array<{ getFile: () => Promise<File> }>>;
+        const picker = (window as unknown as { showOpenFilePicker: OpenPicker })
+          .showOpenFilePicker;
+        const [fileHandle] = await picker({
           types: [
             {
               description:
@@ -440,8 +458,8 @@ export function useGameState() {
         const file = await fileHandle.getFile();
         const text = await file.text();
         return parseGameConfigFromYaml(text);
-      } catch (err: any) {
-        if (err?.name === 'AbortError') {
+      } catch (err: unknown) {
+        if ((err as Error)?.name === 'AbortError') {
           return null;
         }
         console.error('Failed to open file via showOpenFilePicker:', err);
@@ -489,7 +507,16 @@ export function useGameState() {
       // Modern browser File System Access API
       if (typeof window !== 'undefined' && 'showSaveFilePicker' in window) {
         try {
-          const handle = await (window as any).showSaveFilePicker({
+          type SavePicker = (options?: unknown) => Promise<{
+            createWritable: () => Promise<{
+              write: (data: string) => Promise<void>;
+              close: () => Promise<void>;
+            }>;
+          }>;
+          const picker = (
+            window as unknown as { showSaveFilePicker: SavePicker }
+          ).showSaveFilePicker;
+          const handle = await picker({
             suggestedName: fileName,
             types: [
               {
@@ -506,10 +533,10 @@ export function useGameState() {
           await writable.write(yamlContent);
           await writable.close();
           return true;
-        } catch (err: any) {
+        } catch (err: unknown) {
           // If the user cancelled the dialog, return false so state
           // stays unsaved
-          if (err?.name === 'AbortError') {
+          if ((err as Error)?.name === 'AbortError') {
             return false;
           }
           console.warn(

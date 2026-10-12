@@ -133,7 +133,8 @@ export function serializeGameConfigToYaml(config: GameConfig): string {
 
 /**
  * Parses a clean YAML game configuration and initializes it into a GameConfig
- * ready for the game engine, mapping top-level pointProgression to each category's questions.
+ * ready for the game engine, mapping top-level pointProgression to each
+ * category's questions.
  */
 export function parseGameConfigFromYaml(yamlText: string): GameConfig {
   const data = (yaml.parse(yamlText) || {}) as Record<string, any>;
@@ -141,9 +142,14 @@ export function parseGameConfigFromYaml(yamlText: string): GameConfig {
   const title = String(data.title || '');
   const team1Name = String(data.team1 ?? data.team1Name ?? '');
   const team2Name = String(data.team2 ?? data.team2Name ?? '');
+  const rawHint = data.hintPenalty ?? data.defaultHintDeduction;
   const defaultHintDeduction =
-    Number(data.hintPenalty ?? data.defaultHintDeduction) || 100;
-  const reboundPercentage = Number(data.reboundPercentage) || 50;
+    rawHint !== undefined && !isNaN(Number(rawHint)) ? Number(rawHint) : 100;
+  const rawRebound = data.reboundPercentage;
+  const reboundPercentage =
+    rawRebound !== undefined && !isNaN(Number(rawRebound))
+      ? Number(rawRebound)
+      : 50;
   const rawTimer =
     data.questionTimerSeconds ?? data.questionTimer ?? data.timerSeconds;
   const questionTimerSeconds =

@@ -39,6 +39,7 @@ function readJsonBody<T = unknown>(
 
 function jeopartySyncPlugin(): Plugin {
   let sharedState: unknown = null;
+  const sseClients = new Set<import('http').ServerResponse>();
   const recentActionIds = new Set<string>();
   const actionIdQueue: string[] = [];
 
@@ -58,6 +59,27 @@ function jeopartySyncPlugin(): Plugin {
   return {
     name: 'jeoparty-sync',
     configureServer(server) {
+      function broadcastState(state: unknown): void {
+        sharedState = state;
+        server.ws.send({
+          type: 'custom',
+          event: 'jeoparty:state-broadcast',
+          data: { state: sharedState },
+        });
+        const payload = JSON.stringify({
+          type: 'state',
+          state: sharedState,
+        });
+        const msg = `data: ${payload}\n\n`;
+        for (const client of sseClients) {
+          try {
+            client.write(msg);
+          } catch {
+            sseClients.delete(client);
+          }
+        }
+      }
+
       server.middlewares.use('/api/server-info', (_req, res) => {
         const lanIp = getLanIp();
         res.setHeader('Content-Type', 'application/json');
@@ -69,6 +91,39 @@ function jeopartySyncPlugin(): Plugin {
             displayUrl: `http://${lanIp}:5173/?view=display`,
           })
         );
+      });
+
+      server.middlewares.use('/api/events', (req, res) => {
+        if (req.method !== 'GET') {
+          res.statusCode = 405;
+          res.end('Method not allowed');
+          return;
+        }
+
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+          'Access-Control-Allow-Origin': '*',
+        });
+
+        if (typeof res.flushHeaders === 'function') {
+          res.flushHeaders();
+        }
+
+        if (sharedState) {
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'state',
+              state: sharedState,
+            })}\n\n`
+          );
+        }
+
+        sseClients.add(res);
+        req.on('close', () => {
+          sseClients.delete(res);
+        });
       });
 
       server.middlewares.use('/api/action', async (req, res) => {
@@ -89,9 +144,6 @@ function jeopartySyncPlugin(): Plugin {
           const isNew = actionId ? recordActionId(actionId) : true;
 
           if (isNew) {
-            if (body.state) {
-              sharedState = body.state;
-            }
             if (body.action) {
               server.ws.send({
                 type: 'custom',
@@ -100,11 +152,7 @@ function jeopartySyncPlugin(): Plugin {
               });
             }
             if (body.state) {
-              server.ws.send({
-                type: 'custom',
-                event: 'jeoparty:state-broadcast',
-                data: { state: sharedState },
-              });
+              broadcastState(body.state);
             }
           }
 
@@ -128,12 +176,7 @@ function jeopartySyncPlugin(): Plugin {
           try {
             const body = await readJsonBody<{ state?: unknown }>(req);
             if (body.state) {
-              sharedState = body.state;
-              server.ws.send({
-                type: 'custom',
-                event: 'jeoparty:state-broadcast',
-                data: { state: sharedState },
-              });
+              broadcastState(body.state);
             }
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ ok: true, state: sharedState }));
@@ -165,19 +208,11 @@ function jeopartySyncPlugin(): Plugin {
         }
       );
 
-      server.ws.on(
-        'jeoparty:state-sync',
-        (data: { state?: unknown }) => {
-          if (data && data.state) {
-            sharedState = data.state;
-            server.ws.send({
-              type: 'custom',
-              event: 'jeoparty:state-broadcast',
-              data: { state: sharedState },
-            });
-          }
+      server.ws.on('jeoparty:state-sync', (data: { state?: unknown }) => {
+        if (data && data.state) {
+          broadcastState(data.state);
         }
-      );
+      });
 
       server.ws.on('jeoparty:display-status', (data) => {
         server.ws.send({

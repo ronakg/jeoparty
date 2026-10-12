@@ -81,11 +81,13 @@ export async function extractGameArchive(
     if (process.platform !== 'win32') {
       await execFileAsync('unzip', ['-o', '-q', archivePath, '-d', targetDir]);
     } else {
+      const escapePs = (str: string) => str.replace(/'/g, "''");
       await execFileAsync('powershell', [
         '-NoProfile',
+        '-NonInteractive',
         '-Command',
-        `Expand-Archive -Force -LiteralPath "${archivePath}" ` +
-          `-DestinationPath "${targetDir}"`,
+        `Expand-Archive -Force -LiteralPath '${escapePs(archivePath)}' ` +
+          `-DestinationPath '${escapePs(targetDir)}'`,
       ]);
     }
   }
