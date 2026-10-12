@@ -8,7 +8,11 @@ import { parseGameConfigFromYaml } from '../src/utils/gameYaml';
 import { gameReducer, initialGameState } from '../src/utils/gameReducer';
 
 test('Game Package: unpacks and parses minimal .jeoparty fixture', async () => {
-  const packagePath = path.resolve(process.cwd(), 'minimal_test_game.jeoparty');
+  const packagePath = path.resolve(
+    process.cwd(),
+    'games',
+    'minimal_test_game.jeoparty'
+  );
   assert.ok(fs.existsSync(packagePath), 'package must exist');
 
   const tmpExtract = fs.mkdtempSync(
@@ -139,17 +143,24 @@ test(
   'Game Package: unpacks legacy .jeopardy fixture for backward' +
     ' compatibility',
   async () => {
-    const packagePath = path.resolve(
+    const srcPath = path.resolve(
       process.cwd(),
-      'minimal_test_game.jeopardy'
+      'games',
+      'minimal_test_game.jeoparty'
     );
-    assert.ok(fs.existsSync(packagePath), 'legacy package must exist');
+    assert.ok(fs.existsSync(srcPath), 'source package must exist');
+
+    const tmpDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'jeoparty-legacy-src-')
+    );
+    const legacyPath = path.join(tmpDir, 'minimal_test_game.jeopardy');
+    fs.copyFileSync(srcPath, legacyPath);
 
     const tmpExtract = fs.mkdtempSync(
       path.join(os.tmpdir(), 'jeoparty-legacy-fixture-test-')
     );
     try {
-      const result = await extractGameArchive(packagePath, tmpExtract);
+      const result = await extractGameArchive(legacyPath, tmpExtract);
       assert.ok(fs.existsSync(result.yamlPath));
 
       const yamlContent = fs.readFileSync(result.yamlPath, 'utf-8');
@@ -158,12 +169,17 @@ test(
       assert.equal(config.rounds[0].categories.length, 3);
     } finally {
       fs.rmSync(tmpExtract, { recursive: true, force: true });
+      fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   }
 );
 
 test('Game Package Simulation: plays match from package config', async () => {
-  const packagePath = path.resolve(process.cwd(), 'minimal_test_game.jeoparty');
+  const packagePath = path.resolve(
+    process.cwd(),
+    'games',
+    'minimal_test_game.jeoparty'
+  );
   const tmpExtract = fs.mkdtempSync(
     path.join(os.tmpdir(), 'jeoparty-sim-test-')
   );
@@ -279,6 +295,7 @@ test(
   async () => {
     const packagePath = path.resolve(
       process.cwd(),
+      'games',
       'max_sample_game.jeoparty'
     );
     assert.ok(fs.existsSync(packagePath), 'max package must exist');
@@ -358,17 +375,24 @@ test(
 test(
   'Game Package: unpacks legacy max sample package (.jeopardy)',
   async () => {
-    const packagePath = path.resolve(
+    const srcPath = path.resolve(
       process.cwd(),
-      'max_sample_game.jeopardy'
+      'games',
+      'max_sample_game.jeoparty'
     );
-    assert.ok(fs.existsSync(packagePath), 'legacy max package must exist');
+    assert.ok(fs.existsSync(srcPath), 'source max package must exist');
+
+    const tmpDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'jeoparty-max-src-')
+    );
+    const legacyPath = path.join(tmpDir, 'max_sample_game.jeopardy');
+    fs.copyFileSync(srcPath, legacyPath);
 
     const tmpExtract = fs.mkdtempSync(
       path.join(os.tmpdir(), 'jeoparty-max-legacy-test-')
     );
     try {
-      const result = await extractGameArchive(packagePath, tmpExtract);
+      const result = await extractGameArchive(legacyPath, tmpExtract);
       assert.ok(fs.existsSync(result.yamlPath));
       const config = parseGameConfigFromYaml(
         fs.readFileSync(result.yamlPath, 'utf-8')
@@ -377,6 +401,7 @@ test(
       assert.equal(config.rounds[0].categories.length, 7);
     } finally {
       fs.rmSync(tmpExtract, { recursive: true, force: true });
+      fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   }
 );

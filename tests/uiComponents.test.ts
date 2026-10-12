@@ -1224,7 +1224,13 @@ test(
   'PlayerDisplay UI: YouTube audioOnly clue renders audio card on player' +
     ' display',
   () => {
-    const yamlPath = path.resolve(process.cwd(), 'minimal_test_game.yaml');
+    const yamlPath = path.resolve(
+      process.cwd(),
+      'tests',
+      'fixtures',
+      'minimal_game',
+      'game.yaml'
+    );
     const config = parseGameConfigFromYaml(fs.readFileSync(yamlPath, 'utf-8'));
     let state = gameReducer(initialGameState, {
       type: 'LOAD_GAME',
@@ -1262,7 +1268,13 @@ test(
   'PlayerDisplay UI: Standard YouTube clue renders video frame on player' +
     ' display',
   () => {
-    const yamlPath = path.resolve(process.cwd(), 'minimal_test_game.yaml');
+    const yamlPath = path.resolve(
+      process.cwd(),
+      'tests',
+      'fixtures',
+      'minimal_game',
+      'game.yaml'
+    );
     const config = parseGameConfigFromYaml(fs.readFileSync(yamlPath, 'utf-8'));
     let state = gameReducer(initialGameState, {
       type: 'LOAD_GAME',

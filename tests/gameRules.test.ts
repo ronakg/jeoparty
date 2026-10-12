@@ -761,9 +761,15 @@ test('YAML Game File: Clean format contains only configuration, zero gameplay st
   assert.equal(parsed.rounds[0].categories[0].clues[1].points, 200);
 });
 
-test('Game Config: minimal_test_game.yaml parses 3x3 board layout', () => {
-  const yamlPath = path.join(process.cwd(), 'minimal_test_game.yaml');
-  assert.ok(fs.existsSync(yamlPath), 'minimal_test_game.yaml must exist');
+test('Game Config: minimal_game fixture parses 3x3 board layout', () => {
+  const yamlPath = path.join(
+    process.cwd(),
+    'tests',
+    'fixtures',
+    'minimal_game',
+    'game.yaml'
+  );
+  assert.ok(fs.existsSync(yamlPath), 'game.yaml must exist');
   const yamlText = fs.readFileSync(yamlPath, 'utf-8');
   const config = parseGameConfigFromYaml(yamlText);
 
@@ -1093,7 +1099,12 @@ categories:
 });
 
 test('Sample Trivia Game: Successfully parses 5x5 game with diverse multimedia', () => {
-  const filePath = path.resolve(process.cwd(), 'sample_trivia_game.yaml');
+  const filePath = path.resolve(
+    process.cwd(),
+    'tests',
+    'fixtures',
+    'sample_trivia_game.yaml'
+  );
   const content = fs.readFileSync(filePath, 'utf-8');
 
   const config = parseGameConfigFromYaml(content);
