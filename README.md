@@ -111,6 +111,14 @@ npm test
 
 ---
 
+## 🏛️ Architecture
+
+For a comprehensive guide covering system topology, the 4-tier synchronization
+engine, state lifecycles, and component responsibilities, refer to
+[ARCHITECTURE.md](ARCHITECTURE.md).
+
+---
+
 ## 📜 License
 
 Distributed under the [MIT License](LICENSE). Copyright (c) 2026 Ronak Gandhi.
