@@ -2195,6 +2195,41 @@ export const AdminHost: React.FC<AdminHostProps> = ({
                     Done
                   </button>
                 </div>
+              ) : (activeClue.incorrectTeams &&
+                  activeClue.incorrectTeams.length >= 2) ||
+                (!activeClue.reboundOpportunity &&
+                  !activeClue.reboundAvailable &&
+                  (activeClue.lastJudgedResult === 'wrong' ||
+                    activeClue.lastJudgedResult === 'passed')) ? (
+                /* STATE B2: Both teams wrong / rebound exhausted */
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => dispatch({ type: 'REVEAL_ANSWER' })}
+                    disabled={activeClue.answerRevealed}
+                    className={
+                      'py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 ' +
+                      'disabled:opacity-40 disabled:cursor-not-allowed ' +
+                      'text-white font-bold text-xs uppercase ' +
+                      'rounded-lg flex items-center justify-center ' +
+                      'gap-1.5 transition-all'
+                    }
+                    title="Reveal answer to players"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Answer</span>
+                  </button>
+                  <button
+                    onClick={() => dispatch({ type: 'CLOSE_CLUE' })}
+                    className={
+                      'py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 ' +
+                      'text-white font-bold text-xs uppercase ' +
+                      'rounded-lg flex items-center justify-center ' +
+                      'gap-1.5 transition-all'
+                    }
+                  >
+                    <span>Done</span>
+                  </button>
+                </div>
               ) : (
                 /* STATE C: Standard judging */
                 <>

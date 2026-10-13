@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getWinnerState, formatTimerMmSs } from '../utils/gameRules';
+import { soundManager } from '../utils/soundEffects';
 import { tracer } from '../utils/tracer';
 
 interface PlayerDisplayProps {
@@ -546,6 +547,75 @@ export const PlayerDisplay: React.FC<PlayerDisplayProps> = ({
     activeClue?.currentAnsweringTeam,
     lastJudgedTrigger,
   ]);
+
+  const lastSoundTriggerRef = useRef<string | null>(null);
+  const hadActiveClueRef = useRef(false);
+
+  // Trigger stage sound effects and preempt on clue state transitions
+  useEffect(() => {
+    if (!activeClue) {
+      if (hadActiveClueRef.current) {
+        hadActiveClueRef.current = false;
+        soundManager.fadeAndStop(300);
+      }
+      lastSoundTriggerRef.current = null;
+      return;
+    }
+
+    hadActiveClueRef.current = true;
+    const cluePrefix =
+      `${activeClue.roundIndex}-${activeClue.categoryIndex}-` +
+      `${activeClue.clueIndex}`;
+
+    if (activeClue.lastJudgedResult === 'correct') {
+      const key = `${cluePrefix}-correct-${activeClue.correctTeam}`;
+      if (lastSoundTriggerRef.current !== key) {
+        lastSoundTriggerRef.current = key;
+        soundManager.play('correct');
+      }
+    } else if (activeClue.lastJudgedResult === 'wrong') {
+      const wrongCount = activeClue.incorrectTeams?.length ?? 0;
+      const key =
+        `${cluePrefix}-wrong-${wrongCount}-` +
+        `${activeClue.currentAnsweringTeam}`;
+      if (lastSoundTriggerRef.current !== key) {
+        lastSoundTriggerRef.current = key;
+        soundManager.play('wrong');
+      }
+    } else if (
+      activeClue.reboundOpportunity &&
+      !activeClue.lastJudgedResult &&
+      !activeClue.answerRevealed
+    ) {
+      const key = `${cluePrefix}-rebound-${activeClue.currentAnsweringTeam}`;
+      if (lastSoundTriggerRef.current !== key) {
+        lastSoundTriggerRef.current = key;
+        soundManager.play('rebound');
+      }
+    } else if (
+      activeClue.lastJudgedResult === 'passed' ||
+      activeClue.answerRevealed
+    ) {
+      const key = `${cluePrefix}-preempt`;
+      if (lastSoundTriggerRef.current !== key) {
+        lastSoundTriggerRef.current = key;
+        soundManager.fadeAndStop(300);
+      }
+    }
+  }, [
+    activeClue,
+    activeClue?.roundIndex,
+    activeClue?.categoryIndex,
+    activeClue?.clueIndex,
+    activeClue?.lastJudgedResult,
+    activeClue?.incorrectTeams?.length,
+    activeClue?.correctTeam,
+    activeClue?.currentAnsweringTeam,
+    activeClue?.reboundOpportunity,
+    activeClue?.answerRevealed,
+  ]);
+
+  useEffect(() => () => soundManager.stopImmediate(), []);
 
   if (!config) {
     return (

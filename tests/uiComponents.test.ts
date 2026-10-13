@@ -2609,3 +2609,66 @@ test(
     assert.ok(html.includes('<span>Play</span>'));
   }
 );
+
+test(
+  'AdminHost UI: Both teams wrong shows only Answer reveal and Done buttons',
+  () => {
+    let state = gameReducer(initialGameState, {
+      type: 'LOAD_GAME',
+      payload: defaultGame,
+    });
+    state = gameReducer(state, {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 0,
+        clueIndex: 0,
+        firstAnsweringTeam: 1,
+      },
+    });
+    state = gameReducer(state, {
+      type: 'ANSWER_WRONG',
+      payload: { team: 1 },
+    });
+    state = gameReducer(state, { type: 'ADVANCE_REBOUND' });
+    state = gameReducer(state, {
+      type: 'ANSWER_WRONG',
+      payload: { team: 2 },
+    });
+
+    const html = renderToStaticMarkup(
+      React.createElement(AdminHost, {
+        state,
+        dispatch: () => {},
+        openDisplayWindow: () => {},
+        onOpenBuilder: () => {},
+        onGameCreated: () => {},
+      })
+    );
+
+    assert.ok(html.includes('<span>Answer</span>'));
+    assert.ok(html.includes('<span>Done</span>'));
+    assert.ok(!html.includes('Answering:'));
+    assert.ok(!html.includes('+$0'));
+    assert.ok(!html.includes('<span>Wrong</span>'));
+    assert.ok(!html.includes('<span>Rebound</span>'));
+    assert.ok(!html.includes('<span>Pass</span>'));
+
+    // Revealing answer disables the Answer button while keeping Done active
+    const revealedState = gameReducer(state, { type: 'REVEAL_ANSWER' });
+    const revealedHtml = renderToStaticMarkup(
+      React.createElement(AdminHost, {
+        state: revealedState,
+        dispatch: () => {},
+        openDisplayWindow: () => {},
+        onOpenBuilder: () => {},
+        onGameCreated: () => {},
+      })
+    );
+
+    assert.ok(revealedHtml.includes('<span>Answer</span>'));
+    assert.ok(revealedHtml.includes('<span>Done</span>'));
+    assert.ok(revealedHtml.includes('title="Reveal answer to players"'));
+    assert.ok(revealedHtml.includes('disabled=""'));
+  }
+);

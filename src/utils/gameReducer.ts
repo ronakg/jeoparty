@@ -313,7 +313,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       // No point deduction for wrong answers!
       // If this was a rebound attempt (second team answering), both missed
-      if (state.activeClue.reboundOpportunity) {
+      if (state.activeClue.reboundOpportunity || updatedIncorrect.length >= 2) {
         return {
           ...state,
           activeClue: {

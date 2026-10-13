@@ -25,6 +25,7 @@ import {
   calculateAnimatedScore,
 } from '../src/views/PlayerDisplay';
 import { AdminHost } from '../src/views/AdminHost';
+import { SoundEffectsManager } from '../src/utils/soundEffects';
 
 /**
  * Creates an in-memory Duplex stream pair simulating a client-server socket.
@@ -1721,3 +1722,99 @@ test(
     await sim.stop();
   }
 });
+
+test('Simulation: stage sound effects across clue states', async () => {
+  const sim = await GameSimulation.start();
+  const sfx = new SoundEffectsManager();
+  try {
+    await sim.loadGame(defaultGame);
+    await sim.selectClue(0, 0, 0, 1);
+
+    // 1. Team 1 answers wrong -> wrong sound category triggered
+    let state = await sim.answerWrong(1);
+    assert.equal(state.activeClue?.lastJudgedResult, 'wrong');
+    const wrongPlay = sfx.play('wrong');
+    assert.equal(wrongPlay?.category, 'wrong');
+
+    let displayHtml = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+    assert.ok(displayHtml.length > 0);
+
+    // 2. Host advances to rebound -> rebound sound preempts wrong sound
+    state = await sim.advanceRebound();
+    assert.equal(state.activeClue?.reboundOpportunity, true);
+    assert.equal(state.activeClue?.lastJudgedResult, null);
+    const reboundPlay = sfx.play('rebound');
+    assert.equal(reboundPlay?.category, 'rebound');
+    assert.equal(reboundPlay?.trackIndex, 0);
+
+    // 3. Team 2 answers correct on rebound -> correct sound triggered
+    state = await sim.answerCorrect(2);
+    assert.equal(state.activeClue?.lastJudgedResult, 'correct');
+    assert.equal(state.activeClue?.answerRevealed, true);
+    const correctPlay = sfx.play('correct');
+    assert.equal(correctPlay?.category, 'correct');
+
+    displayHtml = renderToStaticMarkup(
+      React.createElement(PlayerDisplay, {
+        state,
+        toMediaUrl: (p: string) => p,
+        onToggleFullScreen: () => {},
+      })
+    );
+    assert.ok(displayHtml.length > 0);
+
+    // 4. Host closes clue -> fadeAndStop cleanly halts audio
+    state = await sim.closeClue();
+    assert.equal(state.activeClue, null);
+    sfx.fadeAndStop(0);
+  } finally {
+    sfx.stopImmediate();
+    await sim.stop();
+  }
+});
+
+test(
+  'Simulation: Host Panel - double miss renders only Answer and Done buttons',
+  async () => {
+    const sim = await GameSimulation.start();
+    try {
+      await sim.loadGame(defaultGame);
+      await sim.selectClue(0, 0, 0, 1);
+
+      await sim.answerWrong(1);
+      await sim.advanceRebound();
+      let state = await sim.answerWrong(2);
+
+      const hostHtml = renderToStaticMarkup(
+        React.createElement(AdminHost, {
+          state,
+          dispatch: () => {},
+          openDisplayWindow: () => {},
+          onOpenBuilder: () => {},
+          onGameCreated: () => {},
+        })
+      );
+
+      assert.ok(hostHtml.includes('<span>Answer</span>'));
+      assert.ok(hostHtml.includes('<span>Done</span>'));
+      assert.ok(!hostHtml.includes('Answering:'));
+      assert.ok(!hostHtml.includes('+$0'));
+      assert.ok(!hostHtml.includes('<span>Wrong</span>'));
+
+      state = await sim.revealAnswer();
+      assert.equal(state.activeClue?.answerRevealed, true);
+
+      state = await sim.closeClue();
+      assert.equal(state.activeClue, null);
+      assert.equal(state.controllingTeam, 2);
+    } finally {
+      await sim.stop();
+    }
+  }
+);

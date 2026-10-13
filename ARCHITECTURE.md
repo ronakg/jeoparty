@@ -164,6 +164,12 @@ Clues support four media types: `image`, `audio`, `video`, and `youtube`.
    - Extracts timestamps (`t=`, `start=`) and embeds via `<iframe>` using
      YouTube's privacy-enhanced domain (`youtube-nocookie.com`).
 
+4. **Stage Sound Effects Engine (`src/utils/soundEffects.ts`)**:
+   - Plays bundled MP3 cues from `public/sounds/` on `PlayerDisplay` for
+     correct answers, wrong answers, and rebound steals.
+   - Enforces non-repeating random track rotation and 300ms fadeout
+     preemption across clue state transitions.
+
 ---
 
 ## 5. Package & Storage Architecture
@@ -211,6 +217,8 @@ game.jeoparty
   Pure state transition engine and game logic.
 - **`src/utils/gameRules.ts`** (`Game Rules`):
   Point calculations, rebound penalty mechanics, and score floor rules.
+- **`src/utils/soundEffects.ts`** (`SoundEffectsManager`):
+  Stage audio cue playback, anti-repetition rotation, and fade preemption.
 
 ---
 

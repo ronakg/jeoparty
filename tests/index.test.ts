@@ -7,3 +7,4 @@ import './simulation.test';
 import './useGameState.test';
 import './archive.test';
 import './gamePackage.test';
+import './soundEffects.test';

@@ -1876,3 +1876,26 @@ categories:
   assert.equal(parsed.defaultHintDeduction, 0);
   assert.equal(parsed.reboundPercentage, 0);
 });
+
+test(
+  'Rebound Flow: marking both teams wrong resolves clue to zero points',
+  () => {
+    let state = gameReducer(createLoadedState(), {
+      type: 'SELECT_CLUE',
+      payload: {
+        roundIndex: 0,
+        categoryIndex: 0,
+        clueIndex: 0,
+        firstAnsweringTeam: 1,
+      },
+    });
+
+    state = gameReducer(state, { type: 'ANSWER_WRONG', payload: { team: 1 } });
+    state = gameReducer(state, { type: 'ANSWER_WRONG', payload: { team: 2 } });
+
+    assert.deepEqual(state.activeClue?.incorrectTeams, [1, 2]);
+    assert.equal(state.activeClue?.reboundOpportunity, false);
+    assert.equal(state.activeClue?.reboundAvailable, false);
+    assert.equal(state.activeClue?.currentAvailablePoints, 0);
+  }
+);
